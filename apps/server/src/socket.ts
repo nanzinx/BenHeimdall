@@ -5,21 +5,33 @@ import type { Server as HttpServer } from 'node:http';
 import { Server, type Socket } from 'socket.io';
 import type { Painel } from '@benheimdall/shared';
 import { tokenDoCabecalho } from './acesso/http';
+import { ipDoCliente } from './acesso/ips';
 import type { ServicoAcesso } from './acesso/servico';
 import type { CicloLeitura } from './leitura/ciclo';
 import type { Log } from './log';
 import { projetarPainel, type Leitor } from './projecao';
 
-export function ligarSocket(
-  http: HttpServer,
-  o: { servico: ServicoAcesso; ciclo: CicloLeitura; segredo: string; log: Log },
-) {
-  const io = new Server(http, { serveClient: false });
+export interface OpcoesSocket {
+  servico: ServicoAcesso;
+  ciclo: CicloLeitura;
+  segredo: string;
+  log: Log;
+  /** O mesmo TRUST_PROXY do Express: o IP real vem de X-Forwarded-For quando o proxy é confiável. */
+  confiarProxy: boolean | number | string;
+  ipPermitido: (ip: string | null) => boolean;
+}
+
+export function ligarSocket(http: HttpServer, o: OpcoesSocket) {
+  const io = new Server(http, {
+    serveClient: false,
+    // O Socket.IO não passa pelos middlewares do Express: confere aqui a lista de IPs.
+    allowRequest: (req, cb) => cb(null, o.ipPermitido(ipDoCliente(req, o.confiarProxy))),
+  });
 
   const conferir = (s: Socket) =>
     o.servico.validar(tokenDoCabecalho(s.handshake.headers.cookie, o.segredo), {
       renovar: false,
-      ip: s.handshake.address,
+      ip: ipDoCliente(s.request, o.confiarProxy),
     });
 
   io.use((socket, next) => {

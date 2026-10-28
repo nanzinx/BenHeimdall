@@ -7,6 +7,7 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import { ZodError } from 'zod';
 import { MockArgusClient, type ArgusClient } from '@benheimdall/argus-client';
 import type { Saude } from '@benheimdall/shared';
+import { ehLoopback, normalizarIp } from './acesso/ips';
 import { ErroAcesso, type ServicoAcesso } from './acesso/servico';
 import { RAIZ, type Config } from './config';
 import { bancoOk, type Banco } from './db/banco';
@@ -35,6 +36,20 @@ export function criarApp(deps: Dependencias) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', config.trustProxy);
+
+  // Só os IPs de IPS_PERMITIDOS (e a própria máquina) entram em qualquer parte do sistema.
+  const ipPermitido = (ip: string | null) =>
+    config.ipsPermitidos.entradas.length === 0 || ehLoopback(ip) || config.ipsPermitidos.contem(ip);
+  const negadosNoLog = new Set<string>();
+  app.use((req, res, next) => {
+    const ip = normalizarIp(req.ip);
+    if (ipPermitido(ip)) return next();
+    if (negadosNoLog.size < 1000 && !negadosNoLog.has(ip ?? '')) {
+      negadosNoLog.add(ip ?? '');
+      log.warn({ ip, rota: req.path }, 'Acesso recusado: IP fora de IPS_PERMITIDOS');
+    }
+    res.status(403).type('text/plain; charset=utf-8').send('Acesso não permitido a partir deste endereço.');
+  });
   app.use(express.json({ limit: '20kb' }));
   app.use(cookieParser(config.sessionSecret));
   app.use((_req, res, next) => {
@@ -98,6 +113,13 @@ export function criarApp(deps: Dependencias) {
   });
 
   const http = createServer(app);
-  const io = ligarSocket(http, { servico, ciclo, segredo: config.sessionSecret, log });
+  const io = ligarSocket(http, {
+    servico,
+    ciclo,
+    segredo: config.sessionSecret,
+    log,
+    confiarProxy: config.trustProxy,
+    ipPermitido,
+  });
   return { app, http, io };
 }

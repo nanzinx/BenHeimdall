@@ -16,7 +16,9 @@
     "test:watch": "vitest",
     "lint": "eslint . && pnpm -r typecheck",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "dev:tunel": "cloudflared tunnel --no-autoupdate --url http://localhost:5173",
+    "prod:tunel": "cloudflared tunnel --no-autoupdate --url http://localhost:3001"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

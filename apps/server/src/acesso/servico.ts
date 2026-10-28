@@ -4,6 +4,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import type { NovoUsuarioEntrada, SessaoAtual, UsuarioPublico } from '@benheimdall/shared';
 import type { Log } from '../log';
 import { Repositorio, usuarioPublico, type LinhaUsuario } from './repositorio';
+import { normalizarIp, type ListaIps } from './ips';
 import { CUSTO_BCRYPT, conferirSenha, gerarHash, gerarSenhaTemporaria } from './senhas';
 
 export const MAX_TENTATIVAS = 5;
@@ -11,7 +12,7 @@ export const BLOQUEIO_MIN = 5;
 
 export interface OpcoesAcesso {
   sessaoMin: number;
-  tvIps: string[];
+  tvIps: ListaIps;
   log: Log;
   agora?: () => Date;
   custoBcrypt?: number;
@@ -40,11 +41,7 @@ export type ResultadoValidacao =
 
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 
-/** `::ffff:127.0.0.1` → `127.0.0.1`. */
-export function normalizarIp(ip: string | undefined | null): string | null {
-  if (!ip) return null;
-  return ip.startsWith('::ffff:') ? ip.slice(7) : ip;
-}
+export { normalizarIp };
 
 export class ServicoAcesso {
   readonly repo: Repositorio;
@@ -74,7 +71,7 @@ export class ServicoAcesso {
   }
 
   ipDaTvPermitido(ip: string | null): boolean {
-    return ip !== null && this.o.tvIps.includes(ip);
+    return this.o.tvIps.contem(ip);
   }
 
   /** Cria o primeiro admin na primeira execução. Devolve a senha gerada, se precisou gerar uma. */

@@ -3,14 +3,19 @@ import { criarArgusClient } from '@benheimdall/argus-client';
 import { Repositorio } from './acesso/repositorio';
 import { ServicoAcesso } from './acesso/servico';
 import { criarApp } from './app';
-import { carregarConfig } from './config';
+import { carregarConfig, carregarDotenv } from './config';
 import { abrirBanco } from './db/banco';
 import { CicloLeitura } from './leitura/ciclo';
 import { RegistroStatus } from './leitura/eventos';
 import { criarLog } from './log';
 
+carregarDotenv();
 const config = carregarConfig();
 const log = criarLog(config.logLevel, config.producao);
+if (config.ipsPermitidos.entradas.length)
+  log.info({ ips: config.ipsPermitidos.entradas }, 'Acesso restrito aos IPs de IPS_PERMITIDOS');
+if (config.ipsPermitidos.entradas.length && config.trustProxy === false)
+  log.warn('IPS_PERMITIDOS sem TRUST_PROXY: atrás de proxy/túnel, todo acesso parece vir do proxy.');
 if (!process.env.SESSION_SECRET)
   log.warn('SESSION_SECRET vazio: usando um segredo aleatório (as sessões caem a cada reinício).');
 

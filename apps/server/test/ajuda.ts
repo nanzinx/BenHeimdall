@@ -29,12 +29,16 @@ import { CicloLeitura } from '../src/leitura/ciclo';
 import { RegistroStatus } from '../src/leitura/eventos';
 import { logSilencioso } from '../src/log';
 
-export function criarAmbiente(opcoes: { agora?: () => Date; tvIps?: string } = {}) {
+export function criarAmbiente(
+  opcoes: { agora?: () => Date; tvIps?: string; ipsPermitidos?: string; trustProxy?: string } = {},
+) {
   const config = carregarConfig({
     NODE_ENV: 'test',
     SESSION_SECRET: 'segredo-de-teste-com-mais-de-32-caracteres',
     TV_ALLOWED_IPS: opcoes.tvIps ?? '127.0.0.1,::1',
     POLL_MS: '3000',
+    IPS_PERMITIDOS: opcoes.ipsPermitidos ?? '',
+    TRUST_PROXY: opcoes.trustProxy ?? '',
   });
   const db = abrirBanco(':memory:');
   const registro = new RegistroStatus(db);

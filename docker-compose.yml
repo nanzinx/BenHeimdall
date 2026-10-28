@@ -34,5 +34,29 @@ services:
       driver: json-file
       options: { max-size: '10m', max-file: '5' }
 
+  # Cloudflare Tunnel: publica o BenHeimdall com HTTPS sem abrir porta no servidor.
+  #   docker compose --profile cloudflare up -d --build
+  # No painel Zero Trust, aponte o hostname público do túnel para http://benheimdall:3001
+  # e use TRUST_PROXY=loopback,uniquelocal no .env.
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.5
+    profiles: [cloudflare]
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      benheimdall:
+        condition: service_healthy
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 100
+    mem_limit: 256m
+    logging:
+      driver: json-file
+      options: { max-size: '10m', max-file: '3' }
+
 volumes:
   dados:
