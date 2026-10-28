@@ -93,6 +93,8 @@ export interface Saude {
   ok: boolean;
   argus: { modo: 'mock' | 'real'; online: boolean; ultimaLeitura: string | null; ultimoErro: string | null };
   banco: { ok: boolean };
+  /** Rotas de simulação de queda disponíveis (modo mock fora de produção). */
+  simulacao: boolean;
 }
 
 export interface UsuarioPublico {

@@ -48,6 +48,8 @@ export function criarApp(deps: Dependencias) {
     next();
   });
 
+  const simulacao = !producao && argus instanceof MockArgusClient;
+
   app.get('/api/saude', (_req, res) => {
     const e = ciclo.estado();
     const banco = bancoOk(db);
@@ -55,6 +57,7 @@ export function criarApp(deps: Dependencias) {
       ok: e.online && banco,
       argus: { modo: argus.modo, online: e.online, ultimaLeitura: e.ultimaLeitura, ultimoErro: e.ultimoErro },
       banco: { ok: banco },
+      simulacao,
     };
     res.status(banco ? 200 : 503).json(corpo);
   });
@@ -62,7 +65,7 @@ export function criarApp(deps: Dependencias) {
   app.use('/api/sessao', rotasSessao(servico, producao));
   app.use('/api', rotasPainel(servico, producao, ciclo, registro));
   app.use('/api', rotasUsuarios(servico, producao));
-  if (!producao && argus instanceof MockArgusClient) app.use('/api/dev', rotasDev(servico, argus, ciclo));
+  if (simulacao && argus instanceof MockArgusClient) app.use('/api/dev', rotasDev(servico, argus, ciclo));
 
   app.use('/api', (_req, res) => {
     res.status(404).json({ codigo: 'NAO_ENCONTRADO', mensagem: 'Rota não encontrada.' });

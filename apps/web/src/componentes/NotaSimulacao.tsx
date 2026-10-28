@@ -14,9 +14,11 @@ export function NotaSimulacao() {
     <div className="sim-note">
       <span className="tag">Simulação</span>
       <span>Argus simulada (ARGUS_MODE=mock). Nomes e telefones são fictícios.</span>
-      <button className="btn-ghost" type="button" disabled={queda.isPending} onClick={() => queda.mutate()}>
-        Simular queda da Argus (15 s)
-      </button>
+      {saude.data.simulacao && (
+        <button className="btn-ghost" type="button" disabled={queda.isPending} onClick={() => queda.mutate()}>
+          Simular queda da Argus (15 s)
+        </button>
+      )}
     </div>
   );
 }
