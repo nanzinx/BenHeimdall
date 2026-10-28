@@ -1,16 +1,14 @@
 // Cliente da Argus real, conforme a "Documentação API Argus" (doc-api-argus.pdf) e o cliente
-// que o BenURA já usa em produção (src/integrations/argus/argus.client.js).
+// que o BenURA usa em produção (o BenHeimdall é independente dele; só segue as mesmas regras).
 //
 //  - Todo comando é POST {ARGUS_BASE_URL}/{comando} com o cabeçalho Token-Signature (doc 1).
 //  - Erro de negócio vem com codStatus < 1 mesmo em HTTP 200. 403 = token recusado.
-//  - 429 = a Argus pediu para desacelerar: vira uma pausa que vale para todos os processos que
-//    usam o mesmo token (o arquivo ARGUS_PAUSA_FILE pode ser o mesmo do BenURA).
+//  - 429 = a Argus pediu para desacelerar: as leituras pausam por alguns segundos.
 //  - /statusoperador de quem não está logado responde HTTP 500: tratado como deslogado.
 //
 // A cada ciclo de leitura, uma única coleta (memorizada por 1 s) atende os 5 métodos do
 // ArgusClient: diretório de operadores (/listarusuarios, em cache), grupos (/listargrupos, para
 // tirar os operadores virtuais) e /statusoperador de cada ramal, com concorrência limitada.
-import { readFileSync, writeFileSync } from 'node:fs';
 import axios, { type AxiosInstance } from 'axios';
 import type {
   AgenteBruto,
@@ -23,7 +21,7 @@ import type {
 } from '../tipos';
 import { ArgusIndisponivelError } from '../tipos';
 import { classificarStatus, TEXTOS_STATUS_PADRAO, type TextosStatus } from './classificar';
-import { distribuirBaias, numerarEquipes, type Baia } from './salao';
+import { distribuirBaias, identificarEquipes, type EquipeConfig } from './salao';
 
 export interface RealArgusOpcoes {
   baseUrl: string;
@@ -36,12 +34,8 @@ export interface RealArgusOpcoes {
   textosStatus?: TextosStatus;
   /** Só operadores destas campanhas (vazio = todos). */
   campanhasIds?: number[];
-  /** NOME DO SUPERVISOR (como na Argus) → número da equipe (config/equipes.json). */
-  equipes?: Record<string, number>;
-  /** Ramal → baia (config/baias.json). */
-  baias?: Record<string, Baia>;
-  /** Arquivo da pausa por limite (429), compartilhado com o BenURA se apontar para o mesmo. */
-  arquivoPausa?: string;
+  /** Equipes do salão (config/equipes.json): identificadas pelo grupo e pelo supervisor. */
+  equipes?: EquipeConfig[];
   pausaLimiteMs?: number;
   cacheDiretorioMs?: number;
   cacheGruposMs?: number;
@@ -54,6 +48,8 @@ interface Operador {
   ramal: string;
   nome: string;
   supervisor: string;
+  /** Grupo vinculado na Argus (ex.: "GABRIEL - COMERCIAL", "DIGITAL"). */
+  grupo: string;
 }
 
 interface StatusOperador {
@@ -195,7 +191,6 @@ export class RealArgusClient implements ArgusClient {
       );
     if (status === 429) {
       this.pausaAte = this.agora() + this.o.pausaLimiteMs;
-      this.gravarPausa();
       throw new ArgusLimiteError(this.pausaAte);
     }
     if (status === 500 && nullEm500) return null;
@@ -207,35 +202,6 @@ export class RealArgusClient implements ArgusClient {
     throw new ArgusIndisponivelError(
       `Argus /${comando} recusou: ${r?.descStatus ?? `codStatus ${r?.codStatus}`}`,
     );
-  }
-
-  // ---------- pausa por limite (429), compartilhável com o BenURA ----------
-
-  private lerPausa(): void {
-    if (!this.o.arquivoPausa) return;
-    try {
-      const { ate } = JSON.parse(readFileSync(this.o.arquivoPausa, 'utf8')) as { ate?: number };
-      if (Number.isFinite(ate)) this.pausaAte = Math.max(this.pausaAte, ate as number);
-    } catch {
-      // sem arquivo = sem pausa de outro processo
-    }
-  }
-
-  private gravarPausa(): void {
-    if (!this.o.arquivoPausa) return;
-    try {
-      writeFileSync(
-        this.o.arquivoPausa,
-        JSON.stringify({
-          ate: this.pausaAte,
-          em: new Date(this.agora()).toISOString(),
-          pid: process.pid,
-          origem: 'benheimdall',
-        }),
-      );
-    } catch {
-      // sem conseguir gravar, a pausa vale só para este processo
-    }
   }
 
   // ---------- diretório e grupos (com cache) ----------
@@ -266,6 +232,7 @@ export class RealArgusClient implements ArgusClient {
           ramal,
           nome: nomeProprio(String(u.nome ?? '').trim()) || `Ramal ${ramal}`,
           supervisor: String(comSupervisor?.nomeUsuarioSupervisor ?? '').trim(),
+          grupo: String((comSupervisor ?? daOperacao[0])?.grupoUsuarioDesc ?? '').trim(),
         });
       }
       this.diretorioCache = { em: agora, operadores };
@@ -309,21 +276,10 @@ export class RealArgusClient implements ArgusClient {
   }
 
   private async coletarAgora(): Promise<Leitura> {
-    this.lerPausa();
     if (this.agora() < this.pausaAte) throw new ArgusLimiteError(this.pausaAte);
 
     const [operadoresTodos, virtuais] = await Promise.all([this.diretorio(), this.ramaisVirtuais()]);
     const operadores = operadoresTodos.filter((op) => !virtuais.has(op.ramal));
-
-    const numeroEquipe = numerarEquipes(
-      operadores.map((op) => op.supervisor),
-      this.o.equipes,
-    );
-    const equipeDe = (op: Operador) => (op.supervisor ? (numeroEquipe.get(op.supervisor) ?? 0) : 0);
-    const baias = distribuirBaias(
-      operadores.map((op) => ({ ramal: op.ramal, equipe: equipeDe(op) })),
-      this.o.baias,
-    );
 
     let falhas = 0;
     let ultimaFalha: unknown = null;
@@ -346,6 +302,18 @@ export class RealArgusClient implements ArgusClient {
       throw ultimaFalha instanceof Error
         ? ultimaFalha
         : new ArgusIndisponivelError('Argus não respondeu ao /statusoperador');
+
+    // Equipe: grupo em que está logado agora (ou o vinculado) e, se ele não disser, o supervisor.
+    const equipes = identificarEquipes(
+      resultados.map((r) => ({
+        ramal: r.op.ramal,
+        grupo: ('status' in r ? String(r.status?.grupo ?? '').trim() : '') || r.op.grupo,
+        supervisor: r.op.supervisor,
+      })),
+      this.o.equipes,
+    );
+    const equipeDe = (op: Operador) => equipes.get(op.ramal) ?? { numero: 0, nome: '' };
+    const baias = distribuirBaias(operadores.map((op) => ({ ramal: op.ramal, equipe: equipeDe(op).numero })));
 
     const agora = this.agora();
     const agentes: AgenteBruto[] = [];
@@ -386,7 +354,8 @@ export class RealArgusClient implements ArgusClient {
         id: op.ramal,
         nome: nomeProprio(String(status?.nome ?? '').trim()) || op.nome,
         ramal: op.ramal,
-        equipe: equipeDe(op),
+        equipe: equipeDe(op).numero,
+        ...(equipeDe(op).nome ? { equipeNome: equipeDe(op).nome } : {}),
         ...(baia ? { lado: baia.lado, posicao: baia.posicao } : {}),
         supervisor: op.supervisor,
         status: classe,

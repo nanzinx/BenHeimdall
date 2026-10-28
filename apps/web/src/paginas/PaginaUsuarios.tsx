@@ -222,11 +222,13 @@ function NovaConta({ aoCriar }: { aoCriar: (r: ComSenha) => void }) {
   const [equipe, setEquipe] = useState(1);
   const [erro, setErro] = useState('');
 
-  // Equipes como estão no painel agora (na Argus real, uma por supervisor). Sem painel, 1 a 5.
+  // Equipes como estão no painel agora (config/equipes.json). Sem painel, 1 a 6.
   const qc = useQueryClient();
   const painel = qc.getQueryData<Painel>(CHAVE_PAINEL);
   const doPainel = painel ? equipesDoPainel(painel.agentes).filter((e) => e.equipe > 0) : [];
-  const opcoesEquipe = doPainel.length ? doPainel : EQUIPES.map((n) => ({ equipe: n, supervisor: '' }));
+  const opcoesEquipe = doPainel.length
+    ? doPainel
+    : EQUIPES.map((n) => ({ equipe: n, nome: '', supervisor: '' }));
 
   const criar = useMutation({
     mutationFn: (dados: unknown) => api<ComSenha>('/api/usuarios', { method: 'POST', body: dados }),
@@ -296,10 +298,10 @@ function NovaConta({ aoCriar }: { aoCriar: (r: ComSenha) => void }) {
         <label>
           Equipe
           <select value={equipe} onChange={(e) => setEquipe(Number(e.target.value))}>
-            {opcoesEquipe.map(({ equipe: n, supervisor }) => (
+            {opcoesEquipe.map(({ equipe: n, nome }) => (
               <option key={n} value={n}>
                 Equipe {n}
-                {supervisor ? ` · ${supervisor}` : ''}
+                {nome ? ` · ${nome}` : ''}
               </option>
             ))}
           </select>

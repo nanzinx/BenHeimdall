@@ -8,7 +8,7 @@ import {
   agenteBrutoSchema,
   chamadaBrutaSchema,
   distribuirBaias,
-  numerarEquipes,
+  identificarEquipes,
   type RealArgusOpcoes,
 } from '../src';
 
@@ -24,7 +24,13 @@ const usuario = (ramal: string, nome: string, supervisor: string, extra: object 
   ativo: true,
   idTipoUsuario: 2,
   campanhas: [
-    { idCampanha: 7, campanhaDesc: 'Consignado', idGrupoUsuario: 1, nomeUsuarioSupervisor: supervisor },
+    {
+      idCampanha: 7,
+      campanhaDesc: 'Consignado',
+      idGrupoUsuario: 1,
+      grupoUsuarioDesc: `${supervisor.split(' ')[0] || 'SEM'} - COMERCIAL`,
+      nomeUsuarioSupervisor: supervisor,
+    },
   ],
   ...extra,
 });
@@ -126,21 +132,29 @@ describe('RealArgusClient', () => {
     expect(await cliente.listarMotivosPausa()).toEqual([{ codigo: 'ALMOÇO 1', descricao: 'ALMOÇO 1' }]);
   });
 
-  it('equipe por supervisor (ordem alfabética ou arquivo) e baias distribuídas', async () => {
-    const { cliente } = fakeArgus(STATUS);
-    const agentes = await cliente.listarAgentes();
-    const eq = Object.fromEntries(agentes.map((a) => [a.ramal, a.equipe]));
-    expect(eq).toEqual({ '2101': 2, '2102': 2, '2103': 1, '2104': 0 }); // GABRIEL=1, MAYSA=2, sem supervisor=0
-    expect(agentes.find((a) => a.ramal === '2102')).toMatchObject({ lado: 'E', posicao: 2 });
-
-    const fixo = fakeArgus(STATUS, {
-      equipes: { 'Maysa Lima': 5 },
-      baias: { '2102': { lado: 'D', posicao: 4 } },
-    }).cliente;
-    const comArquivo = await fixo.listarAgentes();
-    expect(comArquivo.find((a) => a.ramal === '2101')).toMatchObject({ equipe: 5, lado: 'E', posicao: 1 });
-    expect(comArquivo.find((a) => a.ramal === '2102')).toMatchObject({ equipe: 5, lado: 'D', posicao: 4 });
-    expect(comArquivo.find((a) => a.ramal === '2103')?.equipe).toBe(1);
+  it('equipe pelo grupo e pelo supervisor (config/equipes.json), com o nome da equipe', async () => {
+    const EQUIPES = [
+      { numero: 1, nome: 'Gabriel' },
+      { numero: 2, nome: 'Maysa' },
+      { numero: 6, nome: 'Digital' },
+    ];
+    const status = {
+      ...STATUS,
+      // Logado no grupo DIGITAL: vale o grupo, mesmo com supervisora Maysa.
+      '2102': ok({ nome: 'BRUNO', grupo: 'DIGITAL', descricaoStatus: 'Livre', tempoStatus: 1000 }),
+      // Logado na URA (rodízio): o grupo não diz a equipe, vale o supervisor (Gabriel).
+      '2103': ok({ nome: 'CARLA', grupo: 'URA', descricaoStatus: 'Livre', tempoStatus: 1000 }),
+    };
+    const agentes = await fakeArgus(status, { equipes: EQUIPES }).cliente.listarAgentes();
+    const eq = Object.fromEntries(agentes.map((a) => [a.ramal, [a.equipe, a.equipeNome]]));
+    expect(eq).toEqual({
+      '2101': [2, 'Maysa'],
+      '2102': [6, 'Digital'],
+      '2103': [1, 'Gabriel'],
+      '2104': [0, undefined],
+    });
+    // Baias distribuídas por equipe, em ordem de ramal.
+    expect(agentes.find((a) => a.ramal === '2101')).toMatchObject({ lado: 'E', posicao: 1 });
   });
 
   it('uma coleta por ciclo atende os métodos e o diretório fica em cache', async () => {
@@ -203,16 +217,36 @@ describe('nomes', () => {
 });
 
 describe('equipes e baias', () => {
-  it('numera supervisores sem repetir os números fixos', () => {
-    const m = numerarEquipes(['ZECA', 'ANA', 'BIA', 'ANA'], { bia: 1 });
-    expect(Object.fromEntries(m)).toEqual({ ANA: 2, BIA: 1, ZECA: 3 });
+  it('palavra inteira no grupo, depois no supervisor; quem sobra ganha número novo', () => {
+    const eq = identificarEquipes(
+      [
+        { ramal: '1', grupo: 'GABRIEL - COMERCIAL', supervisor: 'X' },
+        { ramal: '2', grupo: '', supervisor: 'GABRIELA ROCHA' }, // Gabriela não é Gabriel
+        { ramal: '3', grupo: 'Digital', supervisor: 'Maysa Lima' },
+        { ramal: '4', grupo: 'URA', supervisor: 'Maysa Lima' },
+        { ramal: '5', grupo: '', supervisor: '' },
+      ],
+      [
+        { numero: 1, nome: 'Gabriel' },
+        { numero: 2, nome: 'Maysa' },
+        { numero: 6, nome: 'Digital' },
+      ],
+    );
+    expect(Object.fromEntries(eq)).toEqual({
+      '1': { numero: 1, nome: 'Gabriel' },
+      '2': { numero: 3, nome: 'Gabriela' },
+      '3': { numero: 6, nome: 'Digital' },
+      '4': { numero: 2, nome: 'Maysa' },
+      '5': { numero: 0, nome: '' },
+    });
   });
 
   it('distribui até 8 baias por equipe; o resto fica sem baia', () => {
     const agentes = Array.from({ length: 10 }, (_, i) => ({ ramal: String(100 + i), equipe: 1 }));
-    const b = distribuirBaias(agentes, { '109': { lado: 'E', posicao: 1 } });
-    expect(b.get('109')).toEqual({ lado: 'E', posicao: 1 });
-    expect(b.get('100')).toEqual({ lado: 'E', posicao: 2 });
+    const b = distribuirBaias(agentes);
+    expect(b.get('100')).toEqual({ lado: 'E', posicao: 1 });
+    expect(b.get('104')).toEqual({ lado: 'D', posicao: 1 });
+    expect(b.has('108')).toBe(false);
     expect(b.size).toBe(8);
   });
 });

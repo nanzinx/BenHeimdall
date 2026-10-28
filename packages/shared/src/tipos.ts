@@ -26,8 +26,8 @@ export const ROTULO_PERFIL: Record<Perfil, string> = {
   tv: 'Tela TV',
 };
 
-/** Equipes do modo simulado (na Argus real, as equipes vêm dos supervisores). */
-export const EQUIPES = [1, 2, 3, 4, 5] as const;
+/** Equipes padrão (sem painel carregado). As reais vêm de config/equipes.json. */
+export const EQUIPES = [1, 2, 3, 4, 5, 6] as const;
 export const EQUIPE_MAX = 99;
 
 export interface PausaAgente {
@@ -54,8 +54,10 @@ export interface Agente {
   id: string;
   nome: string;
   ramal: string;
-  /** Equipe (uma por supervisor). 0 = agente sem supervisor na Argus. */
+  /** Equipe (config/equipes.json). 0 = agente sem equipe identificada. */
   equipe: number;
+  /** Nome da equipe na tela (ex.: "Gabriel", "Digital"). */
+  equipeNome?: string;
   /** Baia no salão. Ausentes quando a equipe tem mais de 8 agentes e a baia não foi definida. */
   lado?: 'E' | 'D';
   posicao?: 1 | 2 | 3 | 4;

@@ -93,6 +93,8 @@ export interface ContextoNormalizacao {
   limites: LimitesPausa;
   /** Total de pausa do dia do agente até `agora`, calculado a partir de `status_eventos`. */
   pausaDiaSeg: (agenteId: string) => number;
+  /** Número da equipe → nome (config/equipes.json), quando a leitura não traz o nome. */
+  nomesEquipes?: Record<number, string>;
   /** Quando a Argus não informa, os atendimentos do dia vêm do histórico (status_eventos). */
   atendimentosDia?: (agenteId: string) => number;
   aoDesconhecerStatus?: (codigo: string) => void;
@@ -132,6 +134,9 @@ export function normalizar(leitura: LeituraArgus, ctx: ContextoNormalizacao): Pa
       nome: a.nome,
       ramal: a.ramal,
       equipe: a.equipe,
+      ...((a.equipeNome ?? ctx.nomesEquipes?.[a.equipe])
+        ? { equipeNome: a.equipeNome ?? ctx.nomesEquipes?.[a.equipe] }
+        : {}),
       ...(a.lado && a.posicao ? { lado: a.lado, posicao: a.posicao } : {}),
       supervisor: a.supervisor,
       status: st.status,

@@ -49,7 +49,7 @@ describe('API', () => {
 
     const { cookie: cSup } = await entrar('sup.um', sup.senha);
     const pSup = (await request(app).get('/api/painel').set('Cookie', cSup)).body as Painel;
-    expect(pSup.agentes).toHaveLength(40);
+    expect(pSup.agentes).toHaveLength(48);
     expect(
       pSup.agentes.filter((a) => a.equipe !== 1 && a.atendimento).every((a) => !a.atendimento!.codigoCliente),
     ).toBe(true);
@@ -137,12 +137,12 @@ describe('API', () => {
     const { cookie } = await entrar('tv.salao', tv.senha);
     const s = abrir(cookie);
     const primeiro = await new Promise<Painel>((ok) => s.once('painel:atualizado', ok));
-    expect(primeiro.agentes).toHaveLength(40);
+    expect(primeiro.agentes).toHaveLength(48);
     expect(primeiro.agentes.every((a) => !a.atendimento)).toBe(true);
 
     // A cada ciclo de leitura, chega uma atualização nova.
     const proximo = new Promise<Painel>((ok) => s.once('painel:atualizado', ok));
     await amb.ciclo.executar();
-    expect((await proximo).agentes).toHaveLength(40);
+    expect((await proximo).agentes).toHaveLength(48);
   });
 });

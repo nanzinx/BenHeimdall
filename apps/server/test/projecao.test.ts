@@ -28,7 +28,7 @@ describe('projeção por perfil', () => {
     const p = await painelCompleto();
     const proj = projetarPainel(p, { perfil: 'supervisor', equipe: 2 });
     painelSchema.parse(proj);
-    expect(proj.agentes).toHaveLength(40);
+    expect(proj.agentes).toHaveLength(48);
 
     const outras = proj.agentes.filter((a) => a.equipe !== 2 && a.atendimento);
     const propria = proj.agentes.filter((a) => a.equipe === 2 && a.atendimento);

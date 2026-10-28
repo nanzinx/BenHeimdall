@@ -26,7 +26,7 @@ describe('normalizador', () => {
   it('respostas do mock viram um Painel válido', async () => {
     const { painel } = await painelDoMock();
     expect(() => painelSchema.parse(painel)).not.toThrow();
-    expect(painel.agentes).toHaveLength(40);
+    expect(painel.agentes).toHaveLength(48);
     const status = new Set(painel.agentes.map((a) => a.status));
     for (const s of ['ATENDENDO', 'PAUSA', 'LIVRE', 'OFFLINE']) expect(status).toContain(s);
   });

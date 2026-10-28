@@ -3,11 +3,11 @@ import { z } from 'zod';
 import { ArgusIndisponivelError, MockArgusClient, agenteBrutoSchema, chamadaBrutaSchema } from '../src';
 
 describe('MockArgusClient', () => {
-  it('simula 40 agentes, 5 equipes × 8 baias, com respostas no formato bruto', async () => {
+  it('simula 48 agentes, 6 equipes × 8 baias, com respostas no formato bruto', async () => {
     const mock = new MockArgusClient({ semente: 7 });
     const agentes = z.array(agenteBrutoSchema).parse(await mock.listarAgentes());
-    expect(agentes).toHaveLength(40);
-    for (const eq of [1, 2, 3, 4, 5]) {
+    expect(agentes).toHaveLength(48);
+    for (const eq of [1, 2, 3, 4, 5, 6]) {
       const time = agentes.filter((a) => a.equipe === eq);
       expect(time).toHaveLength(8);
       for (const lado of ['E', 'D'] as const)
@@ -35,7 +35,7 @@ describe('MockArgusClient', () => {
     const mock = new MockArgusClient({ semente: 1, agora: () => agora, falha: true });
     await expect(mock.listarAgentes()).rejects.toBeInstanceOf(ArgusIndisponivelError);
     mock.restaurar();
-    await expect(mock.listarAgentes()).resolves.toHaveLength(40);
+    await expect(mock.listarAgentes()).resolves.toHaveLength(48);
     mock.simularFalha(10);
     await expect(mock.obterFila()).rejects.toBeInstanceOf(ArgusIndisponivelError);
     agora += 10_000;

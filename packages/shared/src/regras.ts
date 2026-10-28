@@ -79,25 +79,28 @@ export function contarPorStatus(agentes: Agente[]): Record<Agente['status'], num
   return c;
 }
 
-/** Equipes presentes no painel, em ordem, com o supervisor de cada uma (o mais frequente). */
-export function equipesDoPainel(agentes: Agente[]): { equipe: number; supervisor: string }[] {
-  const porEquipe = new Map<number, Map<string, number>>();
+/** Equipes presentes no painel, em ordem, com o nome e o supervisor de cada uma (o mais frequente). */
+export function equipesDoPainel(agentes: Agente[]): { equipe: number; nome: string; supervisor: string }[] {
+  const mais = (m: Map<string, number>) => [...m.entries()].sort((x, y) => y[1] - x[1])[0]?.[0] ?? '';
+  const porEquipe = new Map<number, { nomes: Map<string, number>; sups: Map<string, number> }>();
   for (const a of agentes) {
-    const sup = porEquipe.get(a.equipe) ?? new Map<string, number>();
-    if (a.supervisor) sup.set(a.supervisor, (sup.get(a.supervisor) ?? 0) + 1);
-    porEquipe.set(a.equipe, sup);
+    const e = porEquipe.get(a.equipe) ?? { nomes: new Map(), sups: new Map() };
+    if (a.equipeNome) e.nomes.set(a.equipeNome, (e.nomes.get(a.equipeNome) ?? 0) + 1);
+    if (a.supervisor) e.sups.set(a.supervisor, (e.sups.get(a.supervisor) ?? 0) + 1);
+    porEquipe.set(a.equipe, e);
   }
   return [...porEquipe.entries()]
     .sort(([x], [y]) => (x === 0 ? 1 : y === 0 ? -1 : x - y))
-    .map(([equipe, sup]) => ({
-      equipe,
-      supervisor: [...sup.entries()].sort((x, y) => y[1] - x[1])[0]?.[0] ?? '',
-    }));
+    .map(([equipe, e]) => {
+      const supervisor = mais(e.sups);
+      return { equipe, nome: mais(e.nomes) || primeiroNomeSupervisor(supervisor), supervisor };
+    });
 }
 
-/** "Equipe 3" ou "Sem equipe" (agente sem supervisor na Argus). */
-export function rotuloEquipe(equipe: number): string {
-  return equipe ? `Equipe ${equipe}` : 'Sem equipe';
+/** "Equipe 3 · Ariel", "Equipe 3" ou "Sem equipe". */
+export function rotuloEquipe(equipe: number, nome?: string): string {
+  if (!equipe) return 'Sem equipe';
+  return nome ? `Equipe ${equipe} · ${nome}` : `Equipe ${equipe}`;
 }
 
 /** Primeiro nome do supervisor, para rótulos curtos ("GABRIEL SANTOS" → "Gabriel"). */

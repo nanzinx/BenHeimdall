@@ -1,4 +1,4 @@
-// Argus simulada: 40 agentes (5 equipes × 8 baias) com transições realistas.
+// Argus simulada: 48 agentes (6 equipes × 8 baias, a 6 é a Digital) com transições realistas.
 //
 // A simulação avança em passos de 3 s, calculados a partir do relógio no momento de cada leitura,
 // então não há timer próprio: quem dita o ritmo é o laço de leitura do servidor.

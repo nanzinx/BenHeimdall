@@ -41,14 +41,25 @@ export const NOMES_AGENTES = [
   'Otávio Bastos',
   'Priscila Viana',
   'Renato Paiva',
+  // Equipe 6 (Digital)
+  'Beatriz Lacerda',
+  'Caio Fernandes',
+  'Débora Saraiva',
+  'Enzo Martins',
+  'Flávia Rezende',
+  'Gustavo Pimenta',
+  'Helena Torres',
+  'Igor Valente',
 ];
 
+// Os primeiros nomes casam com config/equipes.json (1 Gabriel … 5 Robson); a 6 é a Digital.
 export const SUPERVISORES = [
-  'Rita Gonçalves',
-  'Marcos Lima',
-  'Sônia Arruda',
-  'Cláudio Neri',
-  'Vera Lúcia Pinto',
+  'Gabriel Souza',
+  'Maysa Lima',
+  'Ariel Costa',
+  'Cahuan Ribeiro',
+  'Robson Melo',
+  'Patrícia Digital',
 ];
 
 export const CLIENTES = [

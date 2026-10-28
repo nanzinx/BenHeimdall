@@ -459,10 +459,10 @@
     @apply overflow-x-auto pb-2;
   }
   .floor {
-    @apply flex min-w-max gap-4;
+    @apply flex min-w-max gap-3.5;
   }
   .team {
-    @apply flex w-[244px] animate-entrada flex-col gap-2.5 rounded-cartao border border-linha bg-superficie p-3.5 shadow-cartao;
+    @apply flex w-[218px] animate-entrada flex-col gap-2.5 rounded-cartao border border-linha bg-superficie p-3 shadow-cartao;
   }
   .team:nth-child(2) {
     @apply [animation-delay:50ms];

@@ -1,0 +1,11 @@
+{
+  "_comentario": "Equipes do salão. 'nome' é procurado como palavra inteira (sem diferenciar maiúsculas e acentos) primeiro no grupo em que o operador está na Argus (ex.: 'GABRIEL - COMERCIAL', 'DIGITAL') e depois no nome do supervisor. 'buscar' acrescenta outras palavras opcionais. Use os mesmos números nas contas de supervisor do BenHeimdall.",
+  "equipes": [
+    { "numero": 1, "nome": "Gabriel" },
+    { "numero": 2, "nome": "Maysa" },
+    { "numero": 3, "nome": "Ariel" },
+    { "numero": 4, "nome": "Cahuan" },
+    { "numero": 5, "nome": "Robson" },
+    { "numero": 6, "nome": "Digital" }
+  ]
+}

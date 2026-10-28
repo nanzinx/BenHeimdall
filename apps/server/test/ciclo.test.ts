@@ -26,8 +26,8 @@ describe('ciclo de leitura', () => {
     expect(await ciclo.executar()).toBe(true);
     const p1 = ciclo.painelAtual();
     painelSchema.parse(p1);
-    expect(p1.agentes).toHaveLength(40);
-    expect((db.prepare('SELECT COUNT(*) AS n FROM status_eventos').get() as { n: number }).n).toBe(40);
+    expect(p1.agentes).toHaveLength(48);
+    expect((db.prepare('SELECT COUNT(*) AS n FROM status_eventos').get() as { n: number }).n).toBe(48);
 
     mock.simularFalha();
     agora += 3000;

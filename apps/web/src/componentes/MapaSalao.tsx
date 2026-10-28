@@ -3,7 +3,6 @@ import clsx from 'clsx';
 // esquerda. A baia 1 de cada lado fica junto da mesa do supervisor (embaixo).
 import {
   equipesDoPainel,
-  primeiroNomeSupervisor,
   rotuloEquipe,
   ROTULO_STATUS,
   formatarDuracao,
@@ -58,7 +57,7 @@ export function MapaSalao({ todos, visiveis }: { todos: Agente[]; visiveis: Agen
       </p>
       <div className="salao-scroll">
         <div className="floor">
-          {equipes.map(({ equipe: eq, supervisor }) => {
+          {equipes.map(({ equipe: eq, nome, supervisor }) => {
             const membros = todos.filter((a) => a.equipe === eq);
             const semBaia = membros.filter((a) => !a.lado || !a.posicao);
             const livres = membros.filter((a) => a.status === 'LIVRE').length;
@@ -72,9 +71,7 @@ export function MapaSalao({ todos, visiveis }: { todos: Agente[]; visiveis: Agen
                 <h3 title={supervisor ? `Supervisor: ${supervisor}` : undefined}>
                   <span>
                     {rotuloEquipe(eq)}
-                    {supervisor && eq ? (
-                      <em className="sup-nome"> · {primeiroNomeSupervisor(supervisor)}</em>
-                    ) : null}
+                    {nome && eq ? <em className="sup-nome"> · {nome}</em> : null}
                   </span>
                   <small>
                     {livres} livre{livres === 1 ? '' : 's'}

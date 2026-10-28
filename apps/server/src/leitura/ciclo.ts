@@ -22,6 +22,8 @@ export interface CicloOpcoes {
   limites: LimitesPausa;
   pollMs: number;
   log: Log;
+  /** Número da equipe → nome (config/equipes.json). */
+  nomesEquipes?: Record<number, string>;
   agora?: () => Date;
 }
 
@@ -114,6 +116,7 @@ export class CicloLeitura extends EventEmitter<EventosCiclo> {
         mapaStatus: argus.mapaStatus,
         limites,
         pausaDiaSeg: (id) => pausas.get(id) ?? 0,
+        nomesEquipes: this.o.nomesEquipes,
         ...(atendimentos ? { atendimentosDia: (id: string) => atendimentos.get(id) ?? 0 } : {}),
       });
       if (this.falhasSeguidas > 0)

@@ -27,7 +27,14 @@ const servico = new ServicoAcesso(new Repositorio(db), {
   log,
 });
 const argus = criarArgusClient(config.argus);
-const ciclo = new CicloLeitura({ argus, registro, limites: config.limites, pollMs: config.pollMs, log });
+const ciclo = new CicloLeitura({
+  argus,
+  registro,
+  limites: config.limites,
+  pollMs: config.pollMs,
+  log,
+  nomesEquipes: config.nomesEquipes,
+});
 
 const senhaGerada = await servico.garantirAdminInicial(config.adminUser, config.adminSenhaInicial);
 if (senhaGerada)

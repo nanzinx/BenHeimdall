@@ -41,20 +41,18 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().int().positive().default(3020),
   ARGUS_MODE: z.enum(['mock', 'real']).default('mock'),
-  // Mesmos nomes e padrões do BenURA (ARGUS_BASE também é aceito).
+  // Argus real (ARGUS_BASE também é aceito como nome do endereço).
   ARGUS_BASE_URL: z.string().default(''),
   ARGUS_BASE: z.string().default(''),
   ARGUS_TOKEN: z.string().default(''),
   ARGUS_TIMEOUT_MS: z.coerce.number().int().min(500).default(5000),
   ARGUS_CONCORRENCIA: z.coerce.number().int().min(1).max(50).default(10),
   ARGUS_CAMPANHAS_IDS: z.string().default(''),
-  ARGUS_PAUSA_FILE: z.string().default(''),
   STATUS_LIVRE: z.string().default(''),
   STATUS_ATENDIMENTO: z.string().default(''),
   STATUS_POS_ATENDIMENTO: z.string().default(''),
   STATUS_OFFLINE: z.string().default(''),
   EQUIPES_FILE: z.string().default('config/equipes.json'),
-  BAIAS_FILE: z.string().default('config/baias.json'),
   ARGUS_MOCK_FALHA: booleano,
   POLL_MS: z.coerce.number().int().min(500).default(3000),
   DB_PATH: z.string().default('data/benheimdall.db'),
@@ -78,9 +76,12 @@ export function carregarConfig(env: NodeJS.ProcessEnv = process.env) {
   const e = envSchema.parse(env);
   const producao = e.NODE_ENV === 'production';
   if (e.ARGUS_MODE === 'real' && !e.ARGUS_TOKEN)
-    throw new Error('ARGUS_MODE=real precisa do ARGUS_TOKEN (o mesmo do BenURA, no .env).');
+    throw new Error(
+      'ARGUS_MODE=real precisa do ARGUS_TOKEN no .env (Argus: Configurações → Desenvolvedor → Acesso API).',
+    );
   if (producao && e.SESSION_SECRET.length < 32)
     throw new Error('SESSION_SECRET precisa ter pelo menos 32 caracteres em produção.');
+  const equipes = lerJsonOpcional(path.resolve(RAIZ, e.EQUIPES_FILE), equipesSchema) ?? [];
   return {
     producao,
     nodeEnv: e.NODE_ENV,
@@ -93,15 +94,13 @@ export function carregarConfig(env: NodeJS.ProcessEnv = process.env) {
       timeoutMs: e.ARGUS_TIMEOUT_MS,
       concorrencia: e.ARGUS_CONCORRENCIA,
       campanhasIds: lista(e.ARGUS_CAMPANHAS_IDS).map(Number).filter(Number.isInteger),
-      arquivoPausa: e.ARGUS_PAUSA_FILE ? path.resolve(RAIZ, e.ARGUS_PAUSA_FILE) : undefined,
       textosStatus: {
         livre: listaOu(e.STATUS_LIVRE, TEXTOS_STATUS_PADRAO.livre),
         atendimento: listaOu(e.STATUS_ATENDIMENTO, TEXTOS_STATUS_PADRAO.atendimento),
         posAtendimento: listaOu(e.STATUS_POS_ATENDIMENTO, TEXTOS_STATUS_PADRAO.posAtendimento),
         offline: listaOu(e.STATUS_OFFLINE, TEXTOS_STATUS_PADRAO.offline),
       },
-      equipes: lerJsonOpcional(path.resolve(RAIZ, e.EQUIPES_FILE), equipesSchema),
-      baias: lerJsonOpcional(path.resolve(RAIZ, e.BAIAS_FILE), baiasSchema),
+      equipes,
     },
     pollMs: e.POLL_MS,
     dbPath: path.resolve(RAIZ, e.DB_PATH),
@@ -117,6 +116,8 @@ export function carregarConfig(env: NodeJS.ProcessEnv = process.env) {
     logLevel: e.LOG_LEVEL,
     limites: carregarLimites(path.resolve(RAIZ, e.PAUSAS_PATH)),
     trustProxy: lerTrustProxy(e.TRUST_PROXY),
+    /** Número da equipe → nome, para a tela (também no modo simulado). */
+    nomesEquipes: Object.fromEntries(equipes.map((q) => [q.numero, q.nome])) as Record<number, string>,
   };
 }
 
@@ -135,27 +136,20 @@ const lista = (s: string) =>
 const listaOu = (s: string, padrao: string[]) => (lista(s).length ? lista(s) : padrao);
 
 // Chaves começadas por "_" são comentários nos arquivos de exemplo.
-const semComentarios = <T>(r: Record<string, T>) =>
-  Object.fromEntries(Object.entries(r).filter(([k]) => !k.startsWith('_')));
-/** NOME DO SUPERVISOR (como na Argus) → número da equipe. */
-const equipesSchema = z.record(z.string(), z.unknown()).transform((r, ctx) => {
-  const saida: Record<string, number> = {};
-  for (const [nome, n] of Object.entries(semComentarios(r))) {
-    if (!Number.isInteger(n) || (n as number) < 1 || (n as number) > 99)
-      ctx.addIssue({ code: 'custom', message: `equipe inválida para "${nome}" (use 1 a 99)` });
-    else saida[nome] = n as number;
-  }
-  return saida;
-});
-const baiaSchema = z.object({
-  lado: z.enum(['E', 'D']),
-  posicao: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
-});
-/** Ramal → baia. */
-const baiasSchema = z
-  .record(z.string(), z.unknown())
-  .transform((r) => semComentarios(r))
-  .pipe(z.record(z.string(), baiaSchema));
+/** config/equipes.json: número, nome (procurado no grupo e no supervisor) e palavras extras. */
+const equipesSchema = z
+  .object({
+    equipes: z
+      .array(
+        z.object({
+          numero: z.number().int().min(1).max(99),
+          nome: z.string().trim().min(1),
+          buscar: z.array(z.string().trim().min(1)).optional(),
+        }),
+      )
+      .refine((l) => new Set(l.map((e) => e.numero)).size === l.length, 'números de equipe repetidos'),
+  })
+  .transform((c) => c.equipes);
 
 /** Arquivo de configuração opcional: ausente = undefined; presente e inválido = erro na partida. */
 function lerJsonOpcional<T>(arquivo: string, schema: z.ZodType<T, z.ZodTypeDef, unknown>): T | undefined {
