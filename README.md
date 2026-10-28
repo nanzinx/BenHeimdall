@@ -1,54 +1,86 @@
+<div align="center">
+
+<img src="docs/img/logo.svg" width="96" alt="Logotipo do BenHeimdall: um olho estilizado em azul e amarelo" />
+
 # BenHeimdall
 
-Painel web de monitoramento em tempo real do call center da Benconsig (crédito consignado).
-Mostra numa única tela, que se atualiza sozinha, quem está **atendendo**, **tabulando**, **em pausa**
-(com alerta a 80% e a 100% do limite), **livre para transferência** e **offline**, além do mapa do
-salão e do detalhe de cada agente.
+**O guardião do salão.** Painel em tempo real do call center da Benconsig: quem está atendendo,
+tabulando, em pausa e livre para transferência, numa única tela que se atualiza sozinha.
 
-O painel **só lê dados**: não transfere, não pausa e não desloga ninguém.
+<p>
+  <img alt="Node.js 20+" src="https://img.shields.io/badge/Node.js-20%2B-339933?logo=nodedotjs&logoColor=white" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" />
+  <img alt="React 18" src="https://img.shields.io/badge/React-18-149ECA?logo=react&logoColor=white" />
+  <img alt="Tailwind CSS" src="https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white" />
+  <img alt="Socket.IO" src="https://img.shields.io/badge/Socket.IO-tempo_real-010101?logo=socketdotio&logoColor=white" />
+  <img alt="SQLite" src="https://img.shields.io/badge/SQLite-histórico-003B57?logo=sqlite&logoColor=white" />
+  <img alt="Testes" src="https://img.shields.io/badge/testes-57_passando-0F9D58?logo=vitest&logoColor=white" />
+  <img alt="Argus" src="https://img.shields.io/badge/Argus-real_e_simulada-F5C400" />
+</p>
 
-> Roda com a **Argus real** (`ARGUS_MODE=real`, mesmo token do BenURA) ou com uma **Argus simulada**
-> (`ARGUS_MODE=mock`, para testar telas). A ligação com a Argus fica isolada em
-> `packages/argus-client`.
+<img src="docs/img/painel-ao-vivo.gif" width="900" alt="Painel ao vivo: os cronômetros correm, as pausas acima do limite pulsam em vermelho e, ao simular a queda da Argus, aparece o aviso e a conexão volta sozinha" />
 
----
+<sub>Simulação com dados fictícios: cronômetros ao vivo, pausa estourada pulsando e uma queda da Argus que volta sozinha.</sub>
 
-## Sumário
+<p>
+  <a href="#-começo-rápido">Começo rápido</a> ·
+  <a href="#-telas">Telas</a> ·
+  <a href="#-ligar-na-argus-real">Argus real</a> ·
+  <a href="#-equipes">Equipes</a> ·
+  <a href="#-acesso-e-segurança">Acesso</a> ·
+  <a href="#-produção">Produção</a> ·
+  <a href="#-arquitetura">Arquitetura</a>
+</p>
 
-- [Requisitos](#requisitos)
-- [Instalação e desenvolvimento](#instalação-e-desenvolvimento)
-- [Validação no seu PC](#validação-no-seu-pc)
-- [Comandos](#comandos)
-- [Variáveis de ambiente](#variáveis-de-ambiente)
-- [Perfis e acesso](#perfis-e-acesso)
-- [Servidor Windows (igual ao BenURA)](#servidor-windows-igual-ao-benura)
-- [Restrição por IP](#restrição-por-ip)
-- [Publicação no Cloudflare (Tunnel)](#publicação-no-cloudflare-tunnel)
-- [Produção com PM2](#produção-com-pm2)
-- [Produção com Docker (imagem endurecida)](#produção-com-docker-imagem-endurecida)
-- [Proxy reverso e HTTPS](#proxy-reverso-e-https)
-- [Ligar na Argus real (sair da simulação)](#ligar-na-argus-real-sair-da-simulação)
-- [O que ainda falta](#o-que-ainda-falta)
-- [Arquitetura](#arquitetura)
-- [Decisões tomadas](#decisões-tomadas)
+</div>
 
 ---
 
-## Requisitos
+## ✨ O que o painel mostra
 
-- Node.js **20 ou mais novo** (recomendado: 22 LTS). O **npm** já vem com o Node, como no BenURA.
-- Windows, macOS ou Linux. O `better-sqlite3` e o `bcrypt` baixam binários prontos na instalação;
-  só se não houver binário para a sua versão do Node é preciso compilar (Linux/macOS: `python3`,
-  `make` e `g++`; Windows: "Visual Studio Build Tools" com C++).
+|                                  |                                                                                                                                    |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 📞 **Atendimentos em curso**     | Agente, código do cliente, primeiro nome, telefone parcial, campanha e duração. Quem está tabulando aparece como **Tabulando**.    |
+| ⏸️ **Em pausa**                  | Motivo, tempo na pausa, limite do motivo e total do dia. O cartão fica **laranja a 80%** do limite e **vermelho pulsante a 100%**. |
+| ✅ **Livres para transferência** | Há quanto tempo estão livres, em ordem de **mais ocioso** ou de **melhor conversão**.                                              |
+| 📊 **Indicadores**               | Atendendo, pós-atendimento, em pausa (e quantos acima do limite), livres e offline.                                                |
+| 🗺️ **Mapa do salão**             | As 6 equipes com 8 baias cada; a baia 1 de cada lado fica junto da mesa do supervisor.                                             |
+| 🕒 **Detalhe do agente**         | Linha do tempo do dia, atendimentos, vendas e pausa total.                                                                         |
+| 📺 **Modo TV**                   | Tela cheia, letras grandes, sem dados de cliente e sem motivo de pausa.                                                            |
 
-### Portas (convivência com o BenURA no mesmo servidor)
+> [!NOTE]
+> O painel **só lê dados**: não transfere, não pausa e não desloga ninguém. A transferência continua no softphone.
 
-| Sistema     | Portas                                                               |
-| ----------- | -------------------------------------------------------------------- |
-| BenURA      | 3000 (rodízio), 3001 (roteador), 3002, 3003 (rotinas), 3010 (painel) |
-| BenHeimdall | **3020** (backend) e **5180** (Vite, só em `npm run dev`)            |
+## 🖼️ Telas
 
-## Instalação e desenvolvimento
+<table>
+  <tr>
+    <td width="50%"><img src="docs/img/painel.png" alt="Painel no tema escuro, com indicadores e as três colunas" /><br /><sub><b>Painel</b> · tema escuro</sub></td>
+    <td width="50%"><img src="docs/img/salao.png" alt="Mapa do salão com as seis equipes e suas baias coloridas pelo status" /><br /><sub><b>Mapa do salão</b> · 6 equipes × 8 baias</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/img/detalhe.png" alt="Detalhe do agente com a linha do tempo do dia" /><br /><sub><b>Detalhe do agente</b> · linha do tempo do dia</sub></td>
+    <td width="50%"><img src="docs/img/login.png" alt="Tela de login com o logotipo do BenHeimdall" /><br /><sub><b>Login</b> · por e-mail</sub></td>
+  </tr>
+</table>
+
+<details>
+<summary><b>Mais telas: tema claro, usuários e modo TV</b></summary>
+<br />
+
+| Tema claro                                                         | Usuários e acessos                                                                             |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| <img src="docs/img/painel-claro.png" alt="Painel no tema claro" /> | <img src="docs/img/usuarios.png" alt="Administração de contas, nova conta e log de acessos" /> |
+
+**Modo TV (1080p)**
+
+<img src="docs/img/tv.png" alt="Modo TV em 1920 por 1080, com letras grandes e sem dados de cliente" />
+
+</details>
+
+## 🚀 Começo rápido
+
+Você precisa do **Node.js 20 ou mais novo** (recomendado: 22 LTS). O npm já vem junto.
 
 ```bash
 cp .env.example .env
@@ -62,32 +94,24 @@ npm install
 npm run dev
 ```
 
-- Front: <http://localhost:5180> (o Vite repassa `/api` e `/socket.io` para o backend)
-- Backend: <http://localhost:3020> (saúde em `/health`, como nos serviços do BenURA)
+Abra **<http://localhost:5180>** e entre com **`renan.leite@benconsig.com`** / **`troque-no-primeiro-acesso`**.
+O sistema pede para criar uma senha nova. Por padrão, roda com a **Argus simulada**.
 
-**Todo login é um e-mail** (admin, supervisor e TV), sem diferença entre maiúsculas e minúsculas.
-No primeiro acesso, entre com `ADMIN_USER` / `ADMIN_SENHA_INICIAL` do `.env` (padrão:
-`renan.leite@benconsig.com` / `troque-no-primeiro-acesso`). O sistema exige a troca da senha logo em seguida. Depois,
-crie supervisores e a conta da TV em **Usuários e acessos**.
+> [!TIP]
+> Para ver o aviso de queda, clique em **Simular queda da Argus (15 s)** no topo do painel: o
+> aviso aparece e a conexão volta sozinha.
 
-**Simular a queda da Argus:** no modo mock, use o botão **Simular queda da Argus (15 s)** no topo
-do painel (ou `POST /api/dev/argus/queda` com `{ "segundos": 15 }`). Para começar já com a Argus
-fora do ar, use `ARGUS_MOCK_FALHA=true`. O aviso aparece e o painel volta sozinho.
+<details>
+<summary><b>🪟 Passo a passo no Windows (PowerShell)</b></summary>
+<br />
 
-## Validação no seu PC
-
-Para validar na sua máquina (Windows, macOS ou Linux), com a Argus simulada. No Windows, use o
-PowerShell:
-
-1. Instale o Node.js LTS (se `node -v` não responder):
+1. Instale o Node.js LTS, se `node -v` não responder, e feche e abra o PowerShell depois:
 
    ```powershell
    winget install OpenJS.NodeJS.LTS
    ```
 
-   Feche e abra o PowerShell depois de instalar.
-
-2. Entre na pasta do BenHeimdall e copie o modelo de configuração:
+2. Entre na pasta e copie o modelo de configuração:
 
    ```powershell
    cd C:\BenHeimdall
@@ -107,142 +131,178 @@ PowerShell:
    npm run dev
    ```
 
-4. Abra <http://localhost:5180>, entre com `renan.leite@benconsig.com` / `troque-no-primeiro-acesso`
-   e troque a senha.
+**Problemas comuns**
 
-   O primeiro admin só é criado com o banco vazio. Se você já tinha subido o sistema antes (com o
-   usuário `admin`), apague o banco de teste e suba de novo: `Remove-Item -Recurse -Force data`.
+- **"A execução de scripts foi desabilitada neste sistema":** libere os scripts só para o seu usuário.
 
-Se o PowerShell disser que "a execução de scripts foi desabilitada neste sistema", libere os
-scripts só para o seu usuário e rode o comando de novo:
+  ```powershell
+  Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+  ```
 
-```powershell
-Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
-```
+- **O login com o e-mail não funciona:** o primeiro admin só é criado com o banco vazio. Se o
+  sistema já tinha subido antes, apague o banco de teste e suba de novo.
 
-O acesso pela própria máquina (`localhost`) sempre entra, mesmo com `IPS_PERMITIDOS` preenchido.
+  ```powershell
+  Remove-Item -Recurse -Force data
+  ```
 
-**Mostrar para outra pessoa sem publicar nada:** com o
-[`cloudflared`](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/)
-instalado (`winget install Cloudflare.cloudflared`), rode em outro terminal, com o `npm run dev` no ar:
+- **O `.env` parece vazio:** confira se abriu o **`.env`** (com ponto), e não um arquivo novo chamado `env`.
+
+</details>
+
+<details>
+<summary><b>🔗 Mostrar para outra pessoa sem publicar nada</b></summary>
+<br />
+
+Com o [`cloudflared`](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/)
+instalado (`winget install Cloudflare.cloudflared`) e o `npm run dev` no ar, rode em outro terminal:
 
 ```powershell
 npm run dev:tunel
 ```
 
-Ele imprime um endereço `https://<algo>.trycloudflare.com` temporário, que aponta para o seu
-`npm run dev`. Quem abrir esse endereço só entra se o IP estiver em `IPS_PERMITIDOS`. O endereço
-muda a cada execução.
+Ele mostra um endereço `https://<algo>.trycloudflare.com` temporário. Só entra quem estiver nos
+IPs de `IPS_PERMITIDOS`, e o endereço muda a cada execução.
 
-## Comandos
+</details>
 
-Os mesmos nomes do BenURA, sempre com `npm run`:
+## 🔌 Ligar na Argus real
 
-| Comando                       | O que faz                                                                   |
-| ----------------------------- | --------------------------------------------------------------------------- |
-| `npm run dev`                 | Sobe backend e front com recarga automática (Argus simulada)                |
-| `npm test`                    | Roda todos os testes (Vitest)                                               |
-| `npm run lint`                | ESLint em tudo + checagem de tipos (`tsc`) em cada pacote                   |
-| `npm run format`              | Formata com o Prettier                                                      |
-| `npm run build`               | Compila o front (`apps/web/dist`) e o backend (`apps/server/dist/index.js`) |
-| `npm start`                   | Roda o backend compilado (em produção ele também serve o front)             |
-| `npm run pm2:iniciar`         | Sobe (ou reinicia) o `benheimdall` no PM2, em produção                      |
-| `npm run pm2:parar`           | Para o `benheimdall` no PM2 (o vigia respeita e não religa)                 |
-| `npm run pm2:logs`            | Últimas linhas do log no PM2                                                |
-| `npm run servico:instalar`    | Windows: compila, sobe no PM2 e cria a tarefa "BenHeimdall" (administrador) |
-| `npm run servico:verificar`   | Windows: mostra tarefa, PM2, `/health` e túnel. Não muda nada               |
-| `npm run servico:desinstalar` | Windows: remove a tarefa "BenHeimdall" (administrador)                      |
-| `npm run tunel:instalar`      | Windows: Cloudflare Tunnel. Reaproveita o túnel do BenURA, se houver        |
-| `npm run dev:tunel`           | Túnel rápido do Cloudflare para o `npm run dev` (precisa do `cloudflared`)  |
-| `npm run prod:tunel`          | Túnel rápido do Cloudflare para o backend compilado (porta 3020)            |
+No `.env`, troque o modo e coloque o token da Argus (**Configurações → Desenvolvedor → Acesso API**):
 
-## Variáveis de ambiente
-
-Todas ficam no `.env` da raiz (modelo em `.env.example`) e são validadas com Zod na partida.
-
-| Variável                  | Padrão                              | Descrição                                                                                     |
-| ------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------- |
-| `PORT`                    | `3020`                              | Porta do backend (o BenURA usa 3000–3010)                                                     |
-| `NODE_ENV`                | `development`                       | `production` liga o cookie `Secure`, exige `SESSION_SECRET` e serve o front compilado         |
-| `ARGUS_MODE`              | `mock`                              | `mock` (simulada) ou `real` (Argus de verdade)                                                |
-| `ARGUS_BASE_URL`          | `https://argus.app.br/apiargus/cmd` | Endereço da API (`ARGUS_BASE`, do BenURA, também vale)                                        |
-| `ARGUS_CONCORRENCIA`      | `10`                                | `/statusoperador` ao mesmo tempo                                                              |
-| `ARGUS_CAMPANHAS_IDS`     | —                                   | Só operadores destas campanhas (vazio = todos)                                                |
-| `ARGUS_PAUSA_FILE`        | —                                   | Arquivo da pausa por limite (429), o mesmo do BenURA para valer para os dois                  |
-| `STATUS_*`                | padrão do BenURA                    | Textos de status da Argus (`LIVRE`, `ATENDIMENTO`, `POS_ATENDIMENTO`, `OFFLINE`)              |
-| `EQUIPES_FILE`            | `config/equipes.json`               | Supervisor → número da equipe (opcional)                                                      |
-| `BAIAS_FILE`              | `config/baias.json`                 | Ramal → baia (opcional)                                                                       |
-| `ARGUS_TOKEN`             | —                                   | Token da Argus (o mesmo do BenURA). Obrigatório com `real`                                    |
-| `ARGUS_MOCK_FALHA`        | `false`                             | Só no mock: começa com a Argus fora do ar                                                     |
-| `POLL_MS`                 | `3000`                              | Intervalo do laço de leitura da Argus (ms)                                                    |
-| `DB_PATH`                 | `data/benheimdall.db`               | Arquivo SQLite (relativo à raiz)                                                              |
-| `SESSION_SECRET`          | aleatório em dev                    | Assina o cookie de sessão. **Obrigatório em produção (32+ caracteres)**                       |
-| `SESSAO_MIN`              | `15`                                | Minutos sem uso até a sessão expirar (admin e supervisor)                                     |
-| `IPS_PERMITIDOS`          | IPs da Benconsig                    | IPs/faixas (IPv4, IPv6, CIDR) que acessam o sistema. Vazio = sem restrição                    |
-| `TV_ALLOWED_IPS`          | —                                   | IPs/faixas de onde o perfil `tv` pode entrar, separados por vírgula                           |
-| `ADMIN_USER`              | `renan.leite@benconsig.com`         | E-mail do primeiro admin (criado só na primeira execução)                                     |
-| `ADMIN_SENHA_INICIAL`     | —                                   | Senha inicial do primeiro admin. Se vazia, uma é gerada e aparece no log                      |
-| `TRUST_PROXY`             | `loopback`                          | Proxies confiáveis para achar o IP real (veja [Cloudflare](#publicação-no-cloudflare-tunnel)) |
-| `DEV_ALLOWED_HOSTS`       | —                                   | Só em dev: domínios extras liberados no Vite (túnel nomeado)                                  |
-| `CLOUDFLARE_TUNNEL_TOKEN` | —                                   | Só no Docker Compose com o perfil `cloudflare`: token do túnel                                |
-| `BIND_ADDR`               | `127.0.0.1`                         | Só no Docker Compose: endereço onde a porta é publicada                                       |
-| `LOG_LEVEL`               | `info`                              | Nível de log do pino                                                                          |
-
-Os limites de pausa por motivo ficam em `config/pausas.json` (valores iniciais, **a confirmar com
-a gestão**): Lanche 15 min, Banheiro 5, Feedback 20, Treinamento 45, Particular 10. Motivo sem
-limite no arquivo usa `padraoMin`.
-
-## Perfis e acesso
-
-| Perfil       | Vê                                                                                                                  | Sessão                                                 |
-| ------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| `admin`      | Tudo, mais a tela **Usuários e acessos**                                                                            | Expira após 15 min sem uso                             |
-| `supervisor` | Status de todas as equipes; código, nome e telefone do cliente **só da própria equipe** (das outras, só a campanha) | Expira após 15 min sem uso                             |
-| `tv`         | Sem dados de cliente e sem motivo de pausa; entra direto no modo TV e não sai dele                                  | Não expira, mas só entra pelos IPs de `TV_ALLOWED_IPS` |
-
-A projeção por perfil é feita **no backend**, antes de enviar, tanto em `GET /api/painel` quanto no
-Socket.IO. CPF, benefício e conta **nunca** saem do backend; o telefone sai como `(11) 9****-1234`
-e o cliente só pelo primeiro nome.
-
-Regras de acesso:
-
-- **Login por e-mail** em todas as contas. O e-mail é guardado em minúsculas e o nome é sugerido a
-  partir dele (`juliana.mendes@…` → "Juliana Mendes"). A Tela TV também usa um e-mail, por exemplo
-  `tv.salao@benconsig.com`.
-- Senhas com **bcrypt**. Sessão em cookie **httpOnly**, **SameSite=Strict** e **Secure** em produção,
-  validada a cada requisição. O banco guarda só o hash SHA-256 do token.
-- **5 senhas erradas** bloqueiam o usuário por **5 min**.
-- Conta nova e senha redefinida recebem **senha temporária** com **troca obrigatória** no primeiro acesso.
-- Contas são **desativadas**, nunca apagadas. O admin não pode desativar a própria conta.
-  Desativar ou redefinir a senha encerra as sessões abertas daquela conta.
-- O log registra entrada, saída, expiração, tentativa recusada, bloqueio e toda alteração de conta.
-
-## Restrição por IP
-
-Só os endereços de `IPS_PERMITIDOS` acessam o sistema: páginas, API e tempo real (Socket.IO). Os
-demais recebem `403 Acesso não permitido a partir deste endereço.`, e o primeiro acesso de cada
-IP recusado vai para o log. A lista vem configurada com os IPs da operação:
-
+```ini
+ARGUS_MODE=real
+ARGUS_TOKEN=<token da Argus>
 ```
-2804:431:80f7:7700::/48, 2804:1b3:a5e7:c3c7::/48, 201.93.163.133,
-2804:1b3:a5e7:2c83::/48, 201.93.159.169, 2804:1b3:a5e7:8e38::/48
+
+Reinicie e confira em <http://localhost:3020/health>: `"modo":"real","online":true`. Se a Argus não
+responder, o painel mostra o aviso de queda e tenta de novo sozinho; o motivo aparece em
+`argus.ultimoErro` (por exemplo, token recusado).
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant L as Laço de leitura (a cada 3 s)
+    participant A as Argus
+    participant B as SQLite
+    participant N as Navegadores
+    L->>A: /listarusuarios e /listargrupos (em cache)
+    L->>A: /statusoperador de cada ramal (até 10 ao mesmo tempo)
+    A-->>L: status, pausa, tempo no status e último lead
+    L->>L: valida, classifica o status, identifica a equipe e mascara o cliente
+    L->>B: grava cada mudança de status
+    B-->>L: total de pausa e atendimentos do dia
+    L-->>N: painel:atualizado (já filtrado pelo perfil de cada um)
+```
+
+| O painel mostra                 | De onde vem (doc-api-argus.pdf)                                                              |
+| ------------------------------- | -------------------------------------------------------------------------------------------- |
+| Agentes (nome, ramal)           | `/listarusuarios` (operadores ativos), em cache de 5 min                                     |
+| Robôs fora do painel            | `/listargrupos`: ramais de grupos virtuais (DTMF/Flash) são ignorados                        |
+| Status, pausa e tempo no status | `/statusoperador` de cada ramal, a cada `POLL_MS` (3 s)                                      |
+| Cliente em atendimento          | `ultimoLead`: código, primeiro nome e telefone parcial. **O CPF que vem junto é descartado** |
+| Equipe                          | grupo do operador e, se ele não disser, o supervisor (veja [Equipes](#-equipes))             |
+| Atendimentos do dia             | contados pelo histórico do próprio BenHeimdall                                               |
+
+<details>
+<summary><b>Como cada status da Argus vira status do painel</b></summary>
+<br />
+
+| Na Argus (`descricaoStatus`)                           | No painel          |
+| ------------------------------------------------------ | ------------------ |
+| `Em Atendimento`, `Atendimento`, `Falando`, `Conversa` | 📞 Atendendo       |
+| `Tabulando`, `Tabulação`, `Pós atendimento`            | 📝 Pós-atendimento |
+| qualquer status com pausa (`descricaoPausa`)           | ⏸️ Em pausa        |
+| `Livre`, `Disponível`                                  | ✅ Livre           |
+| `Deslogado` ou não logado (a Argus responde HTTP 500)  | ⚫ Offline         |
+
+Os textos ficam no `.env` (`STATUS_LIVRE`, `STATUS_ATENDIMENTO`, `STATUS_POS_ATENDIMENTO`,
+`STATUS_OFFLINE`). Um texto desconhecido aparece **uma vez** no log ("Status desconhecido da
+Argus"): é só acrescentá-lo na lista certa.
+
+**Limites de pausa** (`config/pausas.json`): Almoço 60 min, Descanso 10, Banheiro 5 e Feedback 15.
+O nome casa pelo início, sem diferenciar maiúsculas e acentos: "ALMOÇO 1" usa o limite de Almoço.
+
+**Limite de requisições:** se a Argus responder 429, as leituras pausam alguns segundos e voltam
+sozinhas. Se um ramal falhar pontualmente, o painel mantém o último status dele por até 30 s.
+
+</details>
+
+## 👥 Equipes
+
+|  Nº   | Equipe  |     |  Nº   | Equipe      |
+| :---: | ------- | --- | :---: | ----------- |
+| **1** | Gabriel |     | **4** | Cahuan      |
+| **2** | Maysa   |     | **5** | Robson      |
+| **3** | Ariel   |     | **6** | **Digital** |
+
+As equipes ficam em [`config/equipes.json`](config/equipes.json). O nome é procurado como palavra
+inteira (sem diferenciar maiúsculas e acentos):
+
+```mermaid
+flowchart LR
+    O(["Operador"]) --> G{"O grupo cita<br/>uma equipe?"}
+    G -- "sim: 'DIGITAL',<br/>'GABRIEL - COMERCIAL'" --> E(["Essa equipe"])
+    G -- "não: 'URA'" --> S{"O supervisor cita<br/>uma equipe?"}
+    S -- "sim" --> E
+    S -- "não" --> N(["Equipe nova<br/>com o nome do supervisor"])
+```
+
+- **"Gabriel" não casa com "Gabriela".**
+- **Rodízio:** quem está no grupo da URA continua na equipe do seu supervisor.
+- **Baias:** as 8 baias de cada equipe são distribuídas por ordem de ramal. Equipe com mais de 8
+  agentes mostra os demais em "Sem baia definida".
+- As contas de supervisor do BenHeimdall usam esses números. O cadastro já mostra "Equipe 6 · Digital".
+
+## 🔐 Acesso e segurança
+
+| Perfil            | Vê                                                                                      | Sessão                                                 |
+| ----------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| 🛡️ **admin**      | Tudo, mais a tela **Usuários e acessos**                                                | Expira após 15 min sem uso                             |
+| 👤 **supervisor** | Status de todas as equipes; código, nome e telefone do cliente **só da própria equipe** | Expira após 15 min sem uso                             |
+| 📺 **tv**         | Sem dados de cliente e sem motivo de pausa; entra direto no modo TV                     | Não expira, mas só entra pelos IPs de `TV_ALLOWED_IPS` |
+
+- **Login por e-mail** em todas as contas, sem diferenciar maiúsculas. O nome é sugerido a partir
+  do e-mail (`juliana.mendes@…` → "Juliana Mendes").
+- Senhas com **bcrypt**; sessão em cookie **httpOnly + SameSite=Strict** (e **Secure** em produção).
+- **5 senhas erradas** bloqueiam a conta por **5 min**. Conta nova e senha redefinida exigem **troca no primeiro acesso**.
+- Contas são **desativadas, nunca apagadas**. Desativar ou gerar senha nova derruba as sessões abertas.
+- O **log de acessos** registra entrada, saída, expiração, recusas, bloqueios e toda alteração de conta.
+
+> [!IMPORTANT]
+> A filtragem por perfil é feita **no servidor**, antes de enviar. CPF, benefício e conta
+> **nunca** saem do backend; o telefone sai como `(11) 9****-1234` e o cliente só pelo primeiro nome.
+
+<details>
+<summary><b>🌐 Restrição por IP</b></summary>
+<br />
+
+Só os endereços de `IPS_PERMITIDOS` acessam o sistema: páginas, API e tempo real. Os demais
+recebem `403`, e o primeiro acesso de cada IP recusado vai para o log. A lista vem com os IPs da
+operação:
+
+```text
+2804:431:80f7:7700::/48   2804:1b3:a5e7:c3c7::/48   201.93.163.133
+2804:1b3:a5e7:2c83::/48   201.93.159.169            2804:1b3:a5e7:8e38::/48
 ```
 
 - Aceita IPv4, IPv6 e faixas CIDR. Um valor inválido impede o sistema de subir, em vez de liberar geral.
-- A própria máquina (`127.0.0.1` e `::1`) sempre entra: health checks e uso local.
-- Atrás do Cloudflare ou de outro proxy, o IP conferido é o do cliente, desde que `TRUST_PROXY`
-  esteja certo (próxima seção). Se `TRUST_PROXY` estiver vazio com o túnel na mesma máquina, todo
-  acesso parece vir de `127.0.0.1` e entraria; o log avisa na partida.
-- Em `npm run dev` a lista vale para API e Socket.IO. A casca do front (HTML/JS, sem dados) é servida
-  pelo Vite. Em produção o backend serve tudo, e a lista vale para tudo.
+- A própria máquina (`127.0.0.1` e `::1`) sempre entra.
+- Atrás do Cloudflare, vale o IP do visitante, desde que `TRUST_PROXY` esteja certo (o padrão
+  `loopback` serve quando o `cloudflared` roda na mesma máquina).
+- Em `npm run dev`, a lista protege API e tempo real. A casca da página (sem dados) vem do Vite.
 
-## Servidor Windows (igual ao BenURA)
+</details>
 
-O BenHeimdall roda no mesmo servidor Windows do BenURA, do mesmo jeito: PM2 instalado no próprio
-projeto (`npx pm2`), uma tarefa no Agendador de Tarefas que sobe tudo ao ligar o PC (mesmo sem
-ninguém logado) e um vigia a cada 5 min.
+## 🏭 Produção
 
-No PowerShell **como administrador**, na pasta do BenHeimdall (ex.: `C:\BenHeimdall`):
+<details>
+<summary><b>🪟 Servidor Windows com PM2 (recomendado)</b></summary>
+<br />
+
+Mesmo modelo do BenURA: PM2 instalado no próprio projeto, uma tarefa no **Agendador de Tarefas**
+que sobe tudo ao ligar o PC (mesmo sem ninguém logado) e um **vigia** a cada 5 min. No PowerShell
+**como administrador**, na pasta do BenHeimdall:
 
 1. Instale as dependências:
 
@@ -250,8 +310,7 @@ No PowerShell **como administrador**, na pasta do BenHeimdall (ex.: `C:\BenHeimd
    npm ci
    ```
 
-2. Copie e revise o `.env`: `NODE_ENV=production`, `ADMIN_SENHA_INICIAL`, `TV_ALLOWED_IPS` e
-   `IPS_PERMITIDOS` (já vem com os IPs da operação):
+2. Copie e revise o `.env` (`NODE_ENV=production`, `ARGUS_MODE=real`, `ARGUS_TOKEN`, `ADMIN_SENHA_INICIAL`, `TV_ALLOWED_IPS`):
 
    ```powershell
    Copy-Item .env.example .env
@@ -261,61 +320,37 @@ No PowerShell **como administrador**, na pasta do BenHeimdall (ex.: `C:\BenHeimd
    notepad .env
    ```
 
-3. Instale o serviço. Ele compila, sobe o `benheimdall` no PM2, troca o `SESSION_SECRET` do exemplo
-   por um aleatório e cria a tarefa "BenHeimdall" (pede a senha do usuário do Windows):
+3. Instale o serviço. Ele compila, sobe no PM2, troca o `SESSION_SECRET` do exemplo por um
+   aleatório e cria a tarefa "BenHeimdall" (pede a senha do usuário do Windows):
 
    ```powershell
    npm run servico:instalar
    ```
 
-4. Confira:
+4. Confira (tarefa, PM2, `/health` e túnel):
 
    ```powershell
    npm run servico:verificar
    ```
 
-Convivência com o BenURA:
+**Atualizar:** `git pull`, depois `npm ci` e `npm run servico:instalar`.
+**Logs:** `npm run pm2:logs`, `logs\benheimdall.out.log` e `logs\servico-windows.log` (vigia).
 
-- **Mesmo PM2:** os dois usam o PM2 do mesmo usuário. Os scripts do BenHeimdall só mexem no
-  processo `benheimdall`; o `servico:desinstalar` daqui nunca faz `pm2 delete all`.
-- **Portas diferentes:** 3020 aqui, 3000 a 3010 no BenURA.
-- **Mesmo túnel da Cloudflare:** veja a próxima seção.
+- **Uma única instância, em modo fork:** há um só laço de leitura da Argus, e o tempo real guarda as conexões em memória.
+- **No mesmo servidor do BenURA:** os dois são independentes. Usam portas diferentes (BenHeimdall
+  3020; BenURA 3000 a 3010) e, mesmo usando o mesmo PM2, os scripts daqui só mexem no processo
+  `benheimdall` (nunca `pm2 delete all`).
+- **Servidor Linux:** `npm run pm2:iniciar`, depois `npx pm2 save` e `npx pm2 startup`.
 
-Atualizar para uma versão nova:
+</details>
 
-```powershell
-git pull
-```
+<details>
+<summary><b>☁️ Publicação no Cloudflare (Tunnel)</b></summary>
+<br />
 
-```powershell
-npm ci
-```
-
-```powershell
-npm run servico:instalar
-```
-
-Os logs ficam em `logs\benheimdall.out.log`, `logs\benheimdall.err.log` e
-`logs\servico-windows.log` (vigia). Para ver ao vivo: `npm run pm2:logs`.
-
-- **Uma única instância, em modo fork.** O BenHeimdall tem um único laço de leitura da Argus e o
-  Socket.IO guarda as conexões em memória. Cluster ou várias instâncias duplicariam as leituras.
-- Reinício com espera crescente se o processo cair, limite de 400 MB de memória e 5 s para encerrar
-  com calma (fecha o banco).
-
-Em servidor Linux, o mesmo `npm run pm2:iniciar` funciona; para subir com o sistema, use
-`npx pm2 save` e `npx pm2 startup`.
-
-## Publicação no Cloudflare (Tunnel)
-
-O BenHeimdall precisa de um processo Node rodando o tempo todo (o laço de leitura da Argus), de
-SQLite e de WebSocket. Por isso ele **não roda no Cloudflare Pages nem em Workers**. O caminho é o
-**Cloudflare Tunnel**: o `cloudflared`, no servidor, abre uma conexão de saída com a Cloudflare e
-publica o sistema com HTTPS, **sem abrir porta** no roteador.
-
-**Cada PC tem um único serviço `cloudflared`.** Se o BenURA já tem o túnel dele neste servidor, o
-BenHeimdall usa o **mesmo túnel**: só se acrescenta um endereço. O `npm run tunel:instalar` daqui
-detecta isso e não troca nada (o do BenURA troca o serviço existente; o daqui só com `-Substituir`).
+O BenHeimdall precisa de um processo contínuo, de SQLite e de WebSocket, então **não roda no
+Cloudflare Pages nem em Workers**. O caminho é o **Cloudflare Tunnel**: o `cloudflared`, no
+servidor, publica o sistema com HTTPS **sem abrir porta** no roteador.
 
 1. No PowerShell como administrador:
 
@@ -323,77 +358,52 @@ detecta isso e não troca nada (o do BenURA troca o serviço existente; o daqui 
    npm run tunel:instalar
    ```
 
-   - Se já houver túnel (o do BenURA): nada é instalado, e o script mostra o que fazer no painel.
-   - Se não houver: instala o `cloudflared` (winget) e pede o token do túnel, igual ao BenURA.
+   Cada PC tem **um** serviço `cloudflared`. Se já houver um (por exemplo, o do BenURA), o script
+   não troca nada (só com `-Substituir`) e mostra o que fazer no painel; o BenHeimdall entra como
+   mais um endereço no mesmo túnel.
 
-2. No painel **Cloudflare Zero Trust → Networks → Tunnels → (o túnel) → Public Hostname**, adicione:
-   - **Hostname:** `heimdall.benconsig.com.br` (sugestão);
-   - **Service:** `HTTP`, URL `localhost:3020`.
+2. No **Cloudflare Zero Trust → Networks → Tunnels → (o túnel) → Public Hostname**, adicione
+   `heimdall.benconsig.com.br` (sugestão) → **HTTP** `localhost:3020`. O WebSocket já vem ligado.
 
-   WebSocket já vem ligado no túnel.
+3. No `.env`, use `NODE_ENV=production` e `TRUST_PROXY=loopback` (o padrão).
 
-3. No `.env`: `NODE_ENV=production` e `TRUST_PROXY=loopback` (padrão). Depois, `npm run servico:instalar`.
+> [!TIP]
+> Como camada extra, crie uma regra de WAF na Cloudflare liberando só os IPs de `IPS_PERMITIDOS`
+> (ou use o Cloudflare Access). Assim o tráfego de fora nem chega ao servidor.
 
-Cuidados:
+O IP da Tela TV, visto pela Cloudflare, é o **IP público da rede** de onde a TV sai. Esse é o IP
+que vai em `TV_ALLOWED_IPS`.
 
-- A Cloudflare repassa o IP do visitante em `X-Forwarded-For`. Com `TRUST_PROXY=loopback` (o
-  `cloudflared` roda no mesmo PC), o backend usa esse IP em `IPS_PERMITIDOS`, `TV_ALLOWED_IPS` e no
-  log de acessos.
-- O IP da Tela TV, visto pela Cloudflare, é o **IP público da rede** de onde a TV sai. Coloque esse
-  IP em `TV_ALLOWED_IPS`.
-- Camada extra recomendada: uma regra de WAF na Cloudflare liberando só os IPs de `IPS_PERMITIDOS`
-  (ou o Cloudflare Access, como no BenURA). Assim o tráfego de fora nem chega ao servidor.
-- As rotas `/api` respondem com `Cache-Control: no-store`; a Cloudflare não guarda dados do painel.
-- O cookie `Secure` funciona porque o visitante usa HTTPS na Cloudflare.
+</details>
 
-**Com Docker** (em vez do PM2): `docker compose --profile cloudflare up -d --build`, com
-`CLOUDFLARE_TUNNEL_TOKEN=<token>` e `TRUST_PROXY=loopback,uniquelocal` no `.env`, e o Public
-Hostname apontando para `http://benheimdall:3020`. O container do `cloudflared` também roda
-endurecido (somente leitura, sem capabilities).
-
-## Produção com Docker (imagem endurecida)
-
-```bash
-cp .env.example .env   # preencha SESSION_SECRET, ADMIN_SENHA_INICIAL, TV_ALLOWED_IPS...
-```
+<details>
+<summary><b>🐳 Docker (imagem endurecida)</b></summary>
+<br />
 
 ```bash
 docker compose up -d --build
 ```
 
-O que a imagem e o compose fazem:
+Com o túnel da Cloudflare junto (e `CLOUDFLARE_TUNNEL_TOKEN` e `TRUST_PROXY=loopback,uniquelocal` no `.env`):
 
-- **Build em múltiplos estágios.** O build roda em `node:20-bookworm`, e a execução em
-  `gcr.io/distroless/nodejs20-debian12:nonroot`: **sem shell**, sem gerenciador de pacotes, sem
-  ferramentas do sistema.
-- **Usuário não-root** (uid 65532). Código e configuração pertencem ao root e são só leitura;
-  apenas `/app/data` (volume do banco) é gravável.
-- **Só o necessário entra na imagem:** bundle do backend, front compilado, dependências de produção
-  e `config/pausas.json`. Ficam de fora código-fonte, testes, devDependencies e `.env`
-  (veja `.dockerignore`).
-- No compose:
-  - `read_only: true` com `/tmp` em tmpfs `noexec,nosuid,nodev`;
-  - `cap_drop: [ALL]` e `no-new-privileges`;
-  - limites de memória, CPU, processos e arquivos abertos;
-  - rotação de logs;
-  - porta publicada só em `127.0.0.1` por padrão (use proxy reverso com HTTPS ou ajuste `BIND_ADDR`).
-- `HEALTHCHECK` consulta `/api/saude`.
-- **Recomendado no seu pipeline:** fixe as imagens base por digest (`FROM imagem@sha256:...`) e rode
-  um scanner de vulnerabilidades (`trivy image benheimdall`).
+```bash
+docker compose --profile cloudflare up -d --build
+```
 
-Backup do banco: `docker run --rm -v benheimdall_dados:/d -v "$PWD":/b busybox cp /d/benheimdall.db /b/`
-(com o container parado, ou copie também os arquivos `-wal`/`-shm`).
+- Build em múltiplos estágios; execução em **distroless** (sem shell e sem gerenciador de pacotes), como **não-root**.
+- Código e configuração só leitura; apenas o volume do banco é gravável.
+- `read_only`, `cap_drop: [ALL]`, `no-new-privileges`, limites de memória, CPU e processos, rotação de logs.
+- Porta publicada só em `127.0.0.1` por padrão; `HEALTHCHECK` em `/api/saude`.
+- No seu pipeline, recomendo fixar as imagens base por digest e rodar um scanner (`trivy image benheimdall`).
 
-## Proxy reverso e HTTPS
+</details>
 
-Sem Cloudflare, use um proxy reverso (nginx, Caddy) com TLS. Em produção o cookie de sessão é
-`Secure`: o navegador só o envia por **HTTPS**. E:
+<details>
+<summary><b>🔁 Proxy reverso próprio (nginx)</b></summary>
+<br />
 
-- mantenha `TRUST_PROXY=loopback` (proxy na mesma máquina) ou o IP do proxy, para o backend
-  enxergar o IP real. Sem isso, `IPS_PERMITIDOS`, `TV_ALLOWED_IPS` e o log veem o IP do proxy;
-- repasse o WebSocket de `/socket.io` (cabeçalhos `Upgrade` e `Connection`).
-
-Exemplo mínimo para o nginx:
+Em produção o cookie é `Secure`, então o acesso precisa ser por **HTTPS**. Mantenha
+`TRUST_PROXY=loopback` (proxy na mesma máquina) e repasse o WebSocket:
 
 ```nginx
 location / {
@@ -407,179 +417,164 @@ location / {
 }
 ```
 
-## Ligar na Argus real (sair da simulação)
+</details>
 
-No `.env` do PC ou do servidor:
+## 🧰 Comandos
 
+| Comando                                                                  | O que faz                                           |
+| ------------------------------------------------------------------------ | --------------------------------------------------- |
+| `npm run dev`                                                            | Backend e front com recarga automática              |
+| `npm test`                                                               | Testes (Vitest)                                     |
+| `npm run lint`                                                           | ESLint e checagem de tipos em todos os pacotes      |
+| `npm run build`                                                          | Compila o front e o backend para produção           |
+| `npm start`                                                              | Roda o backend compilado (ele também serve o front) |
+| `npm run pm2:iniciar` · `pm2:parar` · `pm2:logs`                         | Processo `benheimdall` no PM2                       |
+| `npm run servico:instalar` · `servico:verificar` · `servico:desinstalar` | Serviço do Windows (tarefa "BenHeimdall" + vigia)   |
+| `npm run tunel:instalar`                                                 | Cloudflare Tunnel no Windows                        |
+| `npm run dev:tunel` · `prod:tunel`                                       | Túnel rápido e temporário do Cloudflare             |
+
+<details>
+<summary><b>🔧 Variáveis de ambiente</b> (todas no <code>.env</code>, validadas na partida)</summary>
+<br />
+
+| Variável                                                                            | Padrão                              | Para quê                                                                    |
+| ----------------------------------------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------------- |
+| `PORT`                                                                              | `3020`                              | Porta do backend                                                            |
+| `NODE_ENV`                                                                          | `development`                       | `production` liga o cookie `Secure`, exige `SESSION_SECRET` e serve o front |
+| `ARGUS_MODE`                                                                        | `mock`                              | `mock` (simulada) ou `real`                                                 |
+| `ARGUS_TOKEN`                                                                       | —                                   | Token da Argus (obrigatório com `real`)                                     |
+| `ARGUS_BASE_URL`                                                                    | `https://argus.app.br/apiargus/cmd` | Endereço da API (`ARGUS_BASE` também vale)                                  |
+| `ARGUS_CONCORRENCIA`                                                                | `10`                                | `/statusoperador` ao mesmo tempo                                            |
+| `ARGUS_CAMPANHAS_IDS`                                                               | —                                   | Só operadores destas campanhas (vazio = todos)                              |
+| `STATUS_LIVRE` · `STATUS_ATENDIMENTO` · `STATUS_POS_ATENDIMENTO` · `STATUS_OFFLINE` | padrões acima                       | Textos de status da Argus                                                   |
+| `EQUIPES_FILE`                                                                      | `config/equipes.json`               | Equipes do salão                                                            |
+| `ARGUS_MOCK_FALHA`                                                                  | `false`                             | Só no mock: começa com a Argus fora do ar                                   |
+| `POLL_MS`                                                                           | `3000`                              | Intervalo de leitura da Argus (ms)                                          |
+| `DB_PATH`                                                                           | `data/benheimdall.db`               | Banco SQLite                                                                |
+| `SESSION_SECRET`                                                                    | aleatório em dev                    | Assina o cookie. **Obrigatório em produção** (32+ caracteres)               |
+| `SESSAO_MIN`                                                                        | `15`                                | Minutos sem uso até a sessão expirar                                        |
+| `IPS_PERMITIDOS`                                                                    | IPs da operação                     | Quem acessa o sistema (IPv4, IPv6, CIDR)                                    |
+| `TV_ALLOWED_IPS`                                                                    | —                                   | De onde o perfil `tv` entra                                                 |
+| `ADMIN_USER` · `ADMIN_SENHA_INICIAL`                                                | `renan.leite@benconsig.com` · —     | Primeiro admin (criado com o banco vazio)                                   |
+| `TRUST_PROXY`                                                                       | `loopback`                          | Proxies confiáveis para achar o IP real                                     |
+| `DEV_ALLOWED_HOSTS`                                                                 | —                                   | Só em dev: domínios extras liberados no Vite                                |
+| `CLOUDFLARE_TUNNEL_TOKEN` · `BIND_ADDR`                                             | — · `127.0.0.1`                     | Só no Docker Compose                                                        |
+| `LOG_LEVEL`                                                                         | `info`                              | Nível de log                                                                |
+
+</details>
+
+## 🏗️ Arquitetura
+
+```mermaid
+flowchart LR
+    subgraph argus["Argus"]
+        API[("API de comandos")]
+    end
+    subgraph servidor["BenHeimdall · servidor (Node + Express)"]
+        C["Laço único de leitura<br/>(a cada 3 s)"]
+        N["Normalização<br/>e mascaramento"]
+        DB[("SQLite<br/>histórico de status")]
+        P["Filtro por perfil<br/>admin · supervisor · tv"]
+        S["Socket.IO"]
+    end
+    subgraph telas["Navegadores"]
+        SUP["Supervisores"]
+        TV["Tela TV"]
+    end
+    API --> C --> N --> P --> S
+    N <--> DB
+    S --> SUP
+    S --> TV
 ```
-ARGUS_MODE=real
-ARGUS_TOKEN=<o mesmo ARGUS_TOKEN do .env do BenURA>
-```
 
-Depois, reinicie (`npm run dev` em teste, `npm run servico:instalar` no servidor) e confira em
-`npm run servico:verificar` ou em <http://localhost:3020/health>: `"modo":"real","online":true`. Se a
-Argus não responder, o painel mostra o aviso de queda e tenta de novo sozinho; o motivo aparece em
-`argus.ultimoErro` (por exemplo, token recusado).
+- **Um único** laço consulta a Argus, não importa quantos navegadores estejam abertos.
+- Cada mudança de status vai para o SQLite; dali saem o total de pausa do dia, os atendimentos e a
+  linha do tempo, que sobrevivem a reinícios.
+- No navegador, os cronômetros correm a cada segundo, corrigidos pela hora do servidor.
 
-**Como o BenHeimdall lê a Argus** (doc-api-argus.pdf, as mesmas regras do cliente do BenURA):
+<details>
+<summary><b>📁 Pastas, tecnologias e API</b></summary>
+<br />
 
-| O painel mostra                 | De onde vem                                                                               |
-| ------------------------------- | ----------------------------------------------------------------------------------------- |
-| Agentes (nome, ramal)           | `/listarusuarios` (operadores ativos), em cache de 5 min                                  |
-| Robôs fora do painel            | `/listargrupos`: ramais de grupos virtuais (DTMF/Flash) são ignorados                     |
-| Status, pausa e tempo no status | `/statusoperador` de cada ramal, a cada `POLL_MS` (3 s), até 10 ao mesmo tempo            |
-| Cliente em atendimento          | `ultimoLead` do `/statusoperador`: código, nome e telefone, mascarados. **CPF nunca sai** |
-| Equipe                          | supervisor do operador (`nomeUsuarioSupervisor`); número em `config/equipes.json`         |
-| Baia no mapa                    | `config/baias.json`; sem ele, as baias livres da equipe por ordem de ramal                |
-| Atendimentos do dia             | contados pelo histórico do BenHeimdall (entradas em "Atendendo")                          |
-
-- **Status:** "Em Atendimento" → Atendendo; "Tabulando" → Pós-atendimento; qualquer pausa → Em
-  pausa; "Livre" → Livre; deslogado (a Argus responde HTTP 500) → Offline. Os textos ficam no
-  `.env` (`STATUS_LIVRE`, `STATUS_ATENDIMENTO`, `STATUS_POS_ATENDIMENTO`, `STATUS_OFFLINE`), com os
-  mesmos nomes e padrões do BenURA. Texto desconhecido aparece no log uma vez; é só acrescentá-lo.
-- **Limites de pausa:** os mesmos do BenURA (Almoço 60, Descanso 10, Banheiro 5, Feedback 15
-  min), casando pelo início do nome: "ALMOÇO 1" usa o limite de Almoço.
-- **Equipes:** sem `config/equipes.json`, as equipes são numeradas em ordem alfabética do
-  supervisor. O filtro e o mapa mostram o nome do supervisor ao lado do número. Para fixar os
-  números (recomendado, porque as contas de supervisor do BenHeimdall usam esse número), copie
-  `config/equipes.example.json` para `config/equipes.json`.
-- **Limite de requisições:** o token é o mesmo do BenURA. Se a Argus responder 429, o BenHeimdall
-  pausa as leituras; com `ARGUS_PAUSA_FILE` apontando para o arquivo do BenURA, a pausa vale para
-  os dois.
-- **Falha pontual de um ramal:** mantém o último status lido por até 30 s; só vira "Argus fora"
-  se nenhum ramal responder.
-
-## O que ainda falta
-
-- [ ] **Vendas do dia e conversão:** a venda é uma tabulação, e o layout do relatório de
-      tabulações não está detalhado na documentação. Hoje a conversão mostra 0%; use a ordem
-      "Mais ocioso primeiro".
-- [ ] **Fila de espera e callbacks:** a API não tem esses números (e o painel não os mostra mais).
-- [ ] **PC e IP da Tela TV** (`TV_ALLOWED_IPS`).
-- [ ] **Equipes e baias definitivas:** `config/equipes.json` e `config/baias.json`, quando o salão
-      estiver mapeado.
-- [ ] **Compartilhar o `ArgusClient` com o BenURA?** O cliente está isolado em
-      `packages/argus-client`, sem dependência do resto do BenHeimdall.
-
-## Arquitetura
-
-```
+```text
 BenHeimdall/
 ├─ apps/
-│  ├─ server/              # Node + Express + Socket.IO + SQLite
-│  │  ├─ src/leitura/      # laço único de leitura, normalizador, mascaramento, status_eventos
-│  │  ├─ src/acesso/       # login, sessão, bloqueio, troca de senha, IP da TV, log
-│  │  ├─ src/rotas/        # /api/sessao, /api/painel, /api/agentes, /api/usuarios, /api/dev
-│  │  ├─ src/projecao.ts   # o que cada perfil pode ver
-│  │  ├─ src/socket.ts     # painel:atualizado a cada ciclo, já projetado
-│  │  └─ test/             # Vitest
-│  └─ web/                 # React 18 + Vite + Tailwind + TanStack Query + React Router
+│  ├─ server/            Node · Express · Socket.IO · SQLite · Zod · pino
+│  │  └─ src/            leitura/ · acesso/ · rotas/ · projecao.ts · socket.ts
+│  └─ web/               React 18 · Vite · Tailwind CSS · TanStack Query · React Router
 ├─ packages/
-│  ├─ shared/              # tipos (Agente, Painel...), schemas Zod e regras de exibição
-│  └─ argus-client/        # interface ArgusClient, MockArgusClient e RealArgusClient (esqueleto)
-├─ config/pausas.json      # limites de pausa por motivo
-├─ docs/prototipo-benheimdall.html   # protótipo visual aprovado
-├─ ecosystem.config.cjs    # PM2
-├─ Dockerfile · docker-compose.yml
-└─ .env.example
+│  ├─ shared/            tipos, schemas Zod e regras de exibição
+│  └─ argus-client/      cliente da Argus (real e simulado), independente do resto
+├─ config/               pausas.json · equipes.json
+├─ scripts/windows/      serviço do Windows, vigia e túnel
+├─ docs/                 protótipo aprovado e imagens deste README
+├─ ecosystem.config.cjs  PM2
+└─ Dockerfile · docker-compose.yml
 ```
 
-Fluxo de dados:
+**Front:** o sistema de design (cores do tema claro e escuro, fontes, sombras e animações) fica
+em [`tailwind.config.ts`](apps/web/tailwind.config.ts), e os componentes de tela em `@layer components`
+com `@apply`, em [`index.css`](apps/web/src/index.css). As animações respeitam `prefers-reduced-motion`.
 
-1. **Um único** laço consulta a Argus a cada `POLL_MS`, não importa quantos navegadores estejam abertos.
-2. As respostas são validadas com Zod, normalizadas para `Painel` e mascaradas. Cada mudança de
-   status vai para `status_eventos`, de onde saem o total de pausa do dia e a linha do tempo. Por
-   isso esses dados sobrevivem a reinícios.
-3. O Socket.IO envia `painel:atualizado` a cada ciclo, já projetado pelo perfil de cada sessão. A
-   fotografia inicial vem de `GET /api/painel`.
-4. No navegador, os cronômetros correm a cada segundo, corrigidos pela diferença entre o relógio
-   local e `atualizadoEm` (hora do servidor).
+| Rota                                                                                                       | Acesso                         | Para quê                                  |
+| ---------------------------------------------------------------------------------------------------------- | ------------------------------ | ----------------------------------------- |
+| `GET /health` · `GET /api/saude`                                                                           | público                        | Conexão com a Argus e com o banco         |
+| `POST /api/sessao/entrar`                                                                                  | público                        | Login                                     |
+| `GET /api/sessao` · `POST /api/sessao/(renovar\|sair\|trocar-senha)`                                       | sessão                         | Sessão atual                              |
+| `GET /api/painel`                                                                                          | sessão                         | Fotografia atual, já filtrada pelo perfil |
+| `GET /api/agentes/:id`                                                                                     | admin, supervisor              | Linha do tempo e pausa do dia             |
+| `GET/POST /api/usuarios` · `POST /api/usuarios/:id/(desativar\|reativar\|nova-senha)` · `GET /api/acessos` | admin                          | Contas e log                              |
+| `POST /api/dev/argus/(queda\|restaurar)`                                                                   | só simulação, fora de produção | Simular queda da Argus                    |
+| Socket.IO `painel:atualizado`                                                                              | sessão                         | Atualização a cada ciclo                  |
 
-API:
+</details>
 
-| Rota                                                                                                       | Acesso                                      | Descrição                                 |
-| ---------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------- |
-| `GET /api/saude`                                                                                           | público                                     | Conexão com a Argus e com o banco         |
-| `POST /api/sessao/entrar`                                                                                  | público                                     | Login                                     |
-| `GET /api/sessao` · `POST /api/sessao/renovar` · `POST /api/sessao/sair` · `POST /api/sessao/trocar-senha` | sessão                                      | Sessão atual                              |
-| `GET /api/painel`                                                                                          | sessão                                      | Fotografia atual, já filtrada pelo perfil |
-| `GET /api/agentes/:id`                                                                                     | admin, supervisor                           | Linha do tempo e pausa do dia             |
-| `GET/POST /api/usuarios`, `POST /api/usuarios/:id/(desativar\|reativar\|nova-senha)`, `GET /api/acessos`   | admin                                       | Administração de contas e log             |
-| `POST /api/dev/argus/(queda\|restaurar)`                                                                   | admin, supervisor; só mock fora de produção | Simular queda da Argus                    |
-
-## Decisões tomadas
-
-Escolhas feitas onde o enunciado não definia, ou definia de outro jeito, sempre pela opção mais
-simples:
+<details>
+<summary><b>🧭 Decisões tomadas</b></summary>
+<br />
 
 **Visual**
 
-1. **Tipografia trocada a pedido:** o enunciado e o protótipo usam Barlow, Barlow Condensed e
-   JetBrains Mono. A pedido, passou a ser **Space Grotesk** (títulos e números), **Inter** (texto) e
-   JetBrains Mono só em código e telefone do cliente. O layout do protótipo foi mantido, com mais
-   movimento: entrada animada das linhas, pulso nas pausas acima do limite, números que "saltam" ao
-   mudar, ponto ao vivo e barras animadas. Tudo isso desliga com `prefers-reduced-motion`.
-2. **Tema** segue o sistema (escuro ou claro), com as cores da marca nos dois.
-3. Fontes servidas pelo próprio app (`@fontsource-variable`), para a TV funcionar sem internet.
+1. Fontes **Space Grotesk** (títulos e números), **Inter** (texto) e **JetBrains Mono** (código e
+   telefone), servidas pelo próprio app, para a TV funcionar sem internet.
+2. Tema segue o sistema (escuro ou claro). As animações desligam com `prefers-reduced-motion`.
+3. CSS com **Tailwind**: sistema de design no `tailwind.config.ts`, componentes com `@apply` e `clsx`.
 
 **Dados e painel**
 
-4. No tipo `Agente`, os campos de cliente de `atendimento` e o `pausa.motivo` são **opcionais**: é
-   assim que a projeção por perfil os omite.
-5. Status desconhecido da Argus vira **OFFLINE** e gera aviso no log (uma vez por código).
-6. Motivo de pausa sem limite em `config/pausas.json` usa `padraoMin` (15 min).
-7. Os indicadores de status contam **os agentes do filtro atual**. **Fila de espera e callbacks
-   saíram da tela** a pedido: não são necessários para os supervisores. O backend continua lendo e
-   enviando esses números no `Painel`, para voltarem fácil se for preciso.
-8. O "dia" do total de pausa começa à **meia-noite no fuso do servidor**. Configure
-   `TZ=America/Sao_Paulo` se o servidor estiver em UTC.
-9. O histórico começa quando o BenHeimdall começa a ler: não há carga retroativa do dia.
-10. Pós-atendimento mantém a campanha da chamada ("Tabulando") e nunca entra em "livres".
-11. Os códigos de status do mock são inventados de propósito e ficam isolados no `argus-client`.
-12. A ordem dos livres (mais ocioso ou melhor conversão) fica salva no navegador (`localStorage`).
-13. O mapa do salão mostra o salão inteiro; quem está fora do filtro fica esmaecido.
+4. Status desconhecido da Argus vira Offline e aparece uma vez no log.
+5. Os indicadores contam os agentes do filtro atual. Fila de espera e callbacks saíram da tela (a API da Argus também não os tem).
+6. O "dia" começa à meia-noite no fuso do servidor; configure `TZ=America/Sao_Paulo` se ele estiver em UTC.
+7. O histórico começa quando o BenHeimdall começa a ler: não há carga retroativa do dia.
+8. A ordem dos livres fica salva no navegador. O mapa mostra o salão inteiro e esmaece quem está fora do filtro.
 
 **Acesso**
 
-14. "Uso" da sessão é **interação do usuário** (clique, tecla, mouse, rolagem), com no máximo uma
-    renovação a cada 30 s. Leituras automáticas (Socket.IO, fotografia) **não renovam**. O socket
-    confere a sessão a cada ciclo e desconecta quem expirou ou foi desativado. Uma varredura a cada
-    minuto registra no log as sessões que expiraram com o navegador fechado.
-15. Senha errada mostra mensagem genérica ("Usuário ou senha incorretos"), sem revelar se o usuário
-    existe. A conferência gasta o mesmo tempo nos dois casos.
-16. O bloqueio conta erros por conta existente. Uma conta desativada só é avisada como "desativada"
-    se a senha estiver certa.
-17. O IP da TV é conferido no login e a cada requisição. **Em desenvolvimento**, o proxy do Vite faz
-    tudo chegar de `127.0.0.1`.
-18. A senha temporária tem 10 caracteres, sem caracteres ambíguos, e é mostrada **uma única vez** ao
-    admin. Nova senha também encerra as sessões e zera o bloqueio da conta.
-19. Senha nova: mínimo de 8 caracteres e diferente da atual.
-20. `GET /api/saude` é público (útil para monitoramento) e não expõe dados de agentes.
+9. "Uso" da sessão é interação do usuário (clique, tecla, mouse, rolagem); leituras automáticas não renovam.
+10. Senha errada mostra mensagem genérica, sem revelar se a conta existe.
+11. A senha temporária tem 10 caracteres sem ambiguidade e aparece uma única vez para o admin.
+12. `/health` é público e não expõe dados de agentes.
 
-**Modo TV**
+**Execução e rede**
 
-21. No modo TV a vista é sempre o painel (abas e filtros escondidos). A tela cheia é pedida ao ligar
-    o modo pelo botão. No perfil `tv`, que entra direto, use o navegador da TV em modo quiosque
-    (ex.: `chromium --kiosk`), porque o navegador não permite tela cheia sem um clique.
+13. Em produção, o backend serve o front (mesma origem do cookie); em dev, o Vite faz proxy.
+14. **npm** com workspaces e PM2 no projeto, no mesmo padrão de comandos do BenURA; o backend de
+    produção é um bundle do esbuild.
+15. Cloudflare **Tunnel**, não Pages/Workers. `TRUST_PROXY=loopback` por padrão, para ninguém
+    forjar o IP pelo `X-Forwarded-For`.
+16. O `.env` é lido pelo backend sem sobrescrever variáveis do sistema; dentro do arquivo, vale a
+    última ocorrência (como no dotenv).
 
-**Execução**
+</details>
 
-22. Em produção, o backend serve o front compilado (mesma origem do cookie). Em desenvolvimento, o
-    Vite faz proxy.
-23. **npm**, como no BenURA (antes era pnpm): workspaces do npm, `npm run ...` e PM2 instalado no
-    projeto. O backend de produção é um bundle do esbuild (`apps/server/dist/index.js`). Toda dependência npm
-    dos pacotes do workspace também fica declarada no `package.json` do servidor, para existir uma
-    única cópia em produção.
-24. A simulação de queda (`/api/dev`) só existe no modo mock **fora de produção**.
+## 📌 O que ainda falta
 
-**Rede e Cloudflare**
+- [ ] **Vendas do dia e conversão:** a venda é uma tabulação, e o relatório de tabulações não
+      está detalhado na documentação da Argus. Até lá, a conversão mostra 0%; use "Mais ocioso primeiro".
+- [ ] **IP da Tela TV** em `TV_ALLOWED_IPS`.
+- [ ] **Primeira leitura com a Argus real:** conferir no log se algum texto de status ficou de fora (por exemplo, o de pós-atendimento).
 
-25. Publicação pelo **Cloudflare Tunnel**, não por Pages/Workers, que não rodam um processo
-    contínuo com SQLite e WebSocket.
-26. `TRUST_PROXY=loopback` por padrão: confia só em proxies na própria máquina (Vite em dev,
-    `cloudflared` ou nginx locais). Quem conecta direto de fora não consegue forjar o IP pelo
-    `X-Forwarded-For`.
-27. `IPS_PERMITIDOS` vale para todo o sistema e sempre aceita a própria máquina. O Socket.IO, que
-    não passa pelos middlewares do Express, confere a lista e o IP da TV pelo mesmo IP real.
-28. O `.env` é lido pelo próprio backend, sem sobrescrever variáveis já definidas no sistema, no PM2
-    ou no Docker. Assim funciona em qualquer Node 20+ e em qualquer sistema operacional.
+<div align="center">
+<br />
+<sub>Feito para a operação da <b>Benconsig</b> · os dados das imagens são fictícios (modo simulado).</sub>
+</div>
