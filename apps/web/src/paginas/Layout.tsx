@@ -13,6 +13,7 @@ import { usePainel } from '../hooks/usePainel';
 import { useRelogio } from '../hooks/useRelogio';
 import { useSessao } from '../hooks/useSessao';
 import { CtxUi, lerOrdem, type EstadoUi } from '../hooks/useUi';
+import { Colunas } from '../componentes/Colunas';
 
 export interface DadosVista {
   painel: Painel;
@@ -47,7 +48,23 @@ export function Layout() {
   const [busca, setBusca] = useState('');
   const [ordem, setOrdem] = useState<OrdemLivres>(lerOrdem);
   const [aberto, setAberto] = useState<string | null>(null);
-  const modoTv = false;
+  // Modo TV: tela cheia, fonte maior, sem motivo de pausa e sem dados de cliente.
+  // O perfil tv entra direto nele e não consegue sair (só pelo botão Sair).
+  const [tvLigado, setTvLigado] = useState(false);
+  const modoTv = usuario.perfil === 'tv' || tvLigado;
+
+  useEffect(() => {
+    document.body.classList.toggle('tv', modoTv);
+    if (modoTv) setAberto(null);
+    return () => document.body.classList.remove('tv');
+  }, [modoTv]);
+
+  const alternarTv = () => {
+    const ligar = !tvLigado;
+    setTvLigado(ligar);
+    if (ligar) void document.documentElement.requestFullscreen?.().catch(() => undefined);
+    else if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
+  };
 
   useAtividade(usuario.perfil !== 'tv', renovar);
 
@@ -87,7 +104,14 @@ export function Layout() {
 
   return (
     <CtxUi.Provider value={ui}>
-      <Topo painel={painel} agora={agora} sessao={sessao!} modoTv={modoTv} onSair={aoSair} />
+      <Topo
+        painel={painel}
+        agora={agora}
+        sessao={sessao!}
+        modoTv={modoTv}
+        onModoTv={usuario.perfil === 'tv' ? undefined : alternarTv}
+        onSair={aoSair}
+      />
       <main className="wrap">
         {!modoTv && usuario.perfil !== 'tv' && <NotaSimulacao />}
         <AvisoArgus painel={painel} agora={agora} />
@@ -95,7 +119,12 @@ export function Layout() {
           <>
             <Indicadores painel={painel} agentes={agentes} agora={agora} />
             {!modoTv && <BarraFerramentas admin={usuario.perfil === 'admin'} />}
-            <Outlet context={{ painel, agentes } satisfies DadosVista} />
+            {/* No modo TV a vista é sempre o painel (as abas ficam escondidas). */}
+            {modoTv ? (
+              <Colunas painel={painel} agentes={agentes} />
+            ) : (
+              <Outlet context={{ painel, agentes } satisfies DadosVista} />
+            )}
           </>
         ) : (
           <div className="splash">Carregando o painel…</div>
