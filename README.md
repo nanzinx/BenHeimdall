@@ -100,6 +100,21 @@ Para validar o sistema na sua máquina (Windows, macOS ou Linux), com a Argus si
 
 4. Abra <http://localhost:5173>, entre com `admin` / `troque-no-primeiro-acesso` e troque a senha.
 
+**No Windows, se o PowerShell disser que `pnpm` não é reconhecido:** o `corepack enable` pode não
+funcionar (precisa de administrador, e versões novas do Node não trazem o corepack). Instale o
+pnpm pelo npm, feche e abra o PowerShell, e confira com `pnpm -v`:
+
+```powershell
+npm install -g pnpm@10
+```
+
+Se aparecer "a execução de scripts foi desabilitada neste sistema", libere os scripts só para o seu
+usuário:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
 O acesso pela própria máquina (`localhost`) sempre entra, mesmo com `IPS_PERMITIDOS` preenchido.
 
 **Mostrar para outra pessoa sem publicar nada:** com o
