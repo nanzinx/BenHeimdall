@@ -1,0 +1,38 @@
+# BenHeimdall em container endurecido.
+#   cp .env.example .env   # preencha SESSION_SECRET, ADMIN_SENHA_INICIAL, TV_ALLOWED_IPS...
+#   docker compose up -d --build
+services:
+  benheimdall:
+    build: .
+    image: benheimdall:latest
+    container_name: benheimdall
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DB_PATH: data/benheimdall.db
+    # Por padrão só escuta no próprio servidor: publique via proxy reverso com HTTPS
+    # (o cookie de sessão é Secure em produção). Para expor direto na rede, troque o 127.0.0.1.
+    ports:
+      - '${BIND_ADDR:-127.0.0.1}:${PORT:-3001}:3001'
+    volumes:
+      - dados:/app/data
+    # ---- endurecimento ----
+    user: '65532:65532'
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 200
+    mem_limit: 512m
+    cpus: 1.0
+    ulimits:
+      nofile: { soft: 4096, hard: 4096 }
+    logging:
+      driver: json-file
+      options: { max-size: '10m', max-file: '5' }
+
+volumes:
+  dados:

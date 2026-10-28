@@ -5,13 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=../../.env src/index.ts",
-    "start": "tsx --env-file-if-exists=../../.env src/index.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "node build.mjs",
+    "start": "node --env-file-if-exists=../../.env --enable-source-maps dist/index.js",
+    "start:tsx": "tsx --env-file-if-exists=../../.env src/index.ts",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@benheimdall/argus-client": "workspace:*",
     "@benheimdall/shared": "workspace:*",
+    "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.11.1",
     "cookie": "^1.0.2",
@@ -27,6 +29,7 @@
     "@types/cookie-parser": "^1.4.9",
     "@types/express": "^5.0.3",
     "@types/supertest": "^6.0.3",
+    "esbuild": "^0.25.12",
     "pino-pretty": "^13.1.1",
     "socket.io-client": "^4.8.1",
     "supertest": "^7.1.4",

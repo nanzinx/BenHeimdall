@@ -28,6 +28,9 @@ const envSchema = z.object({
   ADMIN_SENHA_INICIAL: z.string().default(''),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   PAUSAS_PATH: z.string().default('config/pausas.json'),
+  // Atrás de proxy reverso (nginx, Caddy): número de saltos ou lista de IPs confiáveis.
+  // Necessário para o IP real chegar ao backend (regra do IP da TV e log de acessos).
+  TRUST_PROXY: z.string().default(''),
 });
 
 export type Config = ReturnType<typeof carregarConfig>;
@@ -59,7 +62,15 @@ export function carregarConfig(env: NodeJS.ProcessEnv = process.env) {
     adminSenhaInicial: e.ADMIN_SENHA_INICIAL,
     logLevel: e.LOG_LEVEL,
     limites: carregarLimites(path.resolve(RAIZ, e.PAUSAS_PATH)),
+    trustProxy: lerTrustProxy(e.TRUST_PROXY),
   };
+}
+
+/** '' = desligado; '1' = um salto; 'loopback' ou lista de IPs/sub-redes separados por vírgula. */
+function lerTrustProxy(v: string): boolean | number | string {
+  if (!v || v === 'false') return false;
+  if (/^\d+$/.test(v)) return Number(v);
+  return v;
 }
 
 const pausasSchema = z.object({
