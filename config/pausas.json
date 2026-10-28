@@ -1,0 +1,11 @@
+{
+  "_comentario": "Limites de pausa por motivo, em minutos. Valores iniciais, a confirmar com a gestão. O nome do motivo precisa bater com a descrição que vem da Argus. Motivo sem limite aqui usa padraoMin.",
+  "padraoMin": 15,
+  "limitesMin": {
+    "Lanche": 15,
+    "Banheiro": 5,
+    "Feedback": 20,
+    "Treinamento": 45,
+    "Particular": 10
+  }
+}
