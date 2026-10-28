@@ -1077,6 +1077,20 @@ header.top::after {
 .seat.s-CRIT {
   animation: alerta 2s ease-in-out infinite;
 }
+.team h3 .sup-nome {
+  font-style: normal;
+  font-family: var(--f-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.sem-baia {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px dashed var(--line);
+  padding-top: 8px;
+}
 .sup {
   border: 1px dashed var(--line);
   border-radius: 10px;

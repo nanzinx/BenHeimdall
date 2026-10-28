@@ -1,8 +1,15 @@
 import { NavLink } from 'react-router-dom';
-import { EQUIPES } from '@benheimdall/shared';
+import { primeiroNomeSupervisor, rotuloEquipe } from '@benheimdall/shared';
 import { useUi } from '../hooks/useUi';
 
-export function BarraFerramentas({ admin }: { admin: boolean }) {
+export function BarraFerramentas({
+  admin,
+  equipes,
+}: {
+  admin: boolean;
+  /** Equipes presentes no painel, com o supervisor de cada uma. */
+  equipes: { equipe: number; supervisor: string }[];
+}) {
   const { equipe, setEquipe, busca, setBusca } = useUi();
 
   return (
@@ -14,15 +21,20 @@ export function BarraFerramentas({ admin }: { admin: boolean }) {
         {admin && <NavLink to="/usuarios">Usuários e acessos</NavLink>}
       </nav>
       <div className="chips" role="group" aria-label="Filtrar por equipe">
-        {[0, ...EQUIPES].map((n) => (
+        <button type="button" className="chip" aria-pressed={equipe === -1} onClick={() => setEquipe(-1)}>
+          Todas
+        </button>
+        {equipes.map(({ equipe: n, supervisor }) => (
           <button
             key={n}
             type="button"
             className="chip"
             aria-pressed={equipe === n}
             onClick={() => setEquipe(n)}
+            title={supervisor ? `${rotuloEquipe(n)} · supervisor ${supervisor}` : rotuloEquipe(n)}
           >
-            {n ? `Equipe ${n}` : 'Todas'}
+            {rotuloEquipe(n)}
+            {supervisor && n ? ` · ${primeiroNomeSupervisor(supervisor)}` : ''}
           </button>
         ))}
       </div>

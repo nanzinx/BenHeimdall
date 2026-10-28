@@ -1,7 +1,7 @@
 // Moldura das telas logadas: topo, aviso da Argus, indicadores, filtros, a vista atual e o detalhe.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Outlet, useNavigate, useOutletContext } from 'react-router-dom';
-import type { Agente, OrdemLivres, Painel } from '@benheimdall/shared';
+import { equipesDoPainel, type Agente, type OrdemLivres, type Painel } from '@benheimdall/shared';
 import { AvisoArgus } from '../componentes/AvisoArgus';
 import { BarraFerramentas } from '../componentes/BarraFerramentas';
 import { DetalheAgente } from '../componentes/DetalheAgente';
@@ -25,11 +25,14 @@ export function useDadosVista() {
 }
 
 /** Filtro por equipe e busca por nome, ramal ou código do cliente (quando visível ao perfil). */
+/** Filtro "Todas" (o 0 é "Sem equipe"). */
+export const TODAS = -1;
+
 export function filtrar(agentes: Agente[], equipe: number, busca: string): Agente[] {
   const q = busca.trim().toLowerCase();
   return agentes.filter(
     (a) =>
-      (!equipe || a.equipe === equipe) &&
+      (equipe === TODAS || a.equipe === equipe) &&
       (!q ||
         a.nome.toLowerCase().includes(q) ||
         a.ramal.includes(q) ||
@@ -44,7 +47,9 @@ export function Layout() {
   const { painel, offsetMs, mudaram } = usePainel();
   const agora = useRelogio(offsetMs);
 
-  const [equipe, setEquipe] = useState(usuario.perfil === 'supervisor' ? (usuario.equipe ?? 0) : 0);
+  const [equipe, setEquipe] = useState(
+    usuario.perfil === 'supervisor' && usuario.equipe ? usuario.equipe : TODAS,
+  );
   const [busca, setBusca] = useState('');
   const [ordem, setOrdem] = useState<OrdemLivres>(lerOrdem);
   const [aberto, setAberto] = useState<string | null>(null);
@@ -118,7 +123,12 @@ export function Layout() {
         {painel ? (
           <>
             <Indicadores agentes={agentes} agora={agora} />
-            {!modoTv && <BarraFerramentas admin={usuario.perfil === 'admin'} />}
+            {!modoTv && (
+              <BarraFerramentas
+                admin={usuario.perfil === 'admin'}
+                equipes={equipesDoPainel(painel.agentes)}
+              />
+            )}
             {/* No modo TV a vista é sempre o painel (as abas ficam escondidas). */}
             {modoTv ? (
               <Colunas painel={painel} agentes={agentes} />

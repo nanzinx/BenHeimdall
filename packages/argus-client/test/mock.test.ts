@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import {
-  ArgusIndisponivelError,
-  MockArgusClient,
-  NotImplementedError,
-  RealArgusClient,
-  agenteBrutoSchema,
-  chamadaBrutaSchema,
-} from '../src';
+import { ArgusIndisponivelError, MockArgusClient, agenteBrutoSchema, chamadaBrutaSchema } from '../src';
 
 describe('MockArgusClient', () => {
   it('simula 40 agentes, 5 equipes × 8 baias, com respostas no formato bruto', async () => {
@@ -47,12 +40,5 @@ describe('MockArgusClient', () => {
     await expect(mock.obterFila()).rejects.toBeInstanceOf(ArgusIndisponivelError);
     agora += 10_000;
     await expect(mock.obterFila()).resolves.toBeDefined();
-  });
-});
-
-describe('RealArgusClient', () => {
-  it('é só um esqueleto até a Fase 2', async () => {
-    const real = new RealArgusClient({ baseUrl: 'http://argus.invalid', token: '' });
-    await expect(real.listarAgentes()).rejects.toBeInstanceOf(NotImplementedError);
   });
 });

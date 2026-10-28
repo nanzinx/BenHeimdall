@@ -1,7 +1,9 @@
 // Vista do salão: 5 equipes de 8 baias (4 à esquerda, 4 à direita), numeradas da direita para a
 // esquerda. A baia 1 de cada lado fica junto da mesa do supervisor (embaixo).
 import {
-  EQUIPES,
+  equipesDoPainel,
+  primeiroNomeSupervisor,
+  rotuloEquipe,
   ROTULO_STATUS,
   formatarDuracao,
   nivelPausa,
@@ -34,7 +36,7 @@ function Baia({ a, visivel }: { a: Agente | undefined; visivel: boolean }) {
       style={visivel ? undefined : { opacity: 0.3 }}
       tabIndex={modoTv ? -1 : 0}
       onClick={() => abrir(a.id)}
-      title={`${a.nome} · ${ROTULO_STATUS[a.status]} · baia ${a.lado === 'E' ? 'esquerda' : 'direita'} ${a.posicao}`}
+      title={`${a.nome} · ${ROTULO_STATUS[a.status]}${a.lado ? ` · baia ${a.lado === 'E' ? 'esquerda' : 'direita'} ${a.posicao}` : ''} · ramal ${a.ramal}`}
     >
       <b>{curto}</b>
       <span>{a.status === 'OFFLINE' ? '—' : formatarDuracao(segundosDesde(a.desde, agora))}</span>
@@ -45,8 +47,9 @@ function Baia({ a, visivel }: { a: Agente | undefined; visivel: boolean }) {
 
 export function MapaSalao({ todos, visiveis }: { todos: Agente[]; visiveis: Agente[] }) {
   const ids = new Set(visiveis.map((a) => a.id));
-  // Da esquerda para a direita na tela: equipe 5 … equipe 1.
-  const equipes = [...EQUIPES].reverse();
+  // Da esquerda para a direita na tela: a equipe de maior número primeiro … equipe 1
+  // (numeradas da direita para a esquerda). "Sem equipe" fica na ponta esquerda.
+  const equipes = equipesDoPainel(todos).reverse();
 
   return (
     <section className="salao" aria-label="Mapa do salão">
@@ -56,8 +59,9 @@ export function MapaSalao({ todos, visiveis }: { todos: Agente[]; visiveis: Agen
       </p>
       <div className="salao-scroll">
         <div className="floor">
-          {equipes.map((eq) => {
+          {equipes.map(({ equipe: eq, supervisor }) => {
             const membros = todos.filter((a) => a.equipe === eq);
+            const semBaia = membros.filter((a) => !a.lado || !a.posicao);
             const livres = membros.filter((a) => a.status === 'LIVRE').length;
             const lado = (l: 'E' | 'D') =>
               POSICOES.map((p) => {
@@ -66,8 +70,13 @@ export function MapaSalao({ todos, visiveis }: { todos: Agente[]; visiveis: Agen
               });
             return (
               <div className="team" key={eq}>
-                <h3>
-                  Equipe {eq}
+                <h3 title={supervisor ? `Supervisor: ${supervisor}` : undefined}>
+                  <span>
+                    {rotuloEquipe(eq)}
+                    {supervisor && eq ? (
+                      <em className="sup-nome"> · {primeiroNomeSupervisor(supervisor)}</em>
+                    ) : null}
+                  </span>
                   <small>
                     {livres} livre{livres === 1 ? '' : 's'}
                   </small>
@@ -83,6 +92,14 @@ export function MapaSalao({ todos, visiveis }: { todos: Agente[]; visiveis: Agen
                   </div>
                 </div>
                 <div className="sup">Mesa do supervisor</div>
+                {semBaia.length > 0 && (
+                  <div className="sem-baia">
+                    <div className="side-l">Sem baia definida</div>
+                    {semBaia.map((a) => (
+                      <Baia key={a.id} a={a} visivel={ids.has(a.id)} />
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}

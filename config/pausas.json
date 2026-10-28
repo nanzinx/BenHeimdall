@@ -1,11 +1,10 @@
 {
-  "_comentario": "Limites de pausa por motivo, em minutos. Valores iniciais, a confirmar com a gestão. O nome do motivo precisa bater com a descrição que vem da Argus. Motivo sem limite aqui usa padraoMin.",
+  "_comentario": "Limites de pausa por motivo, em minutos — os mesmos do BenURA (src/config/pausas.js). O motivo casa pelo início do nome, sem diferenciar maiúsculas nem acentos ('ALMOÇO 1' usa 'Almoço'). Motivo sem limite aqui usa padraoMin.",
   "padraoMin": 15,
   "limitesMin": {
-    "Lanche": 15,
+    "Almoço": 60,
+    "Descanso": 10,
     "Banheiro": 5,
-    "Feedback": 20,
-    "Treinamento": 45,
-    "Particular": 10
+    "Feedback": 15
   }
 }

@@ -10,9 +10,9 @@ export const agenteBrutoSchema = z.object({
   id: z.string().min(1),
   nome: z.string().min(1),
   ramal: z.string().min(1),
-  equipe: z.number().int().min(1).max(5),
-  lado: z.enum(['E', 'D']),
-  posicao: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
+  equipe: z.number().int().min(0).max(99),
+  lado: z.enum(['E', 'D']).optional(),
+  posicao: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
   supervisor: z.string(),
   /** Código de status como a Argus manda. Traduzido por `ArgusClient.mapaStatus`. */
   status: z.string().min(1),
@@ -60,6 +60,11 @@ export interface ArgusClient {
   listarAgentes(): Promise<unknown>;
   listarChamadasAtivas(): Promise<unknown>;
   listarMotivosPausa(): Promise<unknown>;
+  /**
+   * true quando a Argus não informa os atendimentos do dia por agente: o servidor conta pelo
+   * próprio histórico (status_eventos).
+   */
+  readonly contaAtendimentosPeloHistorico?: boolean;
   obterFila(): Promise<unknown>;
   obterCallbacks(): Promise<unknown>;
 }

@@ -106,6 +106,7 @@ export class CicloLeitura extends EventEmitter<EventosCiclo> {
       };
       registro.registrar(extrairStatus(leitura, argus.mapaStatus, avisar), agora);
       const pausas = registro.pausasDoDia(agora);
+      const atendimentos = argus.contaAtendimentosPeloHistorico ? registro.atendimentosDoDia(agora) : null;
       this.painel = normalizar(leitura, {
         agora,
         ultimaLeitura: agora,
@@ -113,6 +114,7 @@ export class CicloLeitura extends EventEmitter<EventosCiclo> {
         mapaStatus: argus.mapaStatus,
         limites,
         pausaDiaSeg: (id) => pausas.get(id) ?? 0,
+        ...(atendimentos ? { atendimentosDia: (id: string) => atendimentos.get(id) ?? 0 } : {}),
       });
       if (this.falhasSeguidas > 0)
         log.info({ falhas: this.falhasSeguidas }, 'Conexão com a Argus restabelecida');

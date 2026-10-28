@@ -132,3 +132,14 @@ describe('mascaramento', () => {
     }
   });
 });
+
+describe('limite de pausa (nomes reais da Argus)', () => {
+  it('casa pelo início do nome, sem acento nem maiúscula; o mais específico vence', async () => {
+    const { limiteDaPausa } = await import('../src/leitura/normalizador');
+    const limites = { padraoSeg: 900, porMotivoSeg: { Almoço: 3600, Descanso: 600, 'Descanso longo': 1200 } };
+    expect(limiteDaPausa('ALMOÇO 1', limites)).toBe(3600);
+    expect(limiteDaPausa('almoco', limites)).toBe(3600);
+    expect(limiteDaPausa('DESCANSO LONGO', limites)).toBe(1200);
+    expect(limiteDaPausa('Ginástica laboral', limites)).toBe(900);
+  });
+});

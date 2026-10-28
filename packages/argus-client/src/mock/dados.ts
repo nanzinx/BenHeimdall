@@ -77,12 +77,12 @@ export const CAMPANHAS = [
   'Ativo 1 · Cartão benefício',
 ];
 
+// Os mesmos motivos da Argus real (e do BenURA).
 export const MOTIVOS_PAUSA = [
-  { codigo: 'P01', descricao: 'Lanche' },
-  { codigo: 'P02', descricao: 'Banheiro' },
-  { codigo: 'P03', descricao: 'Feedback' },
-  { codigo: 'P04', descricao: 'Treinamento' },
-  { codigo: 'P05', descricao: 'Particular' },
+  { codigo: 'P01', descricao: 'Almoço' },
+  { codigo: 'P02', descricao: 'Descanso' },
+  { codigo: 'P03', descricao: 'Banheiro' },
+  { codigo: 'P04', descricao: 'Feedback' },
 ];
 
 export const DDDS = ['11', '11', '11', '13', '19', '21', '31', '41', '51', '71', '81', '85'];

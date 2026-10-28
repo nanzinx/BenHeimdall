@@ -6,6 +6,7 @@ import {
   listarLivres,
   listarPausas,
   nivelPausa,
+  rotuloEquipe,
   segundosDesde,
   type Agente,
   type Painel,
@@ -39,7 +40,7 @@ function LinhaAtendimento({ a }: { a: Agente }) {
       <div className="who">
         <b>{a.nome}</b>
         <small>
-          Equipe {a.equipe} · ramal {a.ramal}
+          {rotuloEquipe(a.equipe)} · ramal {a.ramal}
         </small>
       </div>
       <div className="client">
@@ -49,8 +50,8 @@ function LinhaAtendimento({ a }: { a: Agente }) {
           </span>
         ) : at?.codigoCliente ? (
           <span>
-            <b className="cod">{at.codigoCliente}</b> {at.clienteMascarado}{' '}
-            <span className="tel">· {at.telefoneMascarado}</span>
+            <b className="cod">{at.codigoCliente}</b> {at.clienteMascarado ?? ''}
+            {at.telefoneMascarado && <span className="tel"> · {at.telefoneMascarado}</span>}
           </span>
         ) : (
           <span className="restr">Cliente de outra equipe</span>
@@ -110,7 +111,7 @@ function LinhaLivre({ a, pos }: { a: Agente; pos: number }) {
           {a.nome}
         </b>
         <small>
-          Equipe {a.equipe} · ramal {a.ramal} ·{' '}
+          {rotuloEquipe(a.equipe)} · ramal {a.ramal} ·{' '}
           <span className="conv">
             conversão <b>{(conversao(a) * 100).toFixed(0)}%</b>
           </span>

@@ -1,19 +1,15 @@
 import type { ArgusClient } from './tipos';
 import { MockArgusClient } from './mock/MockArgusClient';
-import { RealArgusClient } from './real/RealArgusClient';
+import { RealArgusClient, type RealArgusOpcoes } from './real/RealArgusClient';
 
-export interface CriarArgusOpcoes {
-  modo: 'mock' | 'real';
-  baseUrl?: string;
-  token?: string;
-  mockFalha?: boolean;
-}
+export type CriarArgusOpcoes = { modo: 'mock' | 'real'; mockFalha?: boolean } & Partial<RealArgusOpcoes>;
 
 /** Escolhe o cliente pela variável ARGUS_MODE. */
-export function criarArgusClient(opcoes: CriarArgusOpcoes): ArgusClient {
-  if (opcoes.modo === 'real') {
-    if (!opcoes.baseUrl) throw new Error('ARGUS_BASE_URL é obrigatória com ARGUS_MODE=real.');
-    return new RealArgusClient({ baseUrl: opcoes.baseUrl, token: opcoes.token ?? '' });
+export function criarArgusClient({ modo, mockFalha, ...real }: CriarArgusOpcoes): ArgusClient {
+  if (modo === 'real') {
+    if (!real.baseUrl) throw new Error('ARGUS_BASE_URL é obrigatória com ARGUS_MODE=real.');
+    if (!real.token) throw new Error('ARGUS_TOKEN é obrigatório com ARGUS_MODE=real (o mesmo do BenURA).');
+    return new RealArgusClient({ ...real, baseUrl: real.baseUrl, token: real.token });
   }
-  return new MockArgusClient({ falha: opcoes.mockFalha });
+  return new MockArgusClient({ falha: mockFalha });
 }

@@ -7,9 +7,9 @@ salão e do detalhe de cada agente.
 
 O painel **só lê dados**: não transfere, não pausa e não desloga ninguém.
 
-> **Fase 1:** o sistema está completo com uma **Argus simulada** (`ARGUS_MODE=mock`). A ligação com
-> a API real da Argus (Fase 2) fica concentrada em um único arquivo:
-> `packages/argus-client/src/real/RealArgusClient.ts`.
+> Roda com a **Argus real** (`ARGUS_MODE=real`, mesmo token do BenURA) ou com uma **Argus simulada**
+> (`ARGUS_MODE=mock`, para testar telas). A ligação com a Argus fica isolada em
+> `packages/argus-client`.
 
 ---
 
@@ -27,8 +27,8 @@ O painel **só lê dados**: não transfere, não pausa e não desloga ninguém.
 - [Produção com PM2](#produção-com-pm2)
 - [Produção com Docker (imagem endurecida)](#produção-com-docker-imagem-endurecida)
 - [Proxy reverso e HTTPS](#proxy-reverso-e-https)
-- [Como trocar `ARGUS_MODE` para `real`](#como-trocar-argus_mode-para-real)
-- [O que falta para a Fase 2](#o-que-falta-para-a-fase-2)
+- [Ligar na Argus real (sair da simulação)](#ligar-na-argus-real-sair-da-simulação)
+- [O que ainda falta](#o-que-ainda-falta)
 - [Arquitetura](#arquitetura)
 - [Decisões tomadas](#decisões-tomadas)
 
@@ -160,27 +160,33 @@ Os mesmos nomes do BenURA, sempre com `npm run`:
 
 Todas ficam no `.env` da raiz (modelo em `.env.example`) e são validadas com Zod na partida.
 
-| Variável                  | Padrão                      | Descrição                                                                                     |
-| ------------------------- | --------------------------- | --------------------------------------------------------------------------------------------- |
-| `PORT`                    | `3020`                      | Porta do backend (o BenURA usa 3000–3010)                                                     |
-| `NODE_ENV`                | `development`               | `production` liga o cookie `Secure`, exige `SESSION_SECRET` e serve o front compilado         |
-| `ARGUS_MODE`              | `mock`                      | `mock` (simulada) ou `real` (Fase 2)                                                          |
-| `ARGUS_BASE_URL`          | —                           | URL da API da Argus (obrigatória com `real`)                                                  |
-| `ARGUS_TOKEN`             | —                           | Credencial da Argus (o formato depende da documentação)                                       |
-| `ARGUS_MOCK_FALHA`        | `false`                     | Só no mock: começa com a Argus fora do ar                                                     |
-| `POLL_MS`                 | `3000`                      | Intervalo do laço de leitura da Argus (ms)                                                    |
-| `DB_PATH`                 | `data/benheimdall.db`       | Arquivo SQLite (relativo à raiz)                                                              |
-| `SESSION_SECRET`          | aleatório em dev            | Assina o cookie de sessão. **Obrigatório em produção (32+ caracteres)**                       |
-| `SESSAO_MIN`              | `15`                        | Minutos sem uso até a sessão expirar (admin e supervisor)                                     |
-| `IPS_PERMITIDOS`          | IPs da Benconsig            | IPs/faixas (IPv4, IPv6, CIDR) que acessam o sistema. Vazio = sem restrição                    |
-| `TV_ALLOWED_IPS`          | —                           | IPs/faixas de onde o perfil `tv` pode entrar, separados por vírgula                           |
-| `ADMIN_USER`              | `renan.leite@benconsig.com` | E-mail do primeiro admin (criado só na primeira execução)                                     |
-| `ADMIN_SENHA_INICIAL`     | —                           | Senha inicial do primeiro admin. Se vazia, uma é gerada e aparece no log                      |
-| `TRUST_PROXY`             | `loopback`                  | Proxies confiáveis para achar o IP real (veja [Cloudflare](#publicação-no-cloudflare-tunnel)) |
-| `DEV_ALLOWED_HOSTS`       | —                           | Só em dev: domínios extras liberados no Vite (túnel nomeado)                                  |
-| `CLOUDFLARE_TUNNEL_TOKEN` | —                           | Só no Docker Compose com o perfil `cloudflare`: token do túnel                                |
-| `BIND_ADDR`               | `127.0.0.1`                 | Só no Docker Compose: endereço onde a porta é publicada                                       |
-| `LOG_LEVEL`               | `info`                      | Nível de log do pino                                                                          |
+| Variável                  | Padrão                              | Descrição                                                                                     |
+| ------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------- |
+| `PORT`                    | `3020`                              | Porta do backend (o BenURA usa 3000–3010)                                                     |
+| `NODE_ENV`                | `development`                       | `production` liga o cookie `Secure`, exige `SESSION_SECRET` e serve o front compilado         |
+| `ARGUS_MODE`              | `mock`                              | `mock` (simulada) ou `real` (Argus de verdade)                                                |
+| `ARGUS_BASE_URL`          | `https://argus.app.br/apiargus/cmd` | Endereço da API (`ARGUS_BASE`, do BenURA, também vale)                                        |
+| `ARGUS_CONCORRENCIA`      | `10`                                | `/statusoperador` ao mesmo tempo                                                              |
+| `ARGUS_CAMPANHAS_IDS`     | —                                   | Só operadores destas campanhas (vazio = todos)                                                |
+| `ARGUS_PAUSA_FILE`        | —                                   | Arquivo da pausa por limite (429), o mesmo do BenURA para valer para os dois                  |
+| `STATUS_*`                | padrão do BenURA                    | Textos de status da Argus (`LIVRE`, `ATENDIMENTO`, `POS_ATENDIMENTO`, `OFFLINE`)              |
+| `EQUIPES_FILE`            | `config/equipes.json`               | Supervisor → número da equipe (opcional)                                                      |
+| `BAIAS_FILE`              | `config/baias.json`                 | Ramal → baia (opcional)                                                                       |
+| `ARGUS_TOKEN`             | —                                   | Token da Argus (o mesmo do BenURA). Obrigatório com `real`                                    |
+| `ARGUS_MOCK_FALHA`        | `false`                             | Só no mock: começa com a Argus fora do ar                                                     |
+| `POLL_MS`                 | `3000`                              | Intervalo do laço de leitura da Argus (ms)                                                    |
+| `DB_PATH`                 | `data/benheimdall.db`               | Arquivo SQLite (relativo à raiz)                                                              |
+| `SESSION_SECRET`          | aleatório em dev                    | Assina o cookie de sessão. **Obrigatório em produção (32+ caracteres)**                       |
+| `SESSAO_MIN`              | `15`                                | Minutos sem uso até a sessão expirar (admin e supervisor)                                     |
+| `IPS_PERMITIDOS`          | IPs da Benconsig                    | IPs/faixas (IPv4, IPv6, CIDR) que acessam o sistema. Vazio = sem restrição                    |
+| `TV_ALLOWED_IPS`          | —                                   | IPs/faixas de onde o perfil `tv` pode entrar, separados por vírgula                           |
+| `ADMIN_USER`              | `renan.leite@benconsig.com`         | E-mail do primeiro admin (criado só na primeira execução)                                     |
+| `ADMIN_SENHA_INICIAL`     | —                                   | Senha inicial do primeiro admin. Se vazia, uma é gerada e aparece no log                      |
+| `TRUST_PROXY`             | `loopback`                          | Proxies confiáveis para achar o IP real (veja [Cloudflare](#publicação-no-cloudflare-tunnel)) |
+| `DEV_ALLOWED_HOSTS`       | —                                   | Só em dev: domínios extras liberados no Vite (túnel nomeado)                                  |
+| `CLOUDFLARE_TUNNEL_TOKEN` | —                                   | Só no Docker Compose com o perfil `cloudflare`: token do túnel                                |
+| `BIND_ADDR`               | `127.0.0.1`                         | Só no Docker Compose: endereço onde a porta é publicada                                       |
+| `LOG_LEVEL`               | `info`                              | Nível de log do pino                                                                          |
 
 Os limites de pausa por motivo ficam em `config/pausas.json` (valores iniciais, **a confirmar com
 a gestão**): Lanche 15 min, Banheiro 5, Feedback 20, Treinamento 45, Particular 10. Motivo sem
@@ -401,32 +407,58 @@ location / {
 }
 ```
 
-## Como trocar `ARGUS_MODE` para `real`
+## Ligar na Argus real (sair da simulação)
 
-1. Implementar `packages/argus-client/src/real/RealArgusClient.ts` (veja a seção seguinte).
-2. No `.env`: `ARGUS_MODE=real`, `ARGUS_BASE_URL=<url da API>`, `ARGUS_TOKEN=<credencial>`.
-3. Reiniciar (`pm2 reload benheimdall` ou `docker compose up -d`).
-4. Conferir `GET /api/saude`. Se a Argus não responder, o painel mostra o aviso de queda e tenta de
-   novo sozinho, com espera crescente até 30 s; o motivo aparece em `argus.ultimoErro`.
+No `.env` do PC ou do servidor:
 
-Hoje, com `ARGUS_MODE=real`, todos os métodos lançam `NotImplementedError`. O painel sobe, mas fica
-com o aviso "Sem conexão com a Argus".
+```
+ARGUS_MODE=real
+ARGUS_TOKEN=<o mesmo ARGUS_TOKEN do .env do BenURA>
+```
 
-## O que falta para a Fase 2
+Depois, reinicie (`npm run dev` em teste, `npm run servico:instalar` no servidor) e confira em
+`npm run servico:verificar` ou em <http://localhost:3020/health>: `"modo":"real","online":true`. Se a
+Argus não responder, o painel mostra o aviso de queda e tenta de novo sozinho; o motivo aparece em
+`argus.ultimoErro` (por exemplo, token recusado).
 
-Nada disso foi inventado. Ficou marcado com `TODO(Fase 2)` ou deixado configurável:
+**Como o BenHeimdall lê a Argus** (doc-api-argus.pdf, as mesmas regras do cliente do BenURA):
 
-- [ ] **Endpoints, autenticação e paginação** da API da Argus: cada método de `RealArgusClient`.
-- [ ] **Nomes reais de status** da Argus: preencher `RealArgusClient.mapaStatus`. Hoje, status
-      desconhecido vira OFFLINE e gera aviso no log.
-- [ ] **Código do cliente**: confirmar se a chamada ativa traz o código ou se é preciso cruzar pelo
-      telefone (hoje, sem código, aparece "—").
-- [ ] **Formato das respostas**: converter para os schemas de `packages/argus-client/src/tipos.ts`
-      (ou ajustar esses schemas, que são provisórios).
-- [ ] **Limites finais de pausa por motivo** (`config/pausas.json`), a confirmar com a gestão. Os nomes
-      precisam bater com as descrições de motivo da Argus.
+| O painel mostra                 | De onde vem                                                                               |
+| ------------------------------- | ----------------------------------------------------------------------------------------- |
+| Agentes (nome, ramal)           | `/listarusuarios` (operadores ativos), em cache de 5 min                                  |
+| Robôs fora do painel            | `/listargrupos`: ramais de grupos virtuais (DTMF/Flash) são ignorados                     |
+| Status, pausa e tempo no status | `/statusoperador` de cada ramal, a cada `POLL_MS` (3 s), até 10 ao mesmo tempo            |
+| Cliente em atendimento          | `ultimoLead` do `/statusoperador`: código, nome e telefone, mascarados. **CPF nunca sai** |
+| Equipe                          | supervisor do operador (`nomeUsuarioSupervisor`); número em `config/equipes.json`         |
+| Baia no mapa                    | `config/baias.json`; sem ele, as baias livres da equipe por ordem de ramal                |
+| Atendimentos do dia             | contados pelo histórico do BenHeimdall (entradas em "Atendendo")                          |
+
+- **Status:** "Em Atendimento" → Atendendo; "Tabulando" → Pós-atendimento; qualquer pausa → Em
+  pausa; "Livre" → Livre; deslogado (a Argus responde HTTP 500) → Offline. Os textos ficam no
+  `.env` (`STATUS_LIVRE`, `STATUS_ATENDIMENTO`, `STATUS_POS_ATENDIMENTO`, `STATUS_OFFLINE`), com os
+  mesmos nomes e padrões do BenURA. Texto desconhecido aparece no log uma vez; é só acrescentá-lo.
+- **Limites de pausa:** os mesmos do BenURA (Almoço 60, Descanso 10, Banheiro 5, Feedback 15
+  min), casando pelo início do nome: "ALMOÇO 1" usa o limite de Almoço.
+- **Equipes:** sem `config/equipes.json`, as equipes são numeradas em ordem alfabética do
+  supervisor. O filtro e o mapa mostram o nome do supervisor ao lado do número. Para fixar os
+  números (recomendado, porque as contas de supervisor do BenHeimdall usam esse número), copie
+  `config/equipes.example.json` para `config/equipes.json`.
+- **Limite de requisições:** o token é o mesmo do BenURA. Se a Argus responder 429, o BenHeimdall
+  pausa as leituras; com `ARGUS_PAUSA_FILE` apontando para o arquivo do BenURA, a pausa vale para
+  os dois.
+- **Falha pontual de um ramal:** mantém o último status lido por até 30 s; só vira "Argus fora"
+  se nenhum ramal responder.
+
+## O que ainda falta
+
+- [ ] **Vendas do dia e conversão:** a venda é uma tabulação, e o layout do relatório de
+      tabulações não está detalhado na documentação. Hoje a conversão mostra 0%; use a ordem
+      "Mais ocioso primeiro".
+- [ ] **Fila de espera e callbacks:** a API não tem esses números (e o painel não os mostra mais).
 - [ ] **PC e IP da Tela TV** (`TV_ALLOWED_IPS`).
-- [ ] **Compartilhar o `ArgusClient` com o BenUra?** O cliente já está isolado em
+- [ ] **Equipes e baias definitivas:** `config/equipes.json` e `config/baias.json`, quando o salão
+      estiver mapeado.
+- [ ] **Compartilhar o `ArgusClient` com o BenURA?** O cliente está isolado em
       `packages/argus-client`, sem dependência do resto do BenHeimdall.
 
 ## Arquitetura

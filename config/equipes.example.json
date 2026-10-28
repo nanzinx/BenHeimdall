@@ -1,0 +1,5 @@
+{
+  "_comentario": "Opcional. Copie para config/equipes.json para fixar o número de cada equipe. A chave é o NOME DO SUPERVISOR como aparece na Argus (maiúsculas e acentos não importam). Sem este arquivo, as equipes são numeradas em ordem alfabética do supervisor. Use os mesmos números nas contas de supervisor do BenHeimdall.",
+  "NOME DO SUPERVISOR DA EQUIPE 1": 1,
+  "NOME DO SUPERVISOR DA EQUIPE 2": 2
+}

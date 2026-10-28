@@ -21,6 +21,7 @@ export function inicioDoDia(agora: Date): Date {
 }
 
 const iso = (ms: number) => new Date(ms).toISOString();
+const TOLERANCIA_INICIO_MS = 5000;
 
 export class RegistroStatus {
   private readonly abertoStmt;
@@ -58,11 +59,13 @@ export class RegistroStatus {
         // O início nunca fica no futuro (relógios diferentes entre Argus e servidor).
         const inicioMs = Math.min(Date.parse(s.desde), agoraMs);
         const aberto = this.abertoStmt.get(s.agenteId);
+        // Mesmo status com início a menos de 5 s do anterior é a mesma ocorrência: na Argus real o
+        // início vem de "agora − tempoStatus" e varia alguns milissegundos a cada leitura.
         if (
           aberto &&
           aberto.status === s.status &&
           aberto.motivo === s.motivo &&
-          aberto.inicio === iso(inicioMs)
+          Math.abs(Date.parse(aberto.inicio) - inicioMs) < TOLERANCIA_INICIO_MS
         )
           continue;
         if (aberto) {
@@ -94,6 +97,18 @@ export class RegistroStatus {
     }
     for (const [k, v] of totais) totais.set(k, Math.floor(v));
     return totais;
+  }
+
+  /** Atendimentos de hoje por agente: quantas vezes entrou em ATENDENDO desde a meia-noite. */
+  atendimentosDoDia(agora: Date): Map<string, number> {
+    const linhas = this.db
+      .prepare<[string, string], { agente_id: string; n: number }>(
+        `SELECT agente_id, COUNT(*) AS n FROM status_eventos
+          WHERE status = 'ATENDENDO' AND inicio >= ? AND inicio <= ?
+          GROUP BY agente_id`,
+      )
+      .all(inicioDoDia(agora).toISOString(), agora.toISOString());
+    return new Map(linhas.map((l) => [l.agente_id, l.n]));
   }
 
   /** Linha do tempo de hoje do agente, recortada no início do dia. */

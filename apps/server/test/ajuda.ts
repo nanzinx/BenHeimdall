@@ -4,7 +4,7 @@ import { validarLeitura, type LimitesPausa } from '../src/leitura/normalizador';
 
 export const LIMITES: LimitesPausa = {
   padraoSeg: 900,
-  porMotivoSeg: { Lanche: 900, Banheiro: 300, Feedback: 1200, Treinamento: 2700, Particular: 600 },
+  porMotivoSeg: { Almoço: 3600, Descanso: 600, Banheiro: 300, Feedback: 900 },
 };
 
 export async function lerMock(mock: MockArgusClient) {

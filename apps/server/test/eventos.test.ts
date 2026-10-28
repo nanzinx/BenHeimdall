@@ -62,3 +62,15 @@ describe('status_eventos', () => {
     expect(reg.pausasDoDia(as(0, 5)).get('ag01')).toBe(5 * 60);
   });
 });
+
+describe('leituras da Argus real', () => {
+  it('início que varia milissegundos entre leituras não abre evento novo; atendimentos do dia contados', () => {
+    const reg = new RegistroStatus(abrirBanco(':memory:'));
+    const ms = (d: Date, n: number) => new Date(d.getTime() + n);
+    expect(reg.registrar([st('ATENDENDO', as(9))], as(9, 1))).toBe(1);
+    expect(reg.registrar([st('ATENDENDO', ms(as(9), 40))], as(9, 1, 3))).toBe(0);
+    reg.registrar([st('LIVRE', as(9, 5))], as(9, 5));
+    reg.registrar([st('ATENDENDO', as(9, 6))], as(9, 6));
+    expect(reg.atendimentosDoDia(as(10)).get('ag01')).toBe(2);
+  });
+});

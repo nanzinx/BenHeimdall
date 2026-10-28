@@ -19,6 +19,7 @@ const path = require('node:path');
 function lerEnv(arquivo) {
   if (!existsSync(arquivo)) return {};
   const env = {};
+  // A última ocorrência de cada variável vale (como no dotenv e no backend).
   for (const linha of readFileSync(arquivo, 'utf8').split(/\r?\n/)) {
     const m = linha.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
     if (!m) continue;

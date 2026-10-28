@@ -9,10 +9,19 @@ describe('configuração', () => {
     const dir = mkdtempSync(path.join(tmpdir(), 'benheimdall-env-'));
     try {
       const arquivo = path.join(dir, '.env');
-      writeFileSync(arquivo, '# comentário\r\nPORT=4000\nPOLL_MS="5000"\nTV_ALLOWED_IPS=10.0.0.5\n\nLIXO\n');
+      writeFileSync(
+        arquivo,
+        '# comentário\r\nPORT=4000\nPOLL_MS="5000"\nTV_ALLOWED_IPS=10.0.0.5\nARGUS_TOKEN=\n\nLIXO\nARGUS_TOKEN=abc\n',
+      );
       const env: NodeJS.ProcessEnv = { PORT: '3009' };
       expect(carregarDotenv(arquivo, env)).toBe(true);
-      expect(env).toMatchObject({ PORT: '3009', POLL_MS: '5000', TV_ALLOWED_IPS: '10.0.0.5' });
+      // Variável do sistema vale mais; no arquivo, a última ocorrência vale.
+      expect(env).toMatchObject({
+        PORT: '3009',
+        POLL_MS: '5000',
+        TV_ALLOWED_IPS: '10.0.0.5',
+        ARGUS_TOKEN: 'abc',
+      });
       expect(carregarDotenv(path.join(dir, 'nao-existe'), env)).toBe(false);
     } finally {
       rmSync(dir, { recursive: true, force: true });

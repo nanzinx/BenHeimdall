@@ -3,7 +3,7 @@ import { createContext, useContext } from 'react';
 import type { OrdemLivres } from '@benheimdall/shared';
 
 export interface EstadoUi {
-  equipe: number; // 0 = todas
+  equipe: number; // -1 = todas; 0 = sem equipe
   setEquipe(n: number): void;
   busca: string;
   setBusca(s: string): void;

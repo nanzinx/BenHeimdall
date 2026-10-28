@@ -93,7 +93,30 @@ export interface ContextoNormalizacao {
   limites: LimitesPausa;
   /** Total de pausa do dia do agente até `agora`, calculado a partir de `status_eventos`. */
   pausaDiaSeg: (agenteId: string) => number;
+  /** Quando a Argus não informa, os atendimentos do dia vêm do histórico (status_eventos). */
+  atendimentosDia?: (agenteId: string) => number;
   aoDesconhecerStatus?: (codigo: string) => void;
+}
+
+const semAcento = (s: string) =>
+  s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+
+/**
+ * Limite do motivo de pausa. Casa pelo início do nome, sem diferenciar maiúsculas nem acentos,
+ * como no BenURA: "ALMOÇO 1" usa o limite de "Almoço". O mais específico (mais longo) vence.
+ */
+export function limiteDaPausa(motivo: string, limites: LimitesPausa): number {
+  const m = semAcento(motivo);
+  let melhor: { chave: string; seg: number } | null = null;
+  for (const [chave, seg] of Object.entries(limites.porMotivoSeg)) {
+    const c = semAcento(chave);
+    if (c && m.startsWith(c) && (!melhor || c.length > melhor.chave.length)) melhor = { chave: c, seg };
+  }
+  return melhor?.seg ?? limites.padraoSeg;
 }
 
 export function normalizar(leitura: LeituraArgus, ctx: ContextoNormalizacao): Painel {
@@ -109,19 +132,18 @@ export function normalizar(leitura: LeituraArgus, ctx: ContextoNormalizacao): Pa
       nome: a.nome,
       ramal: a.ramal,
       equipe: a.equipe,
-      lado: a.lado,
-      posicao: a.posicao,
+      ...(a.lado && a.posicao ? { lado: a.lado, posicao: a.posicao } : {}),
       supervisor: a.supervisor,
       status: st.status,
       desde: new Date(a.desde).toISOString(),
-      dia: { atendimentos: a.atendimentosDia, vendas: a.vendasDia },
+      dia: { atendimentos: ctx.atendimentosDia?.(a.id) ?? a.atendimentosDia, vendas: a.vendasDia },
     };
 
     if (st.status === 'PAUSA') {
       const motivo = st.motivo ?? 'Sem motivo';
       agente.pausa = {
         motivo,
-        limiteSeg: ctx.limites.porMotivoSeg[motivo] ?? ctx.limites.padraoSeg,
+        limiteSeg: limiteDaPausa(motivo, ctx.limites),
         totalDiaSeg: ctx.pausaDiaSeg(a.id),
       };
     }
@@ -129,10 +151,11 @@ export function normalizar(leitura: LeituraArgus, ctx: ContextoNormalizacao): Pa
     const c = chamadas.get(a.id);
     if (c && (st.status === 'ATENDENDO' || st.status === 'POS_ATENDIMENTO')) {
       agente.atendimento = {
-        // TODO(Fase 2): se a Argus não mandar o código, cruzar pelo telefone.
-        codigoCliente: c.codigoCliente ?? '—',
-        clienteMascarado: primeiroNome(c.nomeCliente),
-        telefoneMascarado: mascararTelefone(c.telefone),
+        // A Argus manda o codCliente informado na importação do lead; sem ele, "—".
+        codigoCliente: c.codigoCliente || '—',
+        // Sem lead aberto (ou campo vazio), o dado simplesmente não vai.
+        ...(c.nomeCliente.trim() ? { clienteMascarado: primeiroNome(c.nomeCliente) } : {}),
+        ...(c.telefone.replace(/\D/g, '') ? { telefoneMascarado: mascararTelefone(c.telefone) } : {}),
         campanha: c.campanha,
         inicio: new Date(c.inicio).toISOString(),
       };

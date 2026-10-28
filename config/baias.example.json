@@ -1,0 +1,6 @@
+{
+  "_comentario": "Opcional. Copie para config/baias.json para fixar onde cada ramal senta. lado: E (esquerda) ou D (direita); posicao: 1 a 4, sendo a 1 a baia junto da mesa do supervisor. Ramal fora deste arquivo ocupa as baias livres da equipe por ordem de ramal.",
+  "2101": { "lado": "E", "posicao": 1 },
+  "2102": { "lado": "E", "posicao": 2 },
+  "2105": { "lado": "D", "posicao": 1 }
+}

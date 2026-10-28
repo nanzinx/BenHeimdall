@@ -5,6 +5,7 @@ import {
   ROTULO_STATUS,
   formatarDuracao,
   nivelPausa,
+  rotuloEquipe,
   segundosDesde,
   type DetalheAgente as Detalhe,
   type Painel,
@@ -50,7 +51,9 @@ export function DetalheAgente({ painel }: { painel: Painel | undefined }) {
     const at = a.atendimento;
     if (a.status === 'ATENDENDO' && at)
       resumo = at.codigoCliente
-        ? `Cód. ${at.codigoCliente} · ${at.clienteMascarado} · ${at.telefoneMascarado} · ${at.campanha}`
+        ? [`Cód. ${at.codigoCliente}`, at.clienteMascarado, at.telefoneMascarado, at.campanha]
+            .filter(Boolean)
+            .join(' · ')
         : `Cliente de outra equipe · ${at.campanha}`;
     else if (a.status === 'POS_ATENDIMENTO' && at) resumo = `Tabulando · ${at.campanha}`;
     else resumo = `desde ${hhmm(a.desde)}`;
@@ -69,7 +72,9 @@ export function DetalheAgente({ painel }: { painel: Painel | undefined }) {
             <h2>{a?.nome ?? 'Agente'}</h2>
             {a && (
               <p>
-                Equipe {a.equipe} · baia {a.lado === 'E' ? 'esquerda' : 'direita'} {a.posicao} · ramal{' '}
+                {rotuloEquipe(a.equipe)}
+                {a.supervisor ? ` · supervisor ${a.supervisor}` : ''}
+                {a.lado ? ` · baia ${a.lado === 'E' ? 'esquerda' : 'direita'} ${a.posicao}` : ''} · ramal{' '}
                 {a.ramal}
               </p>
             )}

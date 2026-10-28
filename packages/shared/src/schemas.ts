@@ -43,7 +43,7 @@ export const novoUsuarioSchema = z
     // A Tela TV também entra por e-mail (ex.: tv.salao@benconsig.com), mesmo sem caixa de entrada.
     usuario: emailLoginSchema,
     perfil: z.enum(['admin', 'supervisor', 'tv']),
-    equipe: z.number().int().min(1).max(5).nullable().optional(),
+    equipe: z.number().int().min(1).max(99).nullable().optional(),
   })
   .refine((u) => u.perfil !== 'supervisor' || (u.equipe ?? null) !== null, {
     message: 'Supervisor precisa de uma equipe.',
@@ -62,9 +62,9 @@ export const agenteSchema = z
     id: z.string().min(1),
     nome: z.string().min(1),
     ramal: z.string(),
-    equipe: z.number().int().min(1).max(5),
-    lado: z.enum(['E', 'D']),
-    posicao: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
+    equipe: z.number().int().min(0).max(99),
+    lado: z.enum(['E', 'D']).optional(),
+    posicao: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
     supervisor: z.string(),
     status: z.enum(['ATENDENDO', 'POS_ATENDIMENTO', 'PAUSA', 'LIVRE', 'OFFLINE']),
     desde: iso,
