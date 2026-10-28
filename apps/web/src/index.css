@@ -435,7 +435,7 @@ header.top::after {
 /* ---------- indicadores ---------- */
 .kpis {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
   margin-top: 12px;
 }
@@ -682,7 +682,6 @@ header.top::after {
   font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  text-wrap: balance;
 }
 .col-h .count {
   font-family: var(--f-display);
@@ -1597,7 +1596,7 @@ body.tv .row.atend {
 /* ---------- responsivo ---------- */
 @media (max-width: 1100px) {
   .kpis {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
   .board {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

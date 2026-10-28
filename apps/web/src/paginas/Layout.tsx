@@ -117,7 +117,7 @@ export function Layout() {
         <AvisoArgus painel={painel} agora={agora} />
         {painel ? (
           <>
-            <Indicadores painel={painel} agentes={agentes} agora={agora} />
+            <Indicadores agentes={agentes} agora={agora} />
             {!modoTv && <BarraFerramentas admin={usuario.perfil === 'admin'} />}
             {/* No modo TV a vista é sempre o painel (as abas ficam escondidas). */}
             {modoTv ? (
