@@ -1,5 +1,7 @@
 // Ponto de entrada do backend.
 import { criarArgusClient } from '@benheimdall/argus-client';
+import { Repositorio } from './acesso/repositorio';
+import { ServicoAcesso } from './acesso/servico';
 import { criarApp } from './app';
 import { carregarConfig } from './config';
 import { abrirBanco } from './db/banco';
@@ -9,14 +11,30 @@ import { criarLog } from './log';
 
 const config = carregarConfig();
 const log = criarLog(config.logLevel, config.producao);
+if (!process.env.SESSION_SECRET)
+  log.warn('SESSION_SECRET vazio: usando um segredo aleatório (as sessões caem a cada reinício).');
+
 const db = abrirBanco(config.dbPath);
 const registro = new RegistroStatus(db);
+const servico = new ServicoAcesso(new Repositorio(db), {
+  sessaoMin: config.sessaoMin,
+  tvIps: config.tvIps,
+  log,
+});
 const argus = criarArgusClient(config.argus);
 const ciclo = new CicloLeitura({ argus, registro, limites: config.limites, pollMs: config.pollMs, log });
 
-const { http } = criarApp({ config, db, argus, ciclo, registro, log });
+const senhaGerada = await servico.garantirAdminInicial(config.adminUser, config.adminSenhaInicial);
+if (senhaGerada)
+  log.warn(
+    { usuario: config.adminUser, senhaTemporaria: senhaGerada },
+    'Primeiro admin criado com senha gerada (troca obrigatória)',
+  );
+
+const { http, io } = criarApp({ config, db, argus, ciclo, registro, servico, log });
 
 ciclo.iniciar();
+const varredura = setInterval(() => servico.varrerExpiradas(), 60_000);
 http.listen(config.porta, () => {
   log.info(
     { porta: config.porta, argus: argus.modo, pollMs: config.pollMs, db: config.dbPath },
@@ -27,6 +45,8 @@ http.listen(config.porta, () => {
 function encerrar(sinal: string) {
   log.info({ sinal }, 'Encerrando');
   ciclo.parar();
+  clearInterval(varredura);
+  void io.close();
   http.close(() => {
     db.close();
     process.exit(0);

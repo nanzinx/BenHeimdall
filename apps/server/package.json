@@ -14,6 +14,7 @@
     "@benheimdall/shared": "workspace:*",
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.11.1",
+    "cookie": "^1.0.2",
     "cookie-parser": "^1.4.7",
     "express": "^5.1.0",
     "pino": "^9.14.0",
