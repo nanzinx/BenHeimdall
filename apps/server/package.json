@@ -11,8 +11,8 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@benheimdall/argus-client": "workspace:*",
-    "@benheimdall/shared": "workspace:*",
+    "@benheimdall/argus-client": "*",
+    "@benheimdall/shared": "*",
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.11.1",

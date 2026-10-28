@@ -35,7 +35,7 @@ const booleano = z
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.coerce.number().int().positive().default(3001),
+  PORT: z.coerce.number().int().positive().default(3020),
   ARGUS_MODE: z.enum(['mock', 'real']).default('mock'),
   ARGUS_BASE_URL: z.string().default(''),
   ARGUS_TOKEN: z.string().default(''),

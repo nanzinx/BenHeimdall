@@ -1,5 +1,5 @@
 node_modules
 dist
 data
-pnpm-lock.yaml
+package-lock.json
 docs/prototipo-benheimdall.html

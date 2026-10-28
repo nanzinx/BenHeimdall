@@ -21,6 +21,7 @@ O painel **só lê dados**: não transfere, não pausa e não desloga ninguém.
 - [Comandos](#comandos)
 - [Variáveis de ambiente](#variáveis-de-ambiente)
 - [Perfis e acesso](#perfis-e-acesso)
+- [Servidor Windows (igual ao BenURA)](#servidor-windows-igual-ao-benura)
 - [Restrição por IP](#restrição-por-ip)
 - [Publicação no Cloudflare (Tunnel)](#publicação-no-cloudflare-tunnel)
 - [Produção com PM2](#produção-com-pm2)
@@ -35,11 +36,17 @@ O painel **só lê dados**: não transfere, não pausa e não desloga ninguém.
 
 ## Requisitos
 
-- Node.js **20 ou mais novo** (testado com 20 e 22)
-- pnpm **10** (`corepack enable` já ativa a versão certa, definida em `package.json`)
+- Node.js **20 ou mais novo** (recomendado: 22 LTS). O **npm** já vem com o Node, como no BenURA.
 - Windows, macOS ou Linux. O `better-sqlite3` e o `bcrypt` baixam binários prontos na instalação;
   só se não houver binário para a sua versão do Node é preciso compilar (Linux/macOS: `python3`,
-  `make` e `g++`; Windows: "Visual Studio Build Tools" com C++). Instalar com Node 20 ou 22 LTS evita isso.
+  `make` e `g++`; Windows: "Visual Studio Build Tools" com C++).
+
+### Portas (convivência com o BenURA no mesmo servidor)
+
+| Sistema     | Portas                                                               |
+| ----------- | -------------------------------------------------------------------- |
+| BenURA      | 3000 (rodízio), 3001 (roteador), 3002, 3003 (rotinas), 3010 (painel) |
+| BenHeimdall | **3020** (backend) e **5180** (Vite, só em `npm run dev`)            |
 
 ## Instalação e desenvolvimento
 
@@ -48,15 +55,15 @@ cp .env.example .env
 ```
 
 ```bash
-pnpm install
+npm install
 ```
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
-- Front: <http://localhost:5173> (o Vite repassa `/api` e `/socket.io` para o backend)
-- Backend: <http://localhost:3001>
+- Front: <http://localhost:5180> (o Vite repassa `/api` e `/socket.io` para o backend)
+- Backend: <http://localhost:3020> (saúde em `/health`, como nos serviços do BenURA)
 
 No primeiro acesso, entre com `ADMIN_USER` / `ADMIN_SENHA_INICIAL` do `.env` (padrão:
 `admin` / `troque-no-primeiro-acesso`). O sistema exige a troca da senha logo em seguida. Depois,
@@ -68,48 +75,41 @@ fora do ar, use `ARGUS_MOCK_FALHA=true`. O aviso aparece e o painel volta sozinh
 
 ## Validação no seu PC
 
-Para validar o sistema na sua máquina (Windows, macOS ou Linux), com a Argus simulada:
+Para validar na sua máquina (Windows, macOS ou Linux), com a Argus simulada. No Windows, use o
+PowerShell:
 
-1. Instale o [Node.js 22 LTS](https://nodejs.org) e ative o pnpm:
+1. Instale o Node.js LTS (se `node -v` não responder):
 
-   ```bash
-   corepack enable
+   ```powershell
+   winget install OpenJS.NodeJS.LTS
    ```
 
-2. Clone o repositório, entre na pasta e copie o modelo de configuração:
+   Feche e abra o PowerShell depois de instalar.
 
-   ```bash
-   git clone https://github.com/nanzinx/BenHeimdall.git && cd BenHeimdall
+2. Entre na pasta do BenHeimdall e copie o modelo de configuração:
+
+   ```powershell
+   cd C:\BenHeimdall
    ```
 
-   ```bash
-   cp .env.example .env
+   ```powershell
+   Copy-Item .env.example .env
    ```
-
-   No PowerShell do Windows, o segundo comando é `Copy-Item .env.example .env`.
 
 3. Instale e suba:
 
-   ```bash
-   pnpm install
+   ```powershell
+   npm install
    ```
 
-   ```bash
-   pnpm dev
+   ```powershell
+   npm run dev
    ```
 
-4. Abra <http://localhost:5173>, entre com `admin` / `troque-no-primeiro-acesso` e troque a senha.
+4. Abra <http://localhost:5180>, entre com `admin` / `troque-no-primeiro-acesso` e troque a senha.
 
-**No Windows, se o PowerShell disser que `pnpm` não é reconhecido:** o `corepack enable` pode não
-funcionar (precisa de administrador, e versões novas do Node não trazem o corepack). Instale o
-pnpm pelo npm, feche e abra o PowerShell, e confira com `pnpm -v`:
-
-```powershell
-npm install -g pnpm@10
-```
-
-Se aparecer "a execução de scripts foi desabilitada neste sistema", libere os scripts só para o seu
-usuário:
+Se o PowerShell disser que "a execução de scripts foi desabilitada neste sistema", libere os
+scripts só para o seu usuário e rode o comando de novo:
 
 ```powershell
 Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
@@ -119,28 +119,37 @@ O acesso pela própria máquina (`localhost`) sempre entra, mesmo com `IPS_PERMI
 
 **Mostrar para outra pessoa sem publicar nada:** com o
 [`cloudflared`](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/)
-instalado, rode em outro terminal, com o `pnpm dev` no ar:
+instalado (`winget install Cloudflare.cloudflared`), rode em outro terminal, com o `npm run dev` no ar:
 
-```bash
-pnpm dev:tunel
+```powershell
+npm run dev:tunel
 ```
 
 Ele imprime um endereço `https://<algo>.trycloudflare.com` temporário, que aponta para o seu
-`pnpm dev`. Quem abrir esse endereço só entra se o IP estiver em `IPS_PERMITIDOS`. O endereço
+`npm run dev`. Quem abrir esse endereço só entra se o IP estiver em `IPS_PERMITIDOS`. O endereço
 muda a cada execução.
 
 ## Comandos
 
-| Comando           | O que faz                                                                   |
-| ----------------- | --------------------------------------------------------------------------- |
-| `pnpm dev`        | Sobe backend (tsx watch) e front (Vite) com recarga automática              |
-| `pnpm test`       | Roda todos os testes (Vitest)                                               |
-| `pnpm lint`       | ESLint em tudo + checagem de tipos (`tsc`) em cada pacote                   |
-| `pnpm format`     | Formata com o Prettier                                                      |
-| `pnpm build`      | Compila o front (`apps/web/dist`) e o backend (`apps/server/dist/index.js`) |
-| `pnpm start`      | Roda o backend compilado (em produção ele também serve o front)             |
-| `pnpm dev:tunel`  | Túnel rápido do Cloudflare para o `pnpm dev` (precisa do `cloudflared`)     |
-| `pnpm prod:tunel` | Túnel rápido do Cloudflare para o backend compilado (porta 3001)            |
+Os mesmos nomes do BenURA, sempre com `npm run`:
+
+| Comando                       | O que faz                                                                   |
+| ----------------------------- | --------------------------------------------------------------------------- |
+| `npm run dev`                 | Sobe backend e front com recarga automática (Argus simulada)                |
+| `npm test`                    | Roda todos os testes (Vitest)                                               |
+| `npm run lint`                | ESLint em tudo + checagem de tipos (`tsc`) em cada pacote                   |
+| `npm run format`              | Formata com o Prettier                                                      |
+| `npm run build`               | Compila o front (`apps/web/dist`) e o backend (`apps/server/dist/index.js`) |
+| `npm start`                   | Roda o backend compilado (em produção ele também serve o front)             |
+| `npm run pm2:iniciar`         | Sobe (ou reinicia) o `benheimdall` no PM2, em produção                      |
+| `npm run pm2:parar`           | Para o `benheimdall` no PM2 (o vigia respeita e não religa)                 |
+| `npm run pm2:logs`            | Últimas linhas do log no PM2                                                |
+| `npm run servico:instalar`    | Windows: compila, sobe no PM2 e cria a tarefa "BenHeimdall" (administrador) |
+| `npm run servico:verificar`   | Windows: mostra tarefa, PM2, `/health` e túnel. Não muda nada               |
+| `npm run servico:desinstalar` | Windows: remove a tarefa "BenHeimdall" (administrador)                      |
+| `npm run tunel:instalar`      | Windows: Cloudflare Tunnel. Reaproveita o túnel do BenURA, se houver        |
+| `npm run dev:tunel`           | Túnel rápido do Cloudflare para o `npm run dev` (precisa do `cloudflared`)  |
+| `npm run prod:tunel`          | Túnel rápido do Cloudflare para o backend compilado (porta 3020)            |
 
 ## Variáveis de ambiente
 
@@ -148,7 +157,7 @@ Todas ficam no `.env` da raiz (modelo em `.env.example`) e são validadas com Zo
 
 | Variável                  | Padrão                | Descrição                                                                                     |
 | ------------------------- | --------------------- | --------------------------------------------------------------------------------------------- |
-| `PORT`                    | `3001`                | Porta do backend                                                                              |
+| `PORT`                    | `3020`                | Porta do backend (o BenURA usa 3000–3010)                                                     |
 | `NODE_ENV`                | `development`         | `production` liga o cookie `Secure`, exige `SESSION_SECRET` e serve o front compilado         |
 | `ARGUS_MODE`              | `mock`                | `mock` (simulada) ou `real` (Fase 2)                                                          |
 | `ARGUS_BASE_URL`          | —                     | URL da API da Argus (obrigatória com `real`)                                                  |
@@ -210,88 +219,123 @@ IP recusado vai para o log. A lista vem configurada com os IPs da operação:
 - Atrás do Cloudflare ou de outro proxy, o IP conferido é o do cliente, desde que `TRUST_PROXY`
   esteja certo (próxima seção). Se `TRUST_PROXY` estiver vazio com o túnel na mesma máquina, todo
   acesso parece vir de `127.0.0.1` e entraria; o log avisa na partida.
-- Em `pnpm dev` a lista vale para API e Socket.IO. A casca do front (HTML/JS, sem dados) é servida
+- Em `npm run dev` a lista vale para API e Socket.IO. A casca do front (HTML/JS, sem dados) é servida
   pelo Vite. Em produção o backend serve tudo, e a lista vale para tudo.
+
+## Servidor Windows (igual ao BenURA)
+
+O BenHeimdall roda no mesmo servidor Windows do BenURA, do mesmo jeito: PM2 instalado no próprio
+projeto (`npx pm2`), uma tarefa no Agendador de Tarefas que sobe tudo ao ligar o PC (mesmo sem
+ninguém logado) e um vigia a cada 5 min.
+
+No PowerShell **como administrador**, na pasta do BenHeimdall (ex.: `C:\BenHeimdall`):
+
+1. Instale as dependências:
+
+   ```powershell
+   npm ci
+   ```
+
+2. Copie e revise o `.env`: `NODE_ENV=production`, `ADMIN_SENHA_INICIAL`, `TV_ALLOWED_IPS` e
+   `IPS_PERMITIDOS` (já vem com os IPs da operação):
+
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+   ```powershell
+   notepad .env
+   ```
+
+3. Instale o serviço. Ele compila, sobe o `benheimdall` no PM2, troca o `SESSION_SECRET` do exemplo
+   por um aleatório e cria a tarefa "BenHeimdall" (pede a senha do usuário do Windows):
+
+   ```powershell
+   npm run servico:instalar
+   ```
+
+4. Confira:
+
+   ```powershell
+   npm run servico:verificar
+   ```
+
+Convivência com o BenURA:
+
+- **Mesmo PM2:** os dois usam o PM2 do mesmo usuário. Os scripts do BenHeimdall só mexem no
+  processo `benheimdall`; o `servico:desinstalar` daqui nunca faz `pm2 delete all`.
+- **Portas diferentes:** 3020 aqui, 3000 a 3010 no BenURA.
+- **Mesmo túnel da Cloudflare:** veja a próxima seção.
+
+Atualizar para uma versão nova:
+
+```powershell
+git pull
+```
+
+```powershell
+npm ci
+```
+
+```powershell
+npm run servico:instalar
+```
+
+Os logs ficam em `logs\benheimdall.out.log`, `logs\benheimdall.err.log` e
+`logs\servico-windows.log` (vigia). Para ver ao vivo: `npm run pm2:logs`.
+
+- **Uma única instância, em modo fork.** O BenHeimdall tem um único laço de leitura da Argus e o
+  Socket.IO guarda as conexões em memória. Cluster ou várias instâncias duplicariam as leituras.
+- Reinício com espera crescente se o processo cair, limite de 400 MB de memória e 5 s para encerrar
+  com calma (fecha o banco).
+
+Em servidor Linux, o mesmo `npm run pm2:iniciar` funciona; para subir com o sistema, use
+`npx pm2 save` e `npx pm2 startup`.
 
 ## Publicação no Cloudflare (Tunnel)
 
 O BenHeimdall precisa de um processo Node rodando o tempo todo (o laço de leitura da Argus), de
 SQLite e de WebSocket. Por isso ele **não roda no Cloudflare Pages nem em Workers**. O caminho é o
 **Cloudflare Tunnel**: o `cloudflared`, no servidor, abre uma conexão de saída com a Cloudflare e
-publica o sistema com HTTPS, **sem abrir porta** no servidor nem no firewall.
+publica o sistema com HTTPS, **sem abrir porta** no roteador.
 
-**No painel Cloudflare Zero Trust** (Networks → Tunnels):
+**Cada PC tem um único serviço `cloudflared`.** Se o BenURA já tem o túnel dele neste servidor, o
+BenHeimdall usa o **mesmo túnel**: só se acrescenta um endereço. O `npm run tunel:instalar` daqui
+detecta isso e não troca nada (o do BenURA troca o serviço existente; o daqui só com `-Substituir`).
 
-1. Crie um túnel e copie o token.
-2. Em _Public Hostname_, crie, por exemplo, `heimdall.seudominio.com.br` apontando para o serviço:
-   - PM2 no servidor: `http://localhost:3001`;
-   - Docker Compose: `http://benheimdall:3001`.
+1. No PowerShell como administrador:
 
-   WebSocket já vem habilitado no túnel.
+   ```powershell
+   npm run tunel:instalar
+   ```
 
-**Opção A: servidor com PM2**
+   - Se já houver túnel (o do BenURA): nada é instalado, e o script mostra o que fazer no painel.
+   - Se não houver: instala o `cloudflared` (winget) e pede o token do túnel, igual ao BenURA.
 
-```bash
-cloudflared service install <TOKEN_DO_TUNEL>
-```
+2. No painel **Cloudflare Zero Trust → Networks → Tunnels → (o túnel) → Public Hostname**, adicione:
+   - **Hostname:** `heimdall.benconsig.com.br` (sugestão);
+   - **Service:** `HTTP`, URL `localhost:3020`.
 
-Com o BenHeimdall no PM2 (seção seguinte) e, no `.env`, `NODE_ENV=production` e
-`TRUST_PROXY=loopback`.
+   WebSocket já vem ligado no túnel.
 
-**Opção B: Docker Compose**
-
-```bash
-docker compose --profile cloudflare up -d --build
-```
-
-Com `CLOUDFLARE_TUNNEL_TOKEN=<token>` e `TRUST_PROXY=loopback,uniquelocal` no `.env`. O container
-do `cloudflared` também roda endurecido (somente leitura, sem capabilities). Nesse caso a porta
-publicada em `BIND_ADDR` pode até ser removida do compose.
+3. No `.env`: `NODE_ENV=production` e `TRUST_PROXY=loopback` (padrão). Depois, `npm run servico:instalar`.
 
 Cuidados:
 
-- A Cloudflare repassa o IP do visitante em `X-Forwarded-For`. Com `TRUST_PROXY` apontando só para
-  o `cloudflared` (loopback ou a rede do Docker), o backend usa esse IP em `IPS_PERMITIDOS`,
-  `TV_ALLOWED_IPS` e no log de acessos.
+- A Cloudflare repassa o IP do visitante em `X-Forwarded-For`. Com `TRUST_PROXY=loopback` (o
+  `cloudflared` roda no mesmo PC), o backend usa esse IP em `IPS_PERMITIDOS`, `TV_ALLOWED_IPS` e no
+  log de acessos.
 - O IP da Tela TV, visto pela Cloudflare, é o **IP público da rede** de onde a TV sai. Coloque esse
   IP em `TV_ALLOWED_IPS`.
-- Camada extra recomendada: uma regra de WAF na Cloudflare liberando só esses mesmos IPs (ou
-  Cloudflare Access na frente). Assim o tráfego de fora nem chega ao servidor.
+- Camada extra recomendada: uma regra de WAF na Cloudflare liberando só os IPs de `IPS_PERMITIDOS`
+  (ou o Cloudflare Access, como no BenURA). Assim o tráfego de fora nem chega ao servidor.
 - As rotas `/api` respondem com `Cache-Control: no-store`; a Cloudflare não guarda dados do painel.
 - O cookie `Secure` funciona porque o visitante usa HTTPS na Cloudflare.
 
-## Produção com PM2
-
-O arquivo `ecosystem.config.cjs` sobe o BenHeimdall no PM2, ao lado dos outros sistemas do
-servidor. Ele lê o `.env` da raiz.
-
-```bash
-cp .env.example .env   # e preencha: NODE_ENV=production, SESSION_SECRET, ADMIN_SENHA_INICIAL, TV_ALLOWED_IPS, PORT livre
-```
-
-```bash
-pnpm install --frozen-lockfile && pnpm build
-```
-
-```bash
-pm2 start ecosystem.config.cjs --env production
-```
-
-```bash
-pm2 save && pm2 startup
-```
-
-O `pm2 startup` imprime um comando para rodar como root; ele faz o PM2 voltar sozinho depois de
-reiniciar o servidor.
-
-- **Uma única instância, em modo fork.** O BenHeimdall tem um único laço de leitura da Argus e o
-  Socket.IO guarda as conexões em memória. Cluster ou várias instâncias duplicariam as leituras.
-- Reinício com espera crescente se o processo cair, limite de 400 MB de memória e 5 s para encerrar
-  com calma (fecha o banco no `SIGINT`).
-- Logs em `logs/benheimdall.out.log` e `logs/benheimdall.err.log`. Para girar os logs:
-  `pm2 install pm2-logrotate`.
-- Atualizar: `git pull && pnpm install --frozen-lockfile && pnpm build && pm2 reload benheimdall`.
-- Se a porta 3001 já for usada por outro sistema, mude `PORT` no `.env`.
+**Com Docker** (em vez do PM2): `docker compose --profile cloudflare up -d --build`, com
+`CLOUDFLARE_TUNNEL_TOKEN=<token>` e `TRUST_PROXY=loopback,uniquelocal` no `.env`, e o Public
+Hostname apontando para `http://benheimdall:3020`. O container do `cloudflared` também roda
+endurecido (somente leitura, sem capabilities).
 
 ## Produção com Docker (imagem endurecida)
 
@@ -339,7 +383,7 @@ Exemplo mínimo para o nginx:
 
 ```nginx
 location / {
-  proxy_pass http://127.0.0.1:3001;
+  proxy_pass http://127.0.0.1:3020;
   proxy_http_version 1.1;
   proxy_set_header Upgrade $http_upgrade;
   proxy_set_header Connection "upgrade";
@@ -482,7 +526,8 @@ simples:
 
 22. Em produção, o backend serve o front compilado (mesma origem do cookie). Em desenvolvimento, o
     Vite faz proxy.
-23. O backend de produção é um bundle do esbuild (`apps/server/dist/index.js`). Toda dependência npm
+23. **npm**, como no BenURA (antes era pnpm): workspaces do npm, `npm run ...` e PM2 instalado no
+    projeto. O backend de produção é um bundle do esbuild (`apps/server/dist/index.js`). Toda dependência npm
     dos pacotes do workspace também fica declarada no `package.json` do servidor, para existir uma
     única cópia em produção.
 24. A simulação de queda (`/api/dev`) só existe no modo mock **fora de produção**.

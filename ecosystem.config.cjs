@@ -1,8 +1,13 @@
 // Configuração do PM2 para rodar o BenHeimdall no servidor, ao lado dos outros sistemas.
 //
-//   pnpm install --frozen-lockfile && pnpm build
-//   pm2 start ecosystem.config.cjs --env production
-//   pm2 save && pm2 startup          # volta sozinho depois de reiniciar o servidor
+//   npm ci && npm run build
+//   npm run pm2:iniciar      (ou: npx pm2 startOrRestart ecosystem.config.cjs --env production)
+//   npm run pm2:logs
+//   npm run pm2:parar
+//
+// No Windows (como no BenURA), npm run servico:instalar faz tudo isso e cria a tarefa
+// "BenHeimdall" no Agendador, que sobe o painel ao ligar o PC. Em Linux: npx pm2 save && npx pm2 startup.
+// O PM2 é compartilhado com o BenURA no mesmo servidor: aqui só existe o processo "benheimdall".
 //
 // IMPORTANTE: uma única instância, em modo fork. O BenHeimdall tem UM laço de leitura da Argus
 // e o Socket.IO guarda as conexões em memória; cluster ou várias instâncias duplicariam as

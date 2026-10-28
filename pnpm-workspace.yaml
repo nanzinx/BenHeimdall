@@ -1,9 +1,0 @@
-packages:
-  - apps/*
-  - packages/*
-
-# Dependências com binário nativo que precisam rodar o script de instalação.
-onlyBuiltDependencies:
-  - better-sqlite3
-  - bcrypt
-  - esbuild

@@ -65,7 +65,8 @@ export function criarApp(deps: Dependencias) {
 
   const simulacao = !producao && argus instanceof MockArgusClient;
 
-  app.get('/api/saude', (_req, res) => {
+  // /health: mesmo endereço de saúde dos serviços do BenUra (scripts do Windows, túnel).
+  app.get(['/api/saude', '/health'], (_req, res) => {
     const e = ciclo.estado();
     const banco = bancoOk(db);
     const corpo: Saude = {
