@@ -5,6 +5,7 @@ import { useSessao } from './hooks/useSessao';
 import { Layout } from './paginas/Layout';
 import { Login } from './paginas/Login';
 import { PaginaPainel } from './paginas/PaginaPainel';
+import { PaginaSalao } from './paginas/PaginaSalao';
 import { TrocarSenha } from './paginas/TrocarSenha';
 
 /** Sem sessão, tudo vai para /login; com troca de senha pendente, para /trocar-senha. */
@@ -32,6 +33,7 @@ export function App() {
         }
       >
         <Route path="/painel" element={<PaginaPainel />} />
+        <Route path="/salao" element={<PaginaSalao />} />
       </Route>
       <Route path="*" element={<Navigate to="/painel" replace />} />
     </Routes>
