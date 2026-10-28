@@ -1,7 +1,12 @@
 // Regras de acesso: login, sessão, bloqueio, troca obrigatória de senha, IP da TV e
 // administração de contas. Tudo que acontece aqui fica registrado na tabela `acessos`.
 import { createHash, randomBytes } from 'node:crypto';
-import type { NovoUsuarioEntrada, SessaoAtual, UsuarioPublico } from '@benheimdall/shared';
+import {
+  nomeDoEmail,
+  type NovoUsuarioEntrada,
+  type SessaoAtual,
+  type UsuarioPublico,
+} from '@benheimdall/shared';
 import type { Log } from '../log';
 import { Repositorio, usuarioPublico, type LinhaUsuario } from './repositorio';
 import { normalizarIp, type ListaIps } from './ips';
@@ -80,7 +85,7 @@ export class ServicoAcesso {
     const senha = senhaInicial || gerarSenhaTemporaria();
     this.repo.criarUsuario({
       usuario,
-      nome: 'Administrador',
+      nome: nomeDoEmail(usuario),
       perfil: 'admin',
       equipe: null,
       hash: await gerarHash(senha, this.custo),

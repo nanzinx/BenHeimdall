@@ -135,13 +135,13 @@ describe('login', () => {
     const { sessao: sAdmin } = await amb.servico.entrar('chefe', adminConta.senha);
     const { usuario, senhaTemporaria } = await amb.servico.criarUsuario(sAdmin.usuario, {
       nome: 'Juliana',
-      usuario: 'sup.juliana',
+      usuario: 'juliana.mendes@benconsig.com',
       perfil: 'supervisor',
       equipe: 1,
     });
     expect(usuario.trocaSenha).toBe(true);
 
-    const login = await amb.servico.entrar('sup.juliana', senhaTemporaria);
+    const login = await amb.servico.entrar('juliana.mendes@benconsig.com', senhaTemporaria);
     expect(login.sessao.usuario.trocaSenha).toBe(true);
     const valida = amb.servico.validar(login.token, { renovar: true });
     if (!valida.ok) throw new Error('sessão deveria ser válida');
@@ -156,17 +156,27 @@ describe('login', () => {
 
     const { senhaTemporaria: outra } = await amb.servico.novaSenha(sAdmin.usuario, usuario.id);
     expect(amb.servico.validar(login.token, { renovar: false }).ok).toBe(false); // sessões antigas caem
-    await expect(amb.servico.entrar('sup.juliana', 'nova-senha-123')).rejects.toBeInstanceOf(ErroAcesso);
-    expect((await amb.servico.entrar('sup.juliana', outra)).sessao.usuario.trocaSenha).toBe(true);
+    await expect(amb.servico.entrar('juliana.mendes@benconsig.com', 'nova-senha-123')).rejects.toBeInstanceOf(
+      ErroAcesso,
+    );
+    expect((await amb.servico.entrar('juliana.mendes@benconsig.com', outra)).sessao.usuario.trocaSenha).toBe(
+      true,
+    );
   });
 
-  it('cria o primeiro admin uma única vez, com troca obrigatória', async () => {
+  it('cria o primeiro admin uma única vez, pelo e-mail, com troca obrigatória', async () => {
     const amb = criarAmbiente();
-    expect(await amb.servico.garantirAdminInicial('admin', 'senha-inicial')).toBeNull();
-    expect(await amb.servico.garantirAdminInicial('admin', 'outra')).toBeNull();
+    const email = 'renan.leite@benconsig.com';
+    expect(await amb.servico.garantirAdminInicial(email, 'senha-inicial')).toBeNull();
+    expect(await amb.servico.garantirAdminInicial('outro@benconsig.com', 'outra')).toBeNull();
     const lista = amb.servico.listarUsuarios();
     expect(lista).toHaveLength(1);
-    expect(lista[0]).toMatchObject({ usuario: 'admin', perfil: 'admin', trocaSenha: true });
-    await expect(amb.servico.entrar('admin', 'senha-inicial')).resolves.toHaveProperty('token');
+    expect(lista[0]).toMatchObject({
+      usuario: email,
+      nome: 'Renan Leite',
+      perfil: 'admin',
+      trocaSenha: true,
+    });
+    await expect(amb.servico.entrar(email, 'senha-inicial')).resolves.toHaveProperty('token');
   });
 });

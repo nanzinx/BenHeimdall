@@ -65,8 +65,9 @@ npm run dev
 - Front: <http://localhost:5180> (o Vite repassa `/api` e `/socket.io` para o backend)
 - Backend: <http://localhost:3020> (saúde em `/health`, como nos serviços do BenURA)
 
+**Todo login é um e-mail** (admin, supervisor e TV), sem diferença entre maiúsculas e minúsculas.
 No primeiro acesso, entre com `ADMIN_USER` / `ADMIN_SENHA_INICIAL` do `.env` (padrão:
-`admin` / `troque-no-primeiro-acesso`). O sistema exige a troca da senha logo em seguida. Depois,
+`renan.leite@benconsig.com` / `troque-no-primeiro-acesso`). O sistema exige a troca da senha logo em seguida. Depois,
 crie supervisores e a conta da TV em **Usuários e acessos**.
 
 **Simular a queda da Argus:** no modo mock, use o botão **Simular queda da Argus (15 s)** no topo
@@ -106,7 +107,11 @@ PowerShell:
    npm run dev
    ```
 
-4. Abra <http://localhost:5180>, entre com `admin` / `troque-no-primeiro-acesso` e troque a senha.
+4. Abra <http://localhost:5180>, entre com `renan.leite@benconsig.com` / `troque-no-primeiro-acesso`
+   e troque a senha.
+
+   O primeiro admin só é criado com o banco vazio. Se você já tinha subido o sistema antes (com o
+   usuário `admin`), apague o banco de teste e suba de novo: `Remove-Item -Recurse -Force data`.
 
 Se o PowerShell disser que "a execução de scripts foi desabilitada neste sistema", libere os
 scripts só para o seu usuário e rode o comando de novo:
@@ -155,27 +160,27 @@ Os mesmos nomes do BenURA, sempre com `npm run`:
 
 Todas ficam no `.env` da raiz (modelo em `.env.example`) e são validadas com Zod na partida.
 
-| Variável                  | Padrão                | Descrição                                                                                     |
-| ------------------------- | --------------------- | --------------------------------------------------------------------------------------------- |
-| `PORT`                    | `3020`                | Porta do backend (o BenURA usa 3000–3010)                                                     |
-| `NODE_ENV`                | `development`         | `production` liga o cookie `Secure`, exige `SESSION_SECRET` e serve o front compilado         |
-| `ARGUS_MODE`              | `mock`                | `mock` (simulada) ou `real` (Fase 2)                                                          |
-| `ARGUS_BASE_URL`          | —                     | URL da API da Argus (obrigatória com `real`)                                                  |
-| `ARGUS_TOKEN`             | —                     | Credencial da Argus (o formato depende da documentação)                                       |
-| `ARGUS_MOCK_FALHA`        | `false`               | Só no mock: começa com a Argus fora do ar                                                     |
-| `POLL_MS`                 | `3000`                | Intervalo do laço de leitura da Argus (ms)                                                    |
-| `DB_PATH`                 | `data/benheimdall.db` | Arquivo SQLite (relativo à raiz)                                                              |
-| `SESSION_SECRET`          | aleatório em dev      | Assina o cookie de sessão. **Obrigatório em produção (32+ caracteres)**                       |
-| `SESSAO_MIN`              | `15`                  | Minutos sem uso até a sessão expirar (admin e supervisor)                                     |
-| `IPS_PERMITIDOS`          | IPs da Benconsig      | IPs/faixas (IPv4, IPv6, CIDR) que acessam o sistema. Vazio = sem restrição                    |
-| `TV_ALLOWED_IPS`          | —                     | IPs/faixas de onde o perfil `tv` pode entrar, separados por vírgula                           |
-| `ADMIN_USER`              | `admin`               | Usuário do primeiro admin (criado só na primeira execução)                                    |
-| `ADMIN_SENHA_INICIAL`     | —                     | Senha inicial do primeiro admin. Se vazia, uma é gerada e aparece no log                      |
-| `TRUST_PROXY`             | `loopback`            | Proxies confiáveis para achar o IP real (veja [Cloudflare](#publicação-no-cloudflare-tunnel)) |
-| `DEV_ALLOWED_HOSTS`       | —                     | Só em dev: domínios extras liberados no Vite (túnel nomeado)                                  |
-| `CLOUDFLARE_TUNNEL_TOKEN` | —                     | Só no Docker Compose com o perfil `cloudflare`: token do túnel                                |
-| `BIND_ADDR`               | `127.0.0.1`           | Só no Docker Compose: endereço onde a porta é publicada                                       |
-| `LOG_LEVEL`               | `info`                | Nível de log do pino                                                                          |
+| Variável                  | Padrão                      | Descrição                                                                                     |
+| ------------------------- | --------------------------- | --------------------------------------------------------------------------------------------- |
+| `PORT`                    | `3020`                      | Porta do backend (o BenURA usa 3000–3010)                                                     |
+| `NODE_ENV`                | `development`               | `production` liga o cookie `Secure`, exige `SESSION_SECRET` e serve o front compilado         |
+| `ARGUS_MODE`              | `mock`                      | `mock` (simulada) ou `real` (Fase 2)                                                          |
+| `ARGUS_BASE_URL`          | —                           | URL da API da Argus (obrigatória com `real`)                                                  |
+| `ARGUS_TOKEN`             | —                           | Credencial da Argus (o formato depende da documentação)                                       |
+| `ARGUS_MOCK_FALHA`        | `false`                     | Só no mock: começa com a Argus fora do ar                                                     |
+| `POLL_MS`                 | `3000`                      | Intervalo do laço de leitura da Argus (ms)                                                    |
+| `DB_PATH`                 | `data/benheimdall.db`       | Arquivo SQLite (relativo à raiz)                                                              |
+| `SESSION_SECRET`          | aleatório em dev            | Assina o cookie de sessão. **Obrigatório em produção (32+ caracteres)**                       |
+| `SESSAO_MIN`              | `15`                        | Minutos sem uso até a sessão expirar (admin e supervisor)                                     |
+| `IPS_PERMITIDOS`          | IPs da Benconsig            | IPs/faixas (IPv4, IPv6, CIDR) que acessam o sistema. Vazio = sem restrição                    |
+| `TV_ALLOWED_IPS`          | —                           | IPs/faixas de onde o perfil `tv` pode entrar, separados por vírgula                           |
+| `ADMIN_USER`              | `renan.leite@benconsig.com` | E-mail do primeiro admin (criado só na primeira execução)                                     |
+| `ADMIN_SENHA_INICIAL`     | —                           | Senha inicial do primeiro admin. Se vazia, uma é gerada e aparece no log                      |
+| `TRUST_PROXY`             | `loopback`                  | Proxies confiáveis para achar o IP real (veja [Cloudflare](#publicação-no-cloudflare-tunnel)) |
+| `DEV_ALLOWED_HOSTS`       | —                           | Só em dev: domínios extras liberados no Vite (túnel nomeado)                                  |
+| `CLOUDFLARE_TUNNEL_TOKEN` | —                           | Só no Docker Compose com o perfil `cloudflare`: token do túnel                                |
+| `BIND_ADDR`               | `127.0.0.1`                 | Só no Docker Compose: endereço onde a porta é publicada                                       |
+| `LOG_LEVEL`               | `info`                      | Nível de log do pino                                                                          |
 
 Os limites de pausa por motivo ficam em `config/pausas.json` (valores iniciais, **a confirmar com
 a gestão**): Lanche 15 min, Banheiro 5, Feedback 20, Treinamento 45, Particular 10. Motivo sem
@@ -195,6 +200,9 @@ e o cliente só pelo primeiro nome.
 
 Regras de acesso:
 
+- **Login por e-mail** em todas as contas. O e-mail é guardado em minúsculas e o nome é sugerido a
+  partir dele (`juliana.mendes@…` → "Juliana Mendes"). A Tela TV também usa um e-mail, por exemplo
+  `tv.salao@benconsig.com`.
 - Senhas com **bcrypt**. Sessão em cookie **httpOnly**, **SameSite=Strict** e **Secure** em produção,
   validada a cada requisição. O banco guarda só o hash SHA-256 do token.
 - **5 senhas erradas** bloqueiam o usuário por **5 min**.

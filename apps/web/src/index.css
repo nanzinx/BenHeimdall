@@ -1451,7 +1451,18 @@ header.top::after {
 .tbl tbody tr:hover {
   background: var(--surface-2);
 }
+.tbl td.email {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tbl .pendente {
+  display: block;
+  font-size: 11px;
+  margin-top: 2px;
+}
 .acts {
+  flex-wrap: wrap;
   display: flex;
   gap: 6px;
   justify-content: flex-end;

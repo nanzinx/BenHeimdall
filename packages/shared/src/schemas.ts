@@ -1,10 +1,29 @@
 // Schemas Zod das entradas da API (validadas no backend; o front reaproveita as mensagens).
 import { z } from 'zod';
 
-export const usuarioRegex = /^[a-z0-9._-]{3,30}$/;
+/**
+ * Login padronizado: toda conta (admin, supervisor e TV) entra com um e-mail, sem diferença
+ * entre maiúsculas e minúsculas. O campo continua se chamando `usuario` na API e no banco.
+ */
+export const emailLoginSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(1, 'Informe o e-mail.')
+  .max(254, 'E-mail longo demais.')
+  .email('Informe um e-mail válido, como nome.sobrenome@benconsig.com.');
+
+/** "renan.leite@benconsig.com" → "Renan Leite" (nome sugerido a partir do e-mail). */
+export function nomeDoEmail(email: string): string {
+  const local = email.split('@')[0] ?? '';
+  const partes = local.split(/[._-]+/).filter(Boolean);
+  if (!partes.length) return email;
+  return partes.map((p) => p.charAt(0).toLocaleUpperCase('pt-BR') + p.slice(1)).join(' ');
+}
 
 export const loginSchema = z.object({
-  usuario: z.string().trim().toLowerCase().min(1, 'Informe o usuário.'),
+  // No login só normaliza (sem exigir formato de e-mail): a mensagem de erro é sempre a mesma.
+  usuario: z.string().trim().toLowerCase().min(1, 'Informe o e-mail.'),
   senha: z.string().min(1, 'Informe a senha.'),
 });
 
@@ -21,14 +40,8 @@ export const trocarSenhaSchema = z.object({
 export const novoUsuarioSchema = z
   .object({
     nome: z.string().trim().min(1, 'Informe o nome da pessoa ou da tela.').max(60),
-    usuario: z
-      .string()
-      .trim()
-      .toLowerCase()
-      .regex(
-        usuarioRegex,
-        'Usuário com 3 a 30 caracteres: letras minúsculas, números, ponto, hífen ou sublinhado.',
-      ),
+    // A Tela TV também entra por e-mail (ex.: tv.salao@benconsig.com), mesmo sem caixa de entrada.
+    usuario: emailLoginSchema,
     perfil: z.enum(['admin', 'supervisor', 'tv']),
     equipe: z.number().int().min(1).max(5).nullable().optional(),
   })

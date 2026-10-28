@@ -65,3 +65,18 @@ describe('faixas e formatação', () => {
     expect(formatarDuracao(3725)).toBe('1:02:05');
   });
 });
+
+describe('login por e-mail', () => {
+  it('sugere o nome a partir do e-mail', async () => {
+    const { nomeDoEmail, novoUsuarioSchema } = await import('../src');
+    expect(nomeDoEmail('renan.leite@benconsig.com')).toBe('Renan Leite');
+    expect(nomeDoEmail('tv_salao@benconsig.com')).toBe('Tv Salao');
+    const ok = novoUsuarioSchema.parse({
+      nome: 'R',
+      usuario: ' Renan.Leite@Benconsig.com ',
+      perfil: 'admin',
+    });
+    expect(ok.usuario).toBe('renan.leite@benconsig.com');
+    expect(() => novoUsuarioSchema.parse({ nome: 'R', usuario: 'renan', perfil: 'admin' })).toThrow();
+  });
+});

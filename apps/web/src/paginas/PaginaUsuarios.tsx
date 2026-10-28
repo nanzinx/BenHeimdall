@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   EQUIPES,
   ROTULO_PERFIL,
+  nomeDoEmail,
   novoUsuarioSchema,
   type Perfil,
   type RegistroAcesso,
@@ -92,7 +93,7 @@ export function PaginaUsuarios() {
             <thead>
               <tr>
                 <th>Nome</th>
-                <th>Usuário</th>
+                <th>E-mail</th>
                 <th>Perfil</th>
                 <th>Último acesso</th>
                 <th>Situação</th>
@@ -105,7 +106,9 @@ export function PaginaUsuarios() {
               {lista.map((u) => (
                 <tr key={u.id}>
                   <td>{u.nome}</td>
-                  <td className="mono">{u.usuario}</td>
+                  <td className="email" title={u.usuario}>
+                    {u.usuario}
+                  </td>
                   <td>
                     {ROTULO_PERFIL[u.perfil]}
                     {u.perfil === 'supervisor' && u.equipe ? ` · Eq. ${u.equipe}` : ''}
@@ -115,7 +118,9 @@ export function PaginaUsuarios() {
                     <span className={`badge ${u.ativo ? 'on' : 'off'}`}>
                       {u.ativo ? 'Ativa' : 'Desativada'}
                     </span>
-                    {u.ativo && u.trocaSenha && <small className="restr"> · troca pendente</small>}
+                    {u.ativo && u.trocaSenha && (
+                      <small className="restr pendente">troca de senha pendente</small>
+                    )}
                   </td>
                   <td>
                     <div className="acts">
@@ -247,23 +252,31 @@ function NovaConta({ aoCriar }: { aoCriar: (r: ComSenha) => void }) {
   return (
     <form className="fnovo" onSubmit={enviar} noValidate>
       <label>
+        E-mail (é o login)
+        <input
+          type="email"
+          inputMode="email"
+          value={usuario}
+          onChange={(e) => setUsuario(e.target.value)}
+          // Sem nome digitado, sugere a partir do e-mail: juliana.mendes@… → Juliana Mendes.
+          onBlur={() => {
+            const email = usuario.trim().toLowerCase();
+            if (!nome.trim() && email.includes('@')) setNome(nomeDoEmail(email));
+          }}
+          maxLength={254}
+          placeholder="Ex.: juliana.mendes@benconsig.com"
+          autoComplete="off"
+          autoCapitalize="none"
+          spellCheck={false}
+        />
+      </label>
+      <label>
         Nome
         <input
           value={nome}
           onChange={(e) => setNome(e.target.value)}
           maxLength={60}
           placeholder="Ex.: Juliana Mendes"
-        />
-      </label>
-      <label>
-        Usuário
-        <input
-          value={usuario}
-          onChange={(e) => setUsuario(e.target.value)}
-          maxLength={30}
-          placeholder="Ex.: sup.juliana"
-          autoComplete="off"
-          autoCapitalize="none"
         />
       </label>
       <label>

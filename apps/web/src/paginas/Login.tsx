@@ -20,7 +20,7 @@ export function Login() {
     setErro('');
     const dados = loginSchema.safeParse({ usuario, senha });
     if (!dados.success) {
-      setErro('Informe usuário e senha.');
+      setErro('Informe e-mail e senha.');
       return;
     }
     setEnviando(true);
@@ -53,12 +53,16 @@ export function Login() {
         </div>
         <p className="login-lead">Acesso restrito a supervisores e administradores.</p>
         <label>
-          Usuário
+          E-mail
           <input
+            type="email"
+            inputMode="email"
             value={usuario}
             onChange={(e) => setUsuario(e.target.value)}
+            placeholder="nome.sobrenome@benconsig.com"
             autoComplete="username"
             autoCapitalize="none"
+            spellCheck={false}
             autoFocus
             required
           />

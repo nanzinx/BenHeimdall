@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
+import { emailLoginSchema } from '@benheimdall/shared';
 import { criarListaIps, lerListaIps } from './acesso/ips';
 import type { LimitesPausa } from './leitura/normalizador';
 
@@ -46,7 +47,8 @@ const envSchema = z.object({
   SESSAO_MIN: z.coerce.number().int().positive().default(15),
   TV_ALLOWED_IPS: z.string().default(''),
   IPS_PERMITIDOS: z.string().default(''),
-  ADMIN_USER: z.string().trim().toLowerCase().default('admin'),
+  // E-mail do primeiro admin (os logins são todos por e-mail).
+  ADMIN_USER: emailLoginSchema.default('renan.leite@benconsig.com'),
   ADMIN_SENHA_INICIAL: z.string().default(''),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   PAUSAS_PATH: z.string().default('config/pausas.json'),

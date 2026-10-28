@@ -19,6 +19,14 @@ describe('configuração', () => {
     }
   });
 
+  it('ADMIN_USER precisa ser um e-mail (login padronizado)', () => {
+    expect(carregarConfig({}).adminUser).toBe('renan.leite@benconsig.com');
+    expect(carregarConfig({ ADMIN_USER: ' Renan.Leite@Benconsig.com ' }).adminUser).toBe(
+      'renan.leite@benconsig.com',
+    );
+    expect(() => carregarConfig({ ADMIN_USER: 'admin' })).toThrow(/e-mail válido/);
+  });
+
   it('TRUST_PROXY aceita saltos, listas e desligado', () => {
     expect(carregarConfig({ TRUST_PROXY: '' }).trustProxy).toBe(false);
     expect(carregarConfig({ TRUST_PROXY: '1' }).trustProxy).toBe(1);

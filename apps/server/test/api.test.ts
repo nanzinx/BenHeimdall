@@ -86,14 +86,29 @@ describe('API', () => {
     const criada = await request(app)
       .post('/api/usuarios')
       .set('Cookie', cookie)
-      .send({ nome: 'Juliana', usuario: 'sup.juliana', perfil: 'supervisor', equipe: 2 });
+      .send({ nome: 'Juliana', usuario: 'juliana.mendes@benconsig.com', perfil: 'supervisor', equipe: 2 });
     expect(criada.status).toBe(201);
     expect(criada.body.senhaTemporaria).toHaveLength(10);
     const semEquipe = await request(app)
       .post('/api/usuarios')
       .set('Cookie', cookie)
-      .send({ nome: 'X', usuario: 'sup.x', perfil: 'supervisor' });
+      .send({ nome: 'X', usuario: 'sup.x@benconsig.com', perfil: 'supervisor' });
     expect(semEquipe.status).toBe(400);
+    // Login padronizado por e-mail: nome de usuário solto é recusado.
+    const semEmail = await request(app)
+      .post('/api/usuarios')
+      .set('Cookie', cookie)
+      .send({ nome: 'X', usuario: 'sup.solto', perfil: 'supervisor', equipe: 1 });
+    expect(semEmail.status).toBe(400);
+    expect(semEmail.body.mensagem).toMatch(/e-mail válido/);
+    // E-mail com maiúsculas é guardado em minúsculas e entra digitado de qualquer jeito.
+    const tv = await request(app)
+      .post('/api/usuarios')
+      .set('Cookie', cookie)
+      .send({ nome: 'TV', usuario: 'TV.Salao@Benconsig.com', perfil: 'tv' });
+    expect(tv.body.usuario.usuario).toBe('tv.salao@benconsig.com');
+    const { res: entrouTv } = await entrar('Tv.Salao@BENCONSIG.com', tv.body.senhaTemporaria);
+    expect(entrouTv.status).toBe(200);
     const log = await request(app).get('/api/acessos').set('Cookie', cookie);
     expect(log.body.map((l: { evento: string }) => l.evento)).toContain('Conta criada');
 
