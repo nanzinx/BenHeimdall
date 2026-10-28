@@ -6,6 +6,24 @@ import {
   type SessaoAtual,
 } from '@benheimdall/shared';
 
+/** O olho de Heimdall: vigia o salão inteiro. */
+export function Marca() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round">
+      <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" stroke="#fff" />
+      <circle cx="12" cy="12" r="3.2" fill="#F5C400" />
+    </svg>
+  );
+}
+
+const iniciais = (nome: string) =>
+  nome
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]!.toUpperCase())
+    .join('');
+
 interface Props {
   painel: Painel | undefined;
   agora: number;
@@ -27,6 +45,9 @@ export function Topo({ painel, agora, sessao, modoTv, onModoTv, onSair }: Props)
     <header className="top">
       <div className="wrap">
         <div className="brand">
+          <span className="brand-mark" aria-hidden="true">
+            <Marca />
+          </span>
           <b>
             Ben<i>Heimdall</i>
           </b>
@@ -50,10 +71,15 @@ export function Topo({ painel, agora, sessao, modoTv, onModoTv, onSair }: Props)
           </button>
         )}
         <div className="userbox">
-          <span>{usuario.nome}</span>
-          <span className="role">
-            {ROTULO_PERFIL[usuario.perfil]}
-            {usuario.perfil === 'supervisor' && usuario.equipe ? ` · Equipe ${usuario.equipe}` : ''}
+          <span className="avatar" aria-hidden="true">
+            {iniciais(usuario.nome)}
+          </span>
+          <span className="quem">
+            <b>{usuario.nome}</b>
+            <span className="role">
+              {ROTULO_PERFIL[usuario.perfil]}
+              {usuario.perfil === 'supervisor' && usuario.equipe ? ` · Equipe ${usuario.equipe}` : ''}
+            </span>
           </span>
           <span
             className={`sess mono${restante !== null && restante < 60 ? ' low' : ''}`}

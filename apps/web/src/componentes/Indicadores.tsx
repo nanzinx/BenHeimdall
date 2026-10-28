@@ -40,6 +40,7 @@ export function Indicadores({
       valor: c.PAUSA,
       sub: acima ? `${acima} acima do limite` : 'todas no limite',
       cor: acima ? 'var(--st-crit)' : 'var(--st-pausa)',
+      classe: acima ? 'alarme' : undefined,
     },
     { rotulo: 'Livres', valor: c.LIVRE, sub: 'prontos p/ transferência', cor: 'var(--st-livre)' },
     { rotulo: 'Offline', valor: c.OFFLINE, sub: 'deslogados', cor: 'var(--st-off)' },
@@ -62,7 +63,10 @@ export function Indicadores({
           style={{ '--c': i.cor } as React.CSSProperties}
         >
           <span className="lab">{i.rotulo}</span>
-          <span className="val">{i.valor}</span>
+          {/* A chave muda com o valor: o número "salta" quando muda. */}
+          <span className="val" key={i.valor}>
+            {i.valor}
+          </span>
           <span className="sub">{i.sub}</span>
         </div>
       ))}

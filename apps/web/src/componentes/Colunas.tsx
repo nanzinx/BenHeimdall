@@ -35,7 +35,7 @@ function LinhaAtendimento({ a }: { a: Agente }) {
   const pos = a.status === 'POS_ATENDIMENTO';
   const at = a.atendimento;
   return (
-    <li className={`row atend${flash}`} {...props}>
+    <li className={`row atend${pos ? ' em-pos' : ''}${flash}`} {...props}>
       <div className="who">
         <b>{a.nome}</b>
         <small>
@@ -49,7 +49,8 @@ function LinhaAtendimento({ a }: { a: Agente }) {
           </span>
         ) : at?.codigoCliente ? (
           <span>
-            <b className="cod">{at.codigoCliente}</b> {at.clienteMascarado} · {at.telefoneMascarado}
+            <b className="cod">{at.codigoCliente}</b> {at.clienteMascarado}{' '}
+            <span className="tel">· {at.telefoneMascarado}</span>
           </span>
         ) : (
           <span className="restr">Cliente de outra equipe</span>
@@ -58,7 +59,10 @@ function LinhaAtendimento({ a }: { a: Agente }) {
       </div>
       <div className="timer">
         {formatarDuracao(segundosDesde(a.desde, agora))}
-        <small>{pos ? 'pós-atend.' : 'em ligação'}</small>
+        <small>
+          {!pos && <span className="ao-vivo" aria-hidden="true" />}
+          {pos ? 'pós-atend.' : 'em ligação'}
+        </small>
       </div>
     </li>
   );
@@ -160,7 +164,7 @@ export function Colunas({ painel, agentes }: { painel: Painel; agentes: Agente[]
 
       <div className="col s-LIVRE">
         <div className="col-h">
-          <h2>Livres para transferência</h2>
+          <h2 title="Livres para transferência">Livres p/ transferência</h2>
           <span className="count">{livres.length}</span>
           <select
             aria-label="Ordenar livres"

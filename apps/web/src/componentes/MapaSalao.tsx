@@ -18,7 +18,7 @@ function Baia({ a, visivel }: { a: Agente | undefined; visivel: boolean }) {
     return <div className="seat s-OFFLINE" style={{ opacity: 0.25, cursor: 'default' }} aria-hidden="true" />;
 
   let st: string = a.status;
-  let linha = ROTULO_STATUS[a.status];
+  let linha = a.status === 'POS_ATENDIMENTO' ? 'Tabulando' : ROTULO_STATUS[a.status];
   if (a.status === 'PAUSA') {
     if (a.pausa && nivelPausa(segundosDesde(a.desde, agora), a.pausa.limiteSeg) === 'critico') st = 'CRIT';
     linha = a.pausa?.motivo ?? 'Pausa';

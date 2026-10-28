@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { loginSchema } from '@benheimdall/shared';
 import { ErroApi } from '../api/cliente';
+import { Marca } from '../componentes/Topo';
 import { useSessao } from '../hooks/useSessao';
 
 export function Login() {
@@ -38,6 +39,13 @@ export function Login() {
     <section className="gate" aria-label="Entrar no painel">
       <form className="login" onSubmit={enviar} noValidate>
         <div className="login-brand">
+          <span
+            className="brand-mark"
+            style={{ background: 'var(--brand)', marginBottom: 8 }}
+            aria-hidden="true"
+          >
+            <Marca />
+          </span>
           <b>
             Ben<i>Heimdall</i>
           </b>
