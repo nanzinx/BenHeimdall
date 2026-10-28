@@ -40,3 +40,52 @@ export const novoUsuarioSchema = z
 export type LoginEntrada = z.infer<typeof loginSchema>;
 export type TrocarSenhaEntrada = z.infer<typeof trocarSenhaSchema>;
 export type NovoUsuarioEntrada = z.infer<typeof novoUsuarioSchema>;
+
+// Schema do Painel. Usado nos testes para garantir que o backend só entrega dados válidos.
+const iso = z.string().datetime({ offset: true });
+
+export const agenteSchema = z
+  .object({
+    id: z.string().min(1),
+    nome: z.string().min(1),
+    ramal: z.string(),
+    equipe: z.number().int().min(1).max(5),
+    lado: z.enum(['E', 'D']),
+    posicao: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
+    supervisor: z.string(),
+    status: z.enum(['ATENDENDO', 'POS_ATENDIMENTO', 'PAUSA', 'LIVRE', 'OFFLINE']),
+    desde: iso,
+    pausa: z
+      .object({
+        motivo: z.string().optional(),
+        limiteSeg: z.number().nonnegative(),
+        totalDiaSeg: z.number().nonnegative(),
+      })
+      .strict()
+      .optional(),
+    atendimento: z
+      .object({
+        codigoCliente: z.string().optional(),
+        clienteMascarado: z.string().optional(),
+        telefoneMascarado: z.string().optional(),
+        campanha: z.string(),
+        inicio: iso,
+      })
+      .strict()
+      .optional(),
+    dia: z
+      .object({ atendimentos: z.number().int().nonnegative(), vendas: z.number().int().nonnegative() })
+      .strict(),
+  })
+  .strict();
+
+export const painelSchema = z
+  .object({
+    atualizadoEm: iso,
+    argusOnline: z.boolean(),
+    ultimaLeituraArgus: iso,
+    agentes: z.array(agenteSchema),
+    filaEspera: z.number().int().nonnegative(),
+    callbacks: z.number().int().nonnegative(),
+  })
+  .strict();

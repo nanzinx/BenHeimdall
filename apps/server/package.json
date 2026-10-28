@@ -1,0 +1,34 @@
+{
+  "name": "@benheimdall/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=../../.env src/index.ts",
+    "start": "tsx --env-file-if-exists=../../.env src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@benheimdall/argus-client": "workspace:*",
+    "@benheimdall/shared": "workspace:*",
+    "bcrypt": "^6.0.0",
+    "better-sqlite3": "^12.11.1",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.1.0",
+    "pino": "^9.14.0",
+    "socket.io": "^4.8.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/cookie-parser": "^1.4.9",
+    "@types/express": "^5.0.3",
+    "@types/supertest": "^6.0.3",
+    "pino-pretty": "^13.1.1",
+    "socket.io-client": "^4.8.1",
+    "supertest": "^7.1.4",
+    "tsx": "^4.20.6"
+  }
+}

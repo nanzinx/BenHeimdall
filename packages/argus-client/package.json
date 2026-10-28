@@ -1,0 +1,19 @@
+{
+  "name": "@benheimdall/argus-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cliente da Argus isolado em pacote próprio (pode ser compartilhado com o BenUra).",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "axios": "^1.12.2",
+    "zod": "^3.25.76"
+  }
+}
