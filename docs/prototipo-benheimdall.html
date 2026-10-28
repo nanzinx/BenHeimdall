@@ -1,0 +1,658 @@
+<title>BenHeimdall Painel de Atendimento</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: faixa azul da marca no topo, régua de indicadores, três colunas operacionais (atendendo · pausa · livres) e uma vista alternativa do salão */
+:root{
+  --bg:#F2F4F8; --surface:#FFFFFF; --surface-2:#E9EDF4; --ink:#0E1A33; --ink-2:#4B5774; --line:#D5DBE6;
+  --brand:#0B3D91; --brand-2:#082C6B; --brand-ink:#FFFFFF; --accent:#F5C400; --accent-ink:#1E1800;
+  --st-atend:#1F66D6; --st-pos:#7254E8; --st-pausa:#C76A00; --st-crit:#D42A2A; --st-livre:#108A43; --st-off:#8691A6;
+  --tint-atend:rgba(31,102,214,.10); --tint-pos:rgba(114,84,232,.10); --tint-pausa:rgba(199,106,0,.12); --tint-crit:rgba(212,42,42,.12); --tint-livre:rgba(16,138,67,.10); --tint-off:rgba(134,145,166,.12);
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Barlow","Segoe UI",Roboto,Arial,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  --r:10px; --brand-txt:#0B3D91;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0A1020; --surface:#111A2E; --surface-2:#182440; --ink:#E6EBF5; --ink-2:#9AA6BF; --line:#26324E;
+  --brand:#0F2C66; --brand-2:#0A1F4A; --brand-ink:#FFFFFF; --accent:#FFD02E; --accent-ink:#1E1800;
+  --st-atend:#5B95FF; --st-pos:#A08CFF; --st-pausa:#F5A524; --st-crit:#F26464; --st-livre:#34C774; --st-off:#6E7893;
+  --tint-atend:rgba(91,149,255,.14); --tint-pos:rgba(160,140,255,.14); --tint-pausa:rgba(245,165,36,.14); --tint-crit:rgba(242,100,100,.16); --tint-livre:rgba(52,199,116,.13); --tint-off:rgba(110,120,147,.16); --brand-txt:#8DB2FF;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0A1020; --surface:#111A2E; --surface-2:#182440; --ink:#E6EBF5; --ink-2:#9AA6BF; --line:#26324E;
+  --brand:#0F2C66; --brand-2:#0A1F4A; --brand-ink:#FFFFFF; --accent:#FFD02E; --accent-ink:#1E1800;
+  --st-atend:#5B95FF; --st-pos:#A08CFF; --st-pausa:#F5A524; --st-crit:#F26464; --st-livre:#34C774; --st-off:#6E7893;
+  --tint-atend:rgba(91,149,255,.14); --tint-pos:rgba(160,140,255,.14); --tint-pausa:rgba(245,165,36,.14); --tint-crit:rgba(242,100,100,.16); --tint-livre:rgba(52,199,116,.13); --tint-off:rgba(110,120,147,.16); --brand-txt:#8DB2FF;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.4}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--brand)}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1440px;margin:0 auto}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* topo */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--brand);color:var(--brand-ink);border-bottom:3px solid var(--accent)}
+.top .wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-block:12px}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand b{font-family:var(--f-display);font-size:24px;font-weight:700;letter-spacing:.02em}
+.brand b i{font-style:normal;color:var(--accent)}
+.brand span{font-family:var(--f-display);font-size:17px;font-weight:500;opacity:.85;letter-spacing:.03em}
+.top .spacer{flex:1}
+.conn{display:flex;align-items:center;gap:8px;font-size:13px;background:rgba(255,255,255,.10);border-radius:999px;padding:5px 12px}
+.conn .dot{width:8px;height:8px;border-radius:50%;background:#34C774;box-shadow:0 0 0 3px rgba(52,199,116,.25)}
+.conn.off .dot{background:#F26464;box-shadow:0 0 0 3px rgba(242,100,100,.3)}
+.clock{font-family:var(--f-mono);font-size:15px;opacity:.9}
+.btn-top{background:transparent;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;font-weight:600;color:var(--brand-ink)}
+.btn-top:hover{background:rgba(255,255,255,.12)}
+.btn-top[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+.sim-note{font-size:12px;color:var(--ink-2);padding-block:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sim-note .tag{font-family:var(--f-display);font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:11px;background:var(--accent);color:var(--accent-ink);border-radius:4px;padding:2px 6px}
+
+.banner{display:none;margin-top:8px;border-radius:var(--r);padding:10px 14px;background:var(--tint-crit);color:var(--ink);border:1px solid var(--st-crit);font-weight:500}
+.banner.show{display:block}
+
+/* indicadores */
+.kpis{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:8px}
+.kpi{background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:2px;position:relative}
+.kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c,transparent)}
+.kpi .lab{font-family:var(--f-display);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.kpi .val{font-family:var(--f-display);font-size:34px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.kpi .sub{font-size:12px;color:var(--ink-2)}
+.kpi.band-green .val{color:var(--st-livre)} .kpi.band-yellow .val{color:var(--st-pausa)} .kpi.band-red .val{color:var(--st-crit)}
+
+/* barra de ferramentas */
+.toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:16px}
+.tabs{display:flex;background:var(--surface-2);border-radius:9px;padding:3px}
+.tabs a{padding:6px 14px;border-radius:7px;text-decoration:none;color:var(--ink-2);font-weight:600;font-size:13px}
+.tabs a[aria-current="page"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink-2)}
+.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.search{flex:1;min-width:200px;max-width:320px;display:flex}
+.search input{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 10px;font:inherit}
+.btn-ghost{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink-2)}
+.btn-ghost:hover{color:var(--ink)}
+
+/* colunas */
+.board{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:16px;padding-bottom:32px}
+.col{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0;display:flex;flex-direction:column}
+.col-h{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.col-h h2{margin:0;font-family:var(--f-display);font-size:19px;font-weight:700;letter-spacing:.02em;text-wrap:balance}
+.col-h .count{font-family:var(--f-mono);font-size:13px;font-weight:600;border-radius:6px;padding:1px 8px;background:var(--tint);color:var(--c)}
+.col-h .hint{margin-left:auto;font-size:12px;color:var(--ink-2)}
+.col-h select{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:3px 6px;font:inherit;font-size:12px;margin-left:auto}
+.list{list-style:none;margin:0;padding:6px;display:flex;flex-direction:column;gap:4px;min-height:120px}
+.row{display:grid;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent}
+.row:hover{background:var(--surface-2)}
+.row.atend{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
+.row.pausa,.row.livre{grid-template-columns:minmax(0,1fr) auto}
+.who{display:flex;flex-direction:column;min-width:0}
+.who b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who small{color:var(--ink-2);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.client{display:flex;flex-direction:column;min-width:0}
+.client span{font-family:var(--f-mono);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cod{font-weight:600;color:var(--brand-txt);background:var(--surface-2);border-radius:4px;padding:0 5px;margin-right:2px}
+.client small{color:var(--ink-2);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.timer{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:600;font-size:15px;text-align:right}
+.timer small{display:block;font-weight:500;font-size:11px;color:var(--ink-2)}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px;background:var(--tint-pausa);color:var(--st-pausa)}
+.pill.pos{background:var(--tint-pos);color:var(--st-pos)}
+.row.warn{background:var(--tint-pausa)}
+.row.crit{background:var(--tint-crit);border-color:var(--st-crit)}
+.row.crit .timer{color:var(--st-crit)}
+.row.warn .timer{color:var(--st-pausa)}
+.bar{height:4px;border-radius:2px;background:var(--surface-2);margin-top:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--st-pausa)}
+.row.crit .bar i{background:var(--st-crit)}
+.conv{font-size:12px;color:var(--ink-2)}
+.conv b{color:var(--st-livre);font-weight:700}
+.rank{font-family:var(--f-mono);font-size:12px;color:var(--ink-2);width:20px;display:inline-block}
+.empty{padding:24px 14px;text-align:center;color:var(--ink-2);font-size:13px}
+.subhead{font-family:var(--f-display);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);padding:8px 10px 2px}
+.flash{animation:flash 1.2s ease-out}
+@keyframes flash{from{box-shadow:inset 0 0 0 2px var(--accent)}to{box-shadow:inset 0 0 0 2px transparent}}
+
+/* mapa do salão */
+.salao{margin-top:16px;padding-bottom:32px}
+.salao-scroll{overflow-x:auto;padding-bottom:8px}
+.floor{display:flex;gap:16px;min-width:max-content}
+.team{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;width:236px;display:flex;flex-direction:column;gap:10px}
+.team h3{margin:0;font-family:var(--f-display);font-size:17px;font-weight:700;display:flex;justify-content:space-between;align-items:baseline}
+.team h3 small{font-family:var(--f-body);font-size:12px;font-weight:500;color:var(--ink-2)}
+.sides{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.side{display:flex;flex-direction:column-reverse;gap:6px}
+.side-l{font-size:11px;color:var(--ink-2);text-align:center;font-family:var(--f-display);letter-spacing:.08em;text-transform:uppercase}
+.seat{border-radius:8px;padding:6px 8px;background:var(--tint);border:1px solid var(--c);cursor:pointer;min-height:54px;display:flex;flex-direction:column;justify-content:center;text-align:left}
+.seat b{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seat span{font-family:var(--f-mono);font-size:11.5px;color:var(--c)}
+.seat em{font-style:normal;font-size:10.5px;color:var(--ink-2)}
+.sup{border:1px dashed var(--line);border-radius:8px;text-align:center;font-size:12px;color:var(--ink-2);padding:6px;font-family:var(--f-display);letter-spacing:.06em;text-transform:uppercase}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;background:var(--c)}
+.dir{font-size:12px;color:var(--ink-2);margin:0 0 10px}
+
+.s-ATENDENDO{--c:var(--st-atend);--tint:var(--tint-atend)}
+.s-POS_ATENDIMENTO{--c:var(--st-pos);--tint:var(--tint-pos)}
+.s-PAUSA{--c:var(--st-pausa);--tint:var(--tint-pausa)}
+.s-CRIT{--c:var(--st-crit);--tint:var(--tint-crit)}
+.s-LIVRE{--c:var(--st-livre);--tint:var(--tint-livre)}
+.s-OFFLINE{--c:var(--st-off);--tint:var(--tint-off)}
+
+/* painel lateral do agente */
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(380px,100%);background:var(--surface);border-left:1px solid var(--line);z-index:20;transform:translateX(100%);transition:transform .2s ease;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px);box-shadow:-8px 0 24px rgba(0,0,0,.12)}
+.drawer.open{transform:none}
+.drawer-h{padding:16px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:flex-start}
+.drawer-h h2{margin:0;font-family:var(--f-display);font-size:22px;font-weight:700}
+.drawer-h p{margin:2px 0 0;color:var(--ink-2);font-size:13px}
+.drawer-h button{margin-left:auto;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:4px 10px;cursor:pointer}
+.drawer-b{padding:16px;overflow:auto;display:flex;flex-direction:column;gap:16px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--surface-2);border-radius:8px;padding:8px 10px}
+.stat small{display:block;font-size:11px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em;font-family:var(--f-display);font-weight:600}
+.stat b{font-family:var(--f-display);font-size:22px}
+.tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.tl li{display:grid;grid-template-columns:56px 12px 1fr;gap:8px;align-items:start;padding:4px 0}
+.tl time{font-family:var(--f-mono);font-size:12px;color:var(--ink-2)}
+.tl .d{width:10px;height:10px;border-radius:50%;background:var(--c);margin-top:4px}
+.tl span{font-size:13px}
+.scrim{position:fixed;inset:0;background:rgba(5,10,25,.35);z-index:19;display:none}
+.scrim.open{display:block}
+
+/* modo TV */
+body.tv{font-size:16px}
+body.tv .toolbar,body.tv .sim-note .btn-ghost{display:none}
+body.tv .kpi .val{font-size:48px}
+body.tv .col-h h2{font-size:24px}
+body.tv .timer{font-size:20px}
+body.tv .who b{font-size:17px}
+body.tv .client,body.tv .pill-motivo,body.tv .col-h select{display:none}
+body.tv .row{cursor:default}
+body.tv .row.atend{grid-template-columns:minmax(0,1fr) auto}
+
+/* acesso */
+.gate{min-height:70vh;display:grid;place-items:center;padding-block:32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.login{width:min(400px,100%);background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:12px}
+.login-brand{display:flex;flex-direction:column}
+.login-brand b{font-family:var(--f-display);font-size:34px;font-weight:700;line-height:1;color:var(--ink)}
+.login-brand b i{font-style:normal;color:var(--brand-txt)}
+.login-brand span{font-family:var(--f-display);font-size:17px;font-weight:500;color:var(--ink-2);letter-spacing:.03em}
+.login-lead{margin:0;color:var(--ink-2)}
+.login label,.fnovo label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--ink-2)}
+.login input,.fnovo input,.fnovo select{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:9px 10px;font:inherit;font-weight:400}
+.btn-primary{background:var(--brand);color:var(--brand-ink);border:0;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}
+.btn-primary:hover{background:var(--brand-2)}
+.fmsg{margin:0;min-height:1.2em;color:var(--st-crit);font-size:13px;font-weight:500}
+.fhint{margin:0;font-size:12px;color:var(--ink-2)}
+.demo{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}
+.demo .subhead{padding:0}
+.demo-b{display:flex;gap:6px;flex-wrap:wrap}
+.btn-ghost.sm{padding:4px 9px;font-size:12px}
+.userbox{display:flex;align-items:center;gap:10px;font-size:13px;flex-wrap:wrap}
+.userbox .role{opacity:.8}
+.sess{font-size:12px;background:rgba(255,255,255,.12);border-radius:6px;padding:2px 8px}
+.sess.low{background:var(--accent);color:var(--accent-ink)}
+.adm-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;margin-top:16px;padding-bottom:32px;align-items:start}
+.tbl-wrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-family:var(--f-display);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.acts{display:flex;gap:6px;justify-content:flex-end}
+.acts small{color:var(--ink-2)}
+.badge{font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px}
+.badge.on{background:var(--tint-livre);color:var(--st-livre)}
+.badge.off{background:var(--tint-off);color:var(--st-off)}
+.aviso{margin:12px;padding:10px 12px;border-radius:8px;background:var(--surface-2);font-size:13px}
+.fnovo{padding:14px;display:flex;flex-direction:column;gap:10px}
+.log{list-style:none;margin:0;padding:6px 14px 14px;display:flex;flex-direction:column;max-height:320px;overflow:auto}
+.log li{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:10px;padding:5px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+.log time{color:var(--ink-2)}
+.restr{font-family:var(--f-body)!important;color:var(--ink-2)}
+@media (max-width:900px){.adm-grid{grid-template-columns:minmax(0,1fr)}}
+
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.board{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.col-atend{grid-column:1/-1}}
+@media (max-width:640px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.board{grid-template-columns:minmax(0,1fr)}.brand span{display:none}.row.atend{grid-template-columns:minmax(0,1fr) auto}.row.atend .client{grid-column:1/-1;grid-row:2}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><b>Ben<i>Heimdall</i></b><span>Painel de Atendimento</span></div>
+    <div class="spacer"></div>
+    <div class="conn" id="conn" role="status"><span class="dot"></span><span id="connText">Argus conectada</span></div>
+    <span class="clock" id="clock">--:--:--</span>
+    <button class="btn-top" id="btnTv" aria-pressed="false" type="button" hidden>Modo TV</button>
+    <div class="userbox" id="userbox" hidden><span id="uNome"></span><span class="role" id="uRole"></span><span class="sess mono" id="sess"></span><button class="btn-top" id="btnSair" type="button">Sair</button></div>
+  </div>
+</header>
+
+<section class="gate" id="gate" aria-label="Entrar no painel">
+  <form class="login" id="loginForm" novalidate>
+    <div class="login-brand"><b>Ben<i>Heimdall</i></b><span>Painel de Atendimento</span></div>
+    <p class="login-lead">Acesso restrito a supervisores e administradores.</p>
+    <label>Usuário<input id="lUser" autocomplete="username" autocapitalize="none" required></label>
+    <label>Senha<input id="lPass" type="password" autocomplete="current-password" required></label>
+    <p class="fmsg" id="lMsg" role="alert"></p>
+    <button class="btn-primary" type="submit">Entrar</button>
+    <div class="demo"><span class="subhead">Contas de demonstração · senha demo123</span>
+      <div class="demo-b"><button type="button" class="btn-ghost sm" data-demo="admin">Administrador</button><button type="button" class="btn-ghost sm" data-demo="sup.equipe1">Supervisor equipe 1</button><button type="button" class="btn-ghost sm" data-demo="tv.salao">Tela TV</button></div>
+    </div>
+    <p class="fhint">A sessão expira após 15 min sem uso. Depois de 5 senhas erradas, o usuário fica bloqueado por 5 min.</p>
+  </form>
+</section>
+
+<main class="wrap" id="app" hidden>
+  <div class="sim-note">
+    <span class="tag">Protótipo</span>
+    <span>Dados simulados no lugar da API da Argus, atualizados a cada 3 s. Nomes e telefones são fictícios.</span>
+    <button class="btn-ghost" id="btnFall" type="button">Simular queda da Argus</button>
+  </div>
+  <div class="banner" id="banner" role="alert"></div>
+
+  <section class="kpis" id="kpis" aria-label="Indicadores"></section>
+
+  <div class="toolbar">
+    <nav class="tabs" aria-label="Vistas">
+      <a href="#painel" id="tabPainel">Painel</a>
+      <a href="#salao" id="tabSalao">Mapa do salão</a>
+      <a href="#usuarios" id="tabUsuarios" hidden>Usuários e acessos</a>
+    </nav>
+    <div class="chips" id="chips" role="group" aria-label="Filtrar por equipe"></div>
+    <label class="search"><input id="q" type="search" placeholder="Buscar agente, ramal ou código do cliente" aria-label="Buscar agente, ramal ou código do cliente"></label>
+  </div>
+
+  <section id="viewPainel" class="board">
+    <div class="col col-atend s-ATENDENDO">
+      <div class="col-h"><h2>Atendimentos em curso</h2><span class="count" id="cAtend">0</span><span class="hint">código · cliente · campanha · duração</span></div>
+      <ul class="list" id="lAtend"></ul>
+    </div>
+    <div class="col s-PAUSA">
+      <div class="col-h"><h2>Em pausa</h2><span class="count" id="cPausa">0</span><span class="hint">atual · total do dia</span></div>
+      <ul class="list" id="lPausa"></ul>
+    </div>
+    <div class="col s-LIVRE">
+      <div class="col-h"><h2>Livres para transferência</h2><span class="count" id="cLivre">0</span>
+        <select id="ordem" aria-label="Ordenar livres"><option value="ocioso">Mais ocioso primeiro</option><option value="desempenho">Melhor conversão</option></select>
+      </div>
+      <ul class="list" id="lLivre"></ul>
+    </div>
+  </section>
+
+  <section id="viewSalao" class="salao" hidden>
+    <p class="dir">Vista do salão do operacional. Equipes numeradas da direita para a esquerda; a baia 1 de cada lado fica junto da mesa do supervisor.</p>
+    <div class="salao-scroll"><div class="floor" id="floor"></div></div>
+    <div class="legend">
+      <span class="s-ATENDENDO"><i></i>Atendendo</span>
+      <span class="s-POS_ATENDIMENTO"><i></i>Pós-atendimento</span>
+      <span class="s-PAUSA"><i></i>Em pausa</span>
+      <span class="s-CRIT"><i></i>Pausa acima do limite</span>
+      <span class="s-LIVRE"><i></i>Livre</span>
+      <span class="s-OFFLINE"><i></i>Offline</span>
+    </div>
+  </section>
+
+  <section id="viewUsuarios" hidden></section>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Detalhe do agente" aria-hidden="true">
+  <div class="drawer-h"><div><h2 id="dNome">Agente</h2><p id="dSub"></p></div><button type="button" id="dClose">Fechar</button></div>
+  <div class="drawer-b" id="dBody"></div>
+</aside>
+
+<script>
+(function(){
+  // ---------- dados simulados (substituem o ArgusClient) ----------
+  let seed = 42;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  const pick = a => a[Math.floor(rnd() * a.length)];
+
+  const NOMES = ['Ana Paula Ribeiro','Bruno Tavares','Camila Nogueira','Diego Almeida','Eduarda Pires','Felipe Moura','Gabriela Lins','Henrique Sales',
+    'Isabela Prado','João Victor Reis','Karina Duarte','Lucas Ferraz','Mariana Coelho','Nicolas Barros','Olívia Teles','Paulo Henrique Dias',
+    'Quésia Martins','Rafael Antunes','Sabrina Lopes','Thiago Rocha','Úrsula Campos','Vinícius Leal','Wellington Cruz','Yasmin Freitas',
+    'Alice Monteiro','Bernardo Siqueira','Clara Vasconcelos','Daniel Brito','Elisa Fontes','Fábio Queiroz','Giovana Matos','Hugo Peixoto',
+    'Ingrid Cardoso','Júlio César Neves','Larissa Amaral','Matheus Guedes','Natália Rios','Otávio Bastos','Priscila Viana','Renato Paiva'];
+  const CLIENTES = ['Maria','José','Antônio','Francisca','Raimundo','Luiza','Sebastião','Terezinha','Benedito','Aparecida','Joaquim','Conceição','Manoel','Rosa','Geraldo','Helena'];
+  const CAMPANHAS = ['URA · Refin INSS','URA · Margem livre','Ativo 2 · Portabilidade','Ativo 1 · Cartão benefício'];
+  const MOTIVOS = { 'Lanche':15*60, 'Banheiro':5*60, 'Feedback':20*60, 'Treinamento':45*60, 'Particular':10*60 };
+  const ROTULO = { ATENDENDO:'Atendendo', POS_ATENDIMENTO:'Pós-atendimento', PAUSA:'Em pausa', LIVRE:'Livre', OFFLINE:'Offline' };
+
+  const now = () => Date.now();
+  const t0 = now();
+  const tel = () => `(11) 9****-${String(1000 + Math.floor(rnd()*9000))}`;
+
+  const agentes = NOMES.map((nome, i) => {
+    const equipe = Math.floor(i / 8) + 1, n = i % 8;
+    const a = { id:'ag' + (i+1), nome, ramal: String(2100 + i + 1), equipe, lado: n < 4 ? 'E' : 'D', pos: (n % 4) + 1,
+      status:'LIVRE', desde:t0, pausa:null, atend:null, pausaDia: Math.floor(rnd()*1500), atendDia: 6 + Math.floor(rnd()*22), vendas:0, hist:[] };
+    a.vendas = Math.floor(a.atendDia * (0.04 + rnd()*0.22));
+    const r = rnd();
+    if (i === 13 || i === 30) setStatus(a, 'OFFLINE', 0);
+    else if (r < 0.48) setStatus(a, 'ATENDENDO', Math.floor(rnd()*540));
+    else if (r < 0.58) setStatus(a, 'POS_ATENDIMENTO', Math.floor(rnd()*40));
+    else if (r < 0.75) setStatus(a, 'PAUSA', Math.floor(rnd()*1100));
+    else setStatus(a, 'LIVRE', Math.floor(rnd()*240));
+    // histórico do dia fictício antes do status atual
+    let t = a.desde - 60000;
+    const seq = ['LIVRE','ATENDENDO','POS_ATENDIMENTO','LIVRE','ATENDENDO','POS_ATENDIMENTO','PAUSA','LIVRE','ATENDENDO','POS_ATENDIMENTO'];
+    const old = [];
+    for (let k = 0; k < 8; k++) { old.unshift({ status: seq[(k + i) % seq.length], t, motivo: null }); t -= (2 + Math.floor(rnd()*9)) * 60000; }
+    old.forEach(h => { if (h.status === 'PAUSA') h.motivo = pick(Object.keys(MOTIVOS)); });
+    old.unshift({ status:'LOGIN', t: t - 60000 });
+    a.hist = old.concat(a.hist);
+    return a;
+  });
+
+  function setStatus(a, status, ageSec){
+    if (a.status === 'PAUSA' && status !== 'PAUSA') a.pausaDia += Math.floor((now() - a.desde)/1000);
+    a.status = status; a.desde = now() - (ageSec||0)*1000; a.flash = true;
+    a.pausa = null;
+    if (status === 'PAUSA') a.pausa = { motivo: pick(Object.keys(MOTIVOS)) };
+    if (status === 'ATENDENDO') a.atend = { codigo: String(100000 + Math.floor(rnd() * 900000)), cliente: pick(CLIENTES), tel: tel(), campanha: pick(CAMPANHAS) };
+    if (status === 'LIVRE' || status === 'OFFLINE') a.atend = null;
+    a.hist = (a.hist||[]).concat({ status, t: a.desde, motivo: a.pausa ? a.pausa.motivo : null });
+  }
+
+  let fila = 4, callbacks = 3, online = true, ultimo = now(), quedaAte = 0;
+  const secs = a => Math.max(0, Math.floor((now() - a.desde)/1000));
+
+  function tick(){
+    if (!online) return;
+    agentes.forEach(a => {
+      const s = secs(a), r = Math.random();
+      if (a.status === 'LIVRE') { if (r < 0.22) setStatus(a,'ATENDENDO'); else if (r < 0.25) setStatus(a,'PAUSA'); }
+      else if (a.status === 'ATENDENDO') { if (s > 45 && r < 0.10) { a.atendDia++; if (Math.random() < 0.18) a.vendas++; setStatus(a,'POS_ATENDIMENTO'); } }
+      else if (a.status === 'POS_ATENDIMENTO') { if (s > 12 && r < 0.35) setStatus(a,'LIVRE'); }
+      else if (a.status === 'PAUSA') { if (r < 0.04) setStatus(a,'LIVRE'); }
+      else if (a.status === 'OFFLINE') { if (r < 0.01) setStatus(a,'LIVRE'); }
+    });
+    fila = Math.max(0, Math.min(14, fila + Math.round((Math.random()-0.5)*3)));
+    if (Math.random() < 0.06) callbacks = Math.max(0, Math.min(10, callbacks + (Math.random() < 0.5 ? -1 : 1)));
+    ultimo = now();
+  }
+
+  // ---------- estado da tela ----------
+  let equipeF = 0, busca = '', ordem = 'ocioso', aberto = null;
+  try { ordem = localStorage.getItem('benheimdall-ordem') || 'ocioso'; if (!['ocioso','desempenho'].includes(ordem)) ordem = 'ocioso'; } catch(e) { ordem = 'ocioso'; }
+  const $ = id => document.getElementById(id);
+  $('ordem').value = ordem;
+
+  const fmt = s => { const h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60, p = n => String(n).padStart(2,'0'); return h ? `${h}:${p(m)}:${p(x)}` : `${p(m)}:${p(x)}`; };
+  const hhmm = t => new Date(t).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+  const conv = a => a.atendDia ? a.vendas / a.atendDia : 0;
+  const pausaInfo = a => { const lim = MOTIVOS[a.pausa.motivo], s = secs(a), ratio = s / lim; return { lim, s, ratio, nivel: ratio >= 1 ? 'crit' : ratio >= 0.8 ? 'warn' : '' }; };
+
+  function visiveis(){
+    const q = busca.trim().toLowerCase();
+    return agentes.filter(a => (!equipeF || a.equipe === equipeF) && (!q || a.nome.toLowerCase().includes(q) || a.ramal.includes(q) || (a.status === 'ATENDENDO' && a.atend && podeVer(a) && a.atend.codigo.includes(q))));
+  }
+
+  // chips de equipe
+  const chips = $('chips');
+  [0,1,2,3,4,5].forEach(n => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = n ? 'Equipe ' + n : 'Todas';
+    b.setAttribute('aria-pressed', n === equipeF ? 'true' : 'false');
+    b.onclick = () => { equipeF = n; chips.querySelectorAll('.chip').forEach((c,i) => c.setAttribute('aria-pressed', i === n ? 'true' : 'false')); render(); };
+    chips.appendChild(b);
+  });
+  $('q').addEventListener('input', e => { busca = e.target.value; render(); });
+  $('ordem').addEventListener('change', e => { ordem = e.target.value; try { localStorage.setItem('benheimdall-ordem', ordem); } catch(err) {} render(); });
+
+  function kpis(list){
+    const c = st => list.filter(a => a.status === st).length;
+    const pausasCrit = list.filter(a => a.status === 'PAUSA' && pausaInfo(a).nivel === 'crit').length;
+    const band = callbacks <= 1 ? 'green' : callbacks <= 5 ? 'yellow' : 'red';
+    const bandTxt = callbacks <= 1 ? 'ritmo agressivo' : callbacks <= 5 ? 'alerta ao supervisor' : callbacks < 10 ? 'alerta ao gerente' : 'URA freada';
+    const items = [
+      ['Atendendo', c('ATENDENDO'), 'em ligação agora', 'var(--st-atend)'],
+      ['Pós-atendimento', c('POS_ATENDIMENTO'), 'tabulando', 'var(--st-pos)'],
+      ['Em pausa', c('PAUSA'), pausasCrit ? `${pausasCrit} acima do limite` : 'todas no limite', pausasCrit ? 'var(--st-crit)' : 'var(--st-pausa)'],
+      ['Livres', c('LIVRE'), 'prontos p/ transferência', 'var(--st-livre)'],
+      ['Offline', c('OFFLINE'), 'deslogados', 'var(--st-off)'],
+      ['Fila de espera', fila, 'clientes aguardando', 'var(--brand)'],
+      ['Callbacks', callbacks, bandTxt, '', 'band-' + band],
+    ];
+    $('kpis').innerHTML = items.map(([l,v,s,cor,cls]) => `<div class="kpi ${cls||''}" style="--c:${cor || (cls==='band-green'?'var(--st-livre)':cls==='band-yellow'?'var(--st-pausa)':'var(--st-crit)')}"><span class="lab">${l}</span><span class="val">${v}</span><span class="sub">${s}</span></div>`).join('');
+  }
+
+  const fl = a => { const f = a.flash ? ' flash' : ''; return f; };
+
+  function painel(list){
+    const at = list.filter(a => a.status === 'ATENDENDO' || a.status === 'POS_ATENDIMENTO').sort((x,y) => x.desde - y.desde);
+    $('cAtend').textContent = at.length;
+    $('lAtend').innerHTML = at.length ? at.map(a => {
+      const pos = a.status === 'POS_ATENDIMENTO';
+      return `<li class="row atend${fl(a)}" data-id="${a.id}" tabindex="0">
+        <div class="who"><b>${a.nome}</b><small>Equipe ${a.equipe} · ramal ${a.ramal}</small></div>
+        <div class="client">${pos ? '<span><span class="pill pos">Tabulando</span></span>' : podeVer(a) ? `<span><b class="cod">${a.atend.codigo}</b> ${a.atend.cliente} · ${a.atend.tel}</span>` : '<span class="restr">Cliente de outra equipe</span>'}<small>${a.atend ? a.atend.campanha : ''}</small></div>
+        <div class="timer">${fmt(secs(a))}<small>${pos ? 'pós-atend.' : 'em ligação'}</small></div></li>`;
+    }).join('') : '<li class="empty">Nenhum atendimento em curso neste filtro.</li>';
+
+    const pa = list.filter(a => a.status === 'PAUSA').sort((x,y) => pausaInfo(y).ratio - pausaInfo(x).ratio);
+    $('cPausa').textContent = pa.length;
+    $('lPausa').innerHTML = pa.length ? pa.map(a => {
+      const p = pausaInfo(a), total = a.pausaDia + p.s;
+      return `<li class="row pausa ${p.nivel}${fl(a)}" data-id="${a.id}" tabindex="0">
+        <div class="who"><b>${a.nome}</b><small><span class="pill-motivo">${a.pausa.motivo} · limite ${fmt(p.lim)} · </span>total ${fmt(total)}</small>
+          <div class="bar"><i style="width:${Math.min(100, p.ratio*100).toFixed(0)}%"></i></div></div>
+        <div class="timer">${fmt(p.s)}<small>${p.nivel === 'crit' ? '+' + fmt(p.s - p.lim) + ' acima' : 'na pausa'}</small></div></li>`;
+    }).join('') : '<li class="empty">Ninguém em pausa neste filtro.</li>';
+
+    let li = list.filter(a => a.status === 'LIVRE');
+    li = ordem === 'ocioso' ? li.sort((x,y) => x.desde - y.desde) : li.sort((x,y) => conv(y) - conv(x) || x.desde - y.desde);
+    $('cLivre').textContent = li.length;
+    $('lLivre').innerHTML = li.length ? li.map((a,i) => `<li class="row livre${fl(a)}" data-id="${a.id}" tabindex="0">
+        <div class="who"><b><span class="rank">${i+1}</span>${a.nome}</b><small>Equipe ${a.equipe} · ramal ${a.ramal} · <span class="conv">conversão <b>${(conv(a)*100).toFixed(0)}%</b></span></small></div>
+        <div class="timer">${fmt(secs(a))}<small>livre há</small></div></li>`).join('') : '<li class="empty">Nenhum agente livre agora. Os livres aparecem aqui assim que terminam a tabulação.</li>';
+  }
+
+  function salao(list){
+    const ids = new Set(list.map(a => a.id));
+    const seat = a => {
+      if (!a) return '';
+      let st = a.status, linha = ROTULO[st];
+      if (st === 'PAUSA') { const p = pausaInfo(a); if (p.nivel === 'crit') st = 'CRIT'; linha = document.body.classList.contains('tv') ? 'Pausa' : a.pausa.motivo; }
+      const dim = ids.has(a.id) ? '' : ' style="opacity:.3"';
+      return `<button type="button" class="seat s-${st}" data-id="${a.id}"${dim}><b>${a.nome.split(' ')[0]} ${a.nome.split(' ').slice(-1)[0][0]}.</b><span>${st === 'OFFLINE' ? '—' : fmt(secs(a))}</span><em>${linha}</em></button>`;
+    };
+    const teams = [5,4,3,2,1].map(eq => {
+      const m = agentes.filter(a => a.equipe === eq);
+      const side = l => [1,2,3,4].map(p => seat(m.find(a => a.lado === l && a.pos === p))).join('');
+      const livres = m.filter(a => a.status === 'LIVRE').length;
+      return `<div class="team"><h3>Equipe ${eq}<small>${livres} livre${livres === 1 ? '' : 's'}</small></h3>
+        <div class="sides"><div><div class="side-l">Esquerda</div><div class="side">${side('E')}</div></div><div><div class="side-l">Direita</div><div class="side">${side('D')}</div></div></div>
+        <div class="sup">Mesa do supervisor</div></div>`;
+    }).join('');
+    $('floor').innerHTML = teams;
+  }
+
+  function drawer(){
+    const a = agentes.find(x => x.id === aberto);
+    if (!a) return;
+    $('dNome').textContent = a.nome;
+    $('dSub').textContent = `Equipe ${a.equipe} · baia ${a.lado === 'E' ? 'esquerda' : 'direita'} ${a.pos} · ramal ${a.ramal}`;
+    const st = a.status === 'PAUSA' && pausaInfo(a).nivel === 'crit' ? 'CRIT' : a.status;
+    const pausaTot = a.pausaDia + (a.status === 'PAUSA' ? secs(a) : 0);
+    const hist = a.hist.slice(-14).reverse();
+    $('dBody').innerHTML = `
+      <div class="row s-${st}" style="cursor:default;background:var(--tint);border-color:var(--c)"><div class="who"><b>${ROTULO[a.status]}${a.pausa ? ' · ' + a.pausa.motivo : ''}</b><small>${a.atend && a.status === 'ATENDENDO' ? (podeVer(a) ? 'Cód. ' + a.atend.codigo + ' · ' + a.atend.cliente + ' · ' + a.atend.tel + ' · ' : 'Cliente de outra equipe · ') + a.atend.campanha : 'desde ' + hhmm(a.desde)}</small></div><div class="timer">${fmt(secs(a))}</div></div>
+      <div class="stats"><div class="stat"><small>Atendimentos</small><b>${a.atendDia}</b></div><div class="stat"><small>Vendas</small><b>${a.vendas}</b></div><div class="stat"><small>Pausa no dia</small><b class="mono" style="font-size:17px">${fmt(pausaTot)}</b></div></div>
+      <div><div class="subhead" style="padding-left:0">Linha do tempo de hoje</div>
+      <ul class="tl">${hist.map(h => `<li class="s-${h.status === 'LOGIN' ? 'OFFLINE' : h.status}"><time>${hhmm(h.t)}</time><span class="d"></span><span>${h.status === 'LOGIN' ? 'Login na discadora' : ROTULO[h.status]}${h.motivo ? ' · ' + h.motivo : ''}</span></li>`).join('')}</ul></div>`;
+  }
+
+  function openDrawer(id){
+    if (document.body.classList.contains('tv')) return;
+    aberto = id; drawer();
+    $('drawer').classList.add('open'); $('drawer').setAttribute('aria-hidden','false'); $('scrim').classList.add('open'); $('dClose').focus();
+  }
+  function closeDrawer(){ aberto = null; $('drawer').classList.remove('open'); $('drawer').setAttribute('aria-hidden','true'); $('scrim').classList.remove('open'); }
+  document.addEventListener('click', e => { const el = e.target.closest('[data-id]'); if (el && !e.target.closest('.drawer')) openDrawer(el.dataset.id); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); if (e.key === 'Enter') { const el = e.target.closest && e.target.closest('[data-id]'); if (el) openDrawer(el.dataset.id); } });
+  $('dClose').onclick = closeDrawer; $('scrim').onclick = closeDrawer;
+
+  // modo TV
+  $('btnTv').onclick = () => { if (user && user.perfil === 'tv') return; const on = !document.body.classList.contains('tv'); document.body.classList.toggle('tv', on); $('btnTv').setAttribute('aria-pressed', String(on)); if (on) closeDrawer(); render(); };
+
+  // queda simulada
+  $('btnFall').onclick = () => { online = false; quedaAte = now() + 12000; };
+
+  function conexao(){
+    if (!online && now() > quedaAte) { online = true; tick(); }
+    const atraso = Math.floor((now() - ultimo)/1000);
+    $('conn').classList.toggle('off', !online);
+    $('connText').textContent = online ? `Argus conectada · há ${atraso} s` : 'Sem conexão · reconectando';
+    const b = $('banner');
+    if (!online) { b.textContent = `Sem conexão com a Argus. Os dados abaixo são da última leitura, feita há ${atraso} s. O painel volta sozinho quando a conexão retornar.`; b.classList.add('show'); }
+    else b.classList.remove('show');
+    $('clock').textContent = new Date().toLocaleTimeString('pt-BR');
+  }
+
+  // ---------- acesso (no sistema real: senha com hash bcrypt no backend, sessão em cookie httpOnly, log no banco) ----------
+  const PERFIS = { admin:'Administrador', supervisor:'Supervisor', tv:'Tela TV' };
+  const SESS_MIN = 15, MAX_TENT = 5;
+  const DEMO = [
+    { u:'admin', nome:'Administrador', perfil:'admin', equipe:0, senha:'demo123', ativo:true, ultimo:null },
+    ...[1,2,3,4,5].map(n => ({ u:'sup.equipe' + n, nome:'Supervisor Equipe ' + n, perfil:'supervisor', equipe:n, senha:'demo123', ativo:true, ultimo:null })),
+    { u:'tv.salao', nome:'TV do salão', perfil:'tv', equipe:0, senha:'demo123', ativo:true, ultimo:null }
+  ];
+  const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return Array.isArray(v) ? v : d; } catch(e) { return d; } };
+  const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} };
+  let usuarios = load('benheimdall-usuarios', DEMO), acessos = load('benheimdall-acessos', []);
+  let user = null, sessExp = 0, aviso = '';
+  const tent = {};
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  const podeVer = a => !!user && (user.perfil === 'admin' || (user.perfil === 'supervisor' && a.equipe === user.equipe));
+  function registrar(u, evento){ acessos.unshift({ t: now(), u, evento }); acessos = acessos.slice(0, 80); save('benheimdall-acessos', acessos); }
+  function senhaTemp(){ const c = 'abcdefghjkmnpqrstuvwxyz23456789'; let s = ''; for (let i = 0; i < 8; i++) s += c[Math.floor(Math.random() * c.length)]; return s; }
+
+  function entrar(e){
+    e.preventDefault();
+    const u = $('lUser').value.trim().toLowerCase(), p = $('lPass').value, msg = $('lMsg');
+    msg.textContent = '';
+    if (!u || !p) { msg.textContent = 'Informe usuário e senha.'; return; }
+    const t = tent[u] || { n:0, ate:0 };
+    if (t.ate > now()) { msg.textContent = `Usuário bloqueado por excesso de tentativas. Tente de novo em ${Math.ceil((t.ate - now()) / 60000)} min.`; return; }
+    const conta = usuarios.find(x => x.u === u);
+    if (!conta || conta.senha !== p) {
+      t.n++;
+      if (t.n >= MAX_TENT) { t.ate = now() + 5 * 60000; t.n = 0; registrar(u, 'Bloqueado após 5 senhas erradas'); msg.textContent = 'Usuário bloqueado por 5 min após 5 senhas erradas.'; }
+      else { registrar(u, 'Tentativa de login recusada'); msg.textContent = `Usuário ou senha incorretos. Restam ${MAX_TENT - t.n} tentativas.`; }
+      tent[u] = t; return;
+    }
+    if (!conta.ativo) { msg.textContent = 'Esta conta está desativada. Fale com o administrador.'; registrar(u, 'Login recusado: conta desativada'); return; }
+    tent[u] = { n:0, ate:0 };
+    user = conta; conta.ultimo = now(); save('benheimdall-usuarios', usuarios); registrar(u, 'Entrou');
+    $('lPass').value = '';
+    $('gate').hidden = true; $('app').hidden = false; $('userbox').hidden = false;
+    $('uNome').textContent = conta.nome;
+    $('uRole').textContent = PERFIS[conta.perfil] + (conta.perfil === 'supervisor' ? ' · Equipe ' + conta.equipe : '');
+    $('tabUsuarios').hidden = conta.perfil !== 'admin';
+    $('btnTv').hidden = conta.perfil === 'tv';
+    equipeF = conta.perfil === 'supervisor' ? conta.equipe : 0;
+    chips.querySelectorAll('.chip').forEach((c, i) => c.setAttribute('aria-pressed', i === equipeF ? 'true' : 'false'));
+    const tv = conta.perfil === 'tv';
+    document.body.classList.toggle('tv', tv); $('btnTv').setAttribute('aria-pressed', String(tv));
+    renovar(); route(); render();
+  }
+  function sair(motivo){
+    if (!user) return;
+    registrar(user.u, motivo);
+    user = null; closeDrawer(); document.body.classList.remove('tv');
+    $('app').hidden = true; $('gate').hidden = false; $('userbox').hidden = true; $('btnTv').hidden = true;
+    $('lMsg').textContent = motivo === 'Sessão expirada por inatividade' ? 'Sua sessão expirou por inatividade. Entre de novo.' : '';
+    $('lUser').focus();
+  }
+  function renovar(){ if (user && user.perfil !== 'tv') sessExp = now() + SESS_MIN * 60000; }
+  ['click','keydown','pointermove','scroll'].forEach(ev => document.addEventListener(ev, renovar, { passive:true }));
+  function sessao(){
+    const el = $('sess');
+    if (user.perfil === 'tv') { el.textContent = 'sem expiração'; el.classList.remove('low'); return; }
+    const r = Math.max(0, Math.floor((sessExp - now()) / 1000));
+    if (r === 0) { sair('Sessão expirada por inatividade'); return; }
+    el.textContent = 'sessão ' + fmt(r); el.classList.toggle('low', r < 60);
+  }
+  $('loginForm').addEventListener('submit', entrar);
+  $('btnSair').onclick = () => sair('Saiu');
+  document.querySelectorAll('[data-demo]').forEach(b => b.onclick = () => { $('lUser').value = b.dataset.demo; $('lPass').value = 'demo123'; $('lPass').focus(); });
+
+  function renderUsuarios(){
+    if (!user || user.perfil !== 'admin') return;
+    const v = $('viewUsuarios');
+    v.innerHTML = `<div class="adm-grid">
+      <div class="col"><div class="col-h"><h2>Contas de acesso</h2><span class="count" style="--c:var(--brand-txt);--tint:var(--surface-2)">${usuarios.length}</span><span class="hint">supervisores, administradores e telas</span></div>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nome</th><th>Usuário</th><th>Perfil</th><th>Último acesso</th><th>Situação</th><th></th></tr></thead><tbody>
+        ${usuarios.map((x, i) => `<tr><td>${esc(x.nome)}</td><td class="mono">${esc(x.u)}</td><td>${PERFIS[x.perfil]}${x.perfil === 'supervisor' ? ' · Eq. ' + x.equipe : ''}</td><td class="mono">${x.ultimo ? new Date(x.ultimo).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—'}</td><td><span class="badge ${x.ativo ? 'on' : 'off'}">${x.ativo ? 'Ativa' : 'Desativada'}</span></td>
+          <td><div class="acts">${x.u === user.u ? '<small>sua conta</small>' : `<button type="button" class="btn-ghost sm" data-act="toggle" data-i="${i}">${x.ativo ? 'Desativar' : 'Reativar'}</button><button type="button" class="btn-ghost sm" data-act="reset" data-i="${i}">Nova senha</button>`}</div></td></tr>`).join('')}
+        </tbody></table></div>
+        ${aviso ? `<p class="aviso" role="status">${aviso}</p>` : ''}
+      </div>
+      <div class="col">
+        <div class="col-h"><h2>Nova conta</h2></div>
+        <form id="fNovo" class="fnovo" novalidate>
+          <label>Nome<input id="nNome" maxlength="60" placeholder="Ex.: Juliana Mendes"></label>
+          <label>Usuário<input id="nUser" maxlength="30" placeholder="Ex.: sup.juliana" autocomplete="off" autocapitalize="none"></label>
+          <label>Perfil<select id="nPerfil"><option value="supervisor">Supervisor</option><option value="admin">Administrador</option><option value="tv">Tela TV</option></select></label>
+          <label id="nEqWrap">Equipe<select id="nEq">${[1,2,3,4,5].map(n => `<option value="${n}">Equipe ${n}</option>`).join('')}</select></label>
+          <p class="fmsg" id="nMsg"></p>
+          <button type="submit" class="btn-primary">Criar conta</button>
+          <p class="fhint">A conta nasce com uma senha temporária. No sistema real, a troca é obrigatória no primeiro acesso.</p>
+        </form>
+        <div class="col-h" style="border-top:1px solid var(--line)"><h2>Log de acessos</h2></div>
+        <ul class="log">${acessos.length ? acessos.slice(0, 30).map(l => `<li><time class="mono">${new Date(l.t).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })}</time><b class="mono">${esc(l.u)}</b><span>${esc(l.evento)}</span></li>`).join('') : '<li class="empty">Nenhum acesso registrado ainda.</li>'}</ul>
+      </div></div>`;
+    $('nPerfil').onchange = () => { $('nEqWrap').hidden = $('nPerfil').value !== 'supervisor'; };
+    $('fNovo').onsubmit = e => {
+      e.preventDefault();
+      const nome = $('nNome').value.trim(), u = $('nUser').value.trim().toLowerCase(), perfil = $('nPerfil').value, eq = +$('nEq').value;
+      if (!nome) { $('nMsg').textContent = 'Informe o nome da pessoa ou da tela.'; return; }
+      if (!/^[a-z0-9._-]{3,30}$/.test(u)) { $('nMsg').textContent = 'Usuário com 3 a 30 caracteres: letras minúsculas, números, ponto, hífen ou sublinhado.'; return; }
+      if (usuarios.some(x => x.u === u)) { $('nMsg').textContent = 'Já existe uma conta com esse usuário.'; return; }
+      const s = senhaTemp();
+      usuarios.push({ u, nome, perfil, equipe: perfil === 'supervisor' ? eq : 0, senha:s, ativo:true, ultimo:null });
+      save('benheimdall-usuarios', usuarios); registrar(user.u, `Criou a conta ${u}`);
+      aviso = `Conta <b class="mono">${esc(u)}</b> criada. Senha temporária: <b class="mono">${s}</b>`;
+      renderUsuarios();
+    };
+    v.querySelectorAll('[data-act]').forEach(b => b.onclick = () => {
+      const x = usuarios[+b.dataset.i];
+      if (b.dataset.act === 'toggle') { x.ativo = !x.ativo; registrar(user.u, `${x.ativo ? 'Reativou' : 'Desativou'} a conta ${x.u}`); aviso = `Conta <b class="mono">${esc(x.u)}</b> ${x.ativo ? 'reativada' : 'desativada'}.`; }
+      else { x.senha = senhaTemp(); registrar(user.u, `Gerou nova senha para ${x.u}`); aviso = `Nova senha temporária de <b class="mono">${esc(x.u)}</b>: <b class="mono">${x.senha}</b>`; }
+      save('benheimdall-usuarios', usuarios); renderUsuarios();
+    });
+  }
+
+  function route(){
+    let v = location.hash === '#salao' ? 'salao' : location.hash === '#usuarios' ? 'usuarios' : 'painel';
+    if (v === 'usuarios' && !(user && user.perfil === 'admin')) v = 'painel';
+    $('viewPainel').hidden = v !== 'painel'; $('viewSalao').hidden = v !== 'salao'; $('viewUsuarios').hidden = v !== 'usuarios';
+    [['tabPainel','painel'],['tabSalao','salao'],['tabUsuarios','usuarios']].forEach(([id, k]) => $(id).setAttribute('aria-current', v === k ? 'page' : 'false'));
+    if (v === 'usuarios') renderUsuarios();
+  }
+  window.addEventListener('hashchange', () => { route(); render(); });
+
+  function render(){
+    conexao();
+    if (!user) return;
+    sessao();
+    if (!user) return;
+    const list = visiveis();
+    kpis(list);
+    if (!$('viewPainel').hidden) painel(list); else if (!$('viewSalao').hidden) salao(list);
+    if (aberto) drawer();
+    agentes.forEach(a => a.flash = false);
+    conexao();
+  }
+
+  route(); render();
+  setInterval(tick, 3000);
+  setInterval(render, 1000);
+})();
+</script>
