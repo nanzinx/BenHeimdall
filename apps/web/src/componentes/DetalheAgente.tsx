@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 // Painel lateral com o detalhe do agente: status atual, números do dia e linha do tempo.
 import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -61,9 +62,9 @@ export function DetalheAgente({ painel }: { painel: Painel | undefined }) {
 
   return (
     <>
-      <div className={`scrim${aberta ? ' open' : ''}`} onClick={fechar} />
+      <div className={clsx('scrim', aberta && 'open')} onClick={fechar} />
       <aside
-        className={`drawer${aberta ? ' open' : ''}`}
+        className={clsx('drawer', aberta && 'open')}
         aria-label="Detalhe do agente"
         aria-hidden={!aberta}
       >
@@ -85,10 +86,7 @@ export function DetalheAgente({ painel }: { painel: Painel | undefined }) {
         </div>
         {a && (
           <div className="drawer-b">
-            <div
-              className={`row s-${crit ? 'CRIT' : a.status}`}
-              style={{ cursor: 'default', background: 'var(--tint)', borderColor: 'var(--c)' }}
-            >
+            <div className={clsx('row', crit ? 's-CRIT' : `s-${a.status}`)}>
               <div className="who">
                 <b>
                   {ROTULO_STATUS[a.status]}
@@ -109,15 +107,11 @@ export function DetalheAgente({ painel }: { painel: Painel | undefined }) {
               </div>
               <div className="stat">
                 <small>Pausa no dia</small>
-                <b className="mono" style={{ fontSize: 17 }}>
-                  {formatarDuracao(pausaDia)}
-                </b>
+                <b className="!text-[17px]">{formatarDuracao(pausaDia)}</b>
               </div>
             </div>
             <div>
-              <div className="subhead" style={{ paddingLeft: 0 }}>
-                Linha do tempo de hoje
-              </div>
+              <div className="subhead !pl-0">Linha do tempo de hoje</div>
               {detalhe.isError ? (
                 <p className="empty">Não foi possível carregar a linha do tempo.</p>
               ) : linha.length ? (

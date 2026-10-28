@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 // Vista do salão: 5 equipes de 8 baias (4 à esquerda, 4 à direita), numeradas da direita para a
 // esquerda. A baia 1 de cada lado fica junto da mesa do supervisor (embaixo).
 import {
@@ -16,8 +17,7 @@ const POSICOES = [1, 2, 3, 4] as const;
 
 function Baia({ a, visivel }: { a: Agente | undefined; visivel: boolean }) {
   const { agora, abrir, modoTv } = useUi();
-  if (!a)
-    return <div className="seat s-OFFLINE" style={{ opacity: 0.25, cursor: 'default' }} aria-hidden="true" />;
+  if (!a) return <div className="seat vazia" aria-hidden="true" />;
 
   let st: string = a.status;
   let linha = a.status === 'POS_ATENDIMENTO' ? 'Tabulando' : ROTULO_STATUS[a.status];
@@ -31,9 +31,8 @@ function Baia({ a, visivel }: { a: Agente | undefined; visivel: boolean }) {
   return (
     <button
       type="button"
-      className={`seat s-${st}`}
+      className={clsx('seat', `s-${st}`, !visivel && 'opacity-30')}
       data-id={a.id}
-      style={visivel ? undefined : { opacity: 0.3 }}
       tabIndex={modoTv ? -1 : 0}
       onClick={() => abrir(a.id)}
       title={`${a.nome} · ${ROTULO_STATUS[a.status]}${a.lado ? ` · baia ${a.lado === 'E' ? 'esquerda' : 'direita'} ${a.posicao}` : ''} · ramal ${a.ramal}`}

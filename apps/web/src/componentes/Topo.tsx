@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import {
   ROTULO_PERFIL,
   formatarDuracao,
@@ -54,7 +55,7 @@ export function Topo({ painel, agora, sessao, modoTv, onModoTv, onSair }: Props)
           <span>Painel de Atendimento</span>
         </div>
         <div className="spacer" />
-        <div className={`conn${online ? '' : ' off'}`} role="status">
+        <div className={clsx('conn', !online && 'off')} role="status">
           <span className="dot" />
           <span>
             {!painel
@@ -82,7 +83,7 @@ export function Topo({ painel, agora, sessao, modoTv, onModoTv, onSair }: Props)
             </span>
           </span>
           <span
-            className={`sess mono${restante !== null && restante < 60 ? ' low' : ''}`}
+            className={clsx('sess', restante !== null && restante < 60 && 'low')}
             title="Tempo até a sessão expirar sem uso"
           >
             {restante === null ? 'sem expiração' : `sessão ${formatarDuracao(restante)}`}

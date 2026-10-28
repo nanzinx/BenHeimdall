@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 // As três colunas operacionais: atendimentos em curso, em pausa e livres para transferência.
 import {
   conversao,
@@ -19,7 +20,7 @@ function useLinha(a: Agente) {
   return {
     'data-id': a.id,
     tabIndex: modoTv ? -1 : 0,
-    flash: mudaram.has(a.id) ? ' flash' : '',
+    flash: mudaram.has(a.id),
     onClick: () => abrir(a.id),
     onKeyDown: (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -36,7 +37,7 @@ function LinhaAtendimento({ a }: { a: Agente }) {
   const pos = a.status === 'POS_ATENDIMENTO';
   const at = a.atendimento;
   return (
-    <li className={`row atend${pos ? ' em-pos' : ''}${flash}`} {...props}>
+    <li className={clsx('row atend', pos && 'em-pos', flash && 'flash')} {...props}>
       <div className="who">
         <b>{a.nome}</b>
         <small>
@@ -77,9 +78,16 @@ function LinhaPausa({ a, painel }: { a: Agente; painel: Painel }) {
   const nivel = nivelPausa(s, lim);
   // O total do dia vem calculado até atualizadoEm; soma o que passou desde então.
   const total = (a.pausa?.totalDiaSeg ?? 0) + segundosDesde(painel.atualizadoEm, agora);
-  const classe = nivel === 'critico' ? ' crit' : nivel === 'alerta' ? ' warn' : '';
   return (
-    <li className={`row pausa${classe}${flash}`} {...props}>
+    <li
+      className={clsx(
+        'row pausa',
+        nivel === 'critico' && 'crit',
+        nivel === 'alerta' && 'warn',
+        flash && 'flash',
+      )}
+      {...props}
+    >
       <div className="who">
         <b>{a.nome}</b>
         <small>
@@ -104,7 +112,7 @@ function LinhaLivre({ a, pos }: { a: Agente; pos: number }) {
   const { agora } = useUi();
   const { flash, ...props } = useLinha(a);
   return (
-    <li className={`row livre${flash}`} {...props}>
+    <li className={clsx('row livre', flash && 'flash')} {...props}>
       <div className="who">
         <b>
           <span className="rank">{pos}</span>

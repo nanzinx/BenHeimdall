@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import { contarPorStatus, nivelPausa, segundosDesde, type Agente } from '@benheimdall/shared';
 
 /**
@@ -14,28 +15,24 @@ export function Indicadores({ agentes, agora }: { agentes: Agente[]; agora: numb
       nivelPausa(segundosDesde(a.desde, agora), a.pausa.limiteSeg) === 'critico',
   ).length;
 
-  const itens: { rotulo: string; valor: number; sub: string; cor: string; classe?: string }[] = [
-    { rotulo: 'Atendendo', valor: c.ATENDENDO, sub: 'em ligação agora', cor: 'var(--st-atend)' },
-    { rotulo: 'Pós-atendimento', valor: c.POS_ATENDIMENTO, sub: 'tabulando', cor: 'var(--st-pos)' },
+  const itens: { rotulo: string; valor: number; sub: string; status: string; classe?: string }[] = [
+    { rotulo: 'Atendendo', valor: c.ATENDENDO, sub: 'em ligação agora', status: 'ATENDENDO' },
+    { rotulo: 'Pós-atendimento', valor: c.POS_ATENDIMENTO, sub: 'tabulando', status: 'POS_ATENDIMENTO' },
     {
       rotulo: 'Em pausa',
       valor: c.PAUSA,
       sub: acima ? `${acima} acima do limite` : 'todas no limite',
-      cor: acima ? 'var(--st-crit)' : 'var(--st-pausa)',
+      status: acima ? 'CRIT' : 'PAUSA',
       classe: acima ? 'alarme' : undefined,
     },
-    { rotulo: 'Livres', valor: c.LIVRE, sub: 'prontos p/ transferência', cor: 'var(--st-livre)' },
-    { rotulo: 'Offline', valor: c.OFFLINE, sub: 'deslogados', cor: 'var(--st-off)' },
+    { rotulo: 'Livres', valor: c.LIVRE, sub: 'prontos p/ transferência', status: 'LIVRE' },
+    { rotulo: 'Offline', valor: c.OFFLINE, sub: 'deslogados', status: 'OFFLINE' },
   ];
 
   return (
     <section className="kpis" aria-label="Indicadores">
       {itens.map((i) => (
-        <div
-          key={i.rotulo}
-          className={`kpi ${i.classe ?? ''}`}
-          style={{ '--c': i.cor } as React.CSSProperties}
-        >
+        <div key={i.rotulo} className={clsx('kpi', `s-${i.status}`, i.classe)}>
           <span className="lab">{i.rotulo}</span>
           {/* A chave muda com o valor: o número "salta" quando muda. */}
           <span className="val" key={i.valor}>

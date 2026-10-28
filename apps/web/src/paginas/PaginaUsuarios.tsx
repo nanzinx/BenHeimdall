@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 // Administração de contas (só admin): lista, nova conta, desativar/reativar, nova senha e log.
 import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -83,12 +84,7 @@ export function PaginaUsuarios() {
       <div className="col">
         <div className="col-h">
           <h2>Contas de acesso</h2>
-          <span
-            className="count"
-            style={{ '--c': 'var(--brand-txt)', '--tint': 'var(--surface-2)' } as React.CSSProperties}
-          >
-            {lista.length}
-          </span>
+          <span className="count s-MARCA">{lista.length}</span>
           <span className="hint">supervisores, administradores e telas</span>
         </div>
         <div className="tbl-wrap">
@@ -118,7 +114,7 @@ export function PaginaUsuarios() {
                   </td>
                   <td className="mono">{dataHora(u.ultimoAcesso)}</td>
                   <td>
-                    <span className={`badge ${u.ativo ? 'on' : 'off'}`}>
+                    <span className={clsx('badge', u.ativo ? 'on' : 'off')}>
                       {u.ativo ? 'Ativa' : 'Desativada'}
                     </span>
                     {u.ativo && u.trocaSenha && (
@@ -165,7 +161,7 @@ export function PaginaUsuarios() {
         </div>
         {usuarios.isError && <p className="aviso">Não foi possível carregar as contas.</p>}
         {aviso && (
-          <p className="aviso" role="status" style={aviso.erro ? { color: 'var(--st-crit)' } : undefined}>
+          <p className={clsx('aviso', aviso.erro && 'erro')} role="status">
             {aviso.texto}
             {aviso.senha && (
               <>
@@ -195,7 +191,7 @@ export function PaginaUsuarios() {
             atualizar();
           }}
         />
-        <div className="col-h" style={{ borderTop: '1px solid var(--line)' }}>
+        <div className="col-h border-t border-linha">
           <h2>Log de acessos</h2>
         </div>
         <ul className="log">

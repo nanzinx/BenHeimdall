@@ -39,11 +39,7 @@ export function Login() {
     <section className="gate" aria-label="Entrar no painel">
       <form className="login" onSubmit={enviar} noValidate>
         <div className="login-brand">
-          <span
-            className="brand-mark"
-            style={{ background: 'var(--brand)', marginBottom: 8 }}
-            aria-hidden="true"
-          >
+          <span className="brand-mark" aria-hidden="true">
             <Marca />
           </span>
           <b>

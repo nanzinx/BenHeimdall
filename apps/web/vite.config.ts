@@ -1,10 +1,25 @@
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-export default defineConfig(({ mode }) => {
-  // Lê o mesmo .env da raiz que o backend usa (PORT, DEV_ALLOWED_HOSTS).
-  const env = { ...loadEnv(mode, path.resolve(__dirname, '../..'), ''), ...process.env };
+/**
+ * Lê só PORT e DEV_ALLOWED_HOSTS do .env da raiz. Não usa o loadEnv do Vite de propósito: ele
+ * aproveitaria o NODE_ENV=development do .env e o build sairia com o React de desenvolvimento.
+ */
+function lerDoEnv(): Record<string, string> {
+  const arquivo = path.resolve(__dirname, '../../.env');
+  const env: Record<string, string> = {};
+  if (!existsSync(arquivo)) return env;
+  for (const linha of readFileSync(arquivo, 'utf8').split(/\r?\n/)) {
+    const m = linha.match(/^\s*(PORT|DEV_ALLOWED_HOSTS)\s*=\s*(.*?)\s*$/);
+    if (m) env[m[1]!] = m[2]!.replace(/^(['"])(.*)\1$/, '$2');
+  }
+  return env;
+}
+
+export default defineConfig(() => {
+  const env = { ...lerDoEnv(), ...process.env };
   const backend = `http://localhost:${env.PORT ?? 3020}`;
   // Domínios extras liberados no servidor de dev (ex.: túnel nomeado do Cloudflare).
   const extras = (env.DEV_ALLOWED_HOSTS ?? '')
