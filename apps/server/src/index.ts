@@ -8,6 +8,13 @@ import { abrirBanco } from './db/banco';
 import { CicloLeitura } from './leitura/ciclo';
 import { RegistroStatus } from './leitura/eventos';
 import { criarLog } from './log';
+import { explicarFalhaNaPartida } from './partida';
+
+// Falha ao subir (configuração inválida, banco, módulo nativo...): explica em português e sai.
+process.on('uncaughtException', (err) => {
+  console.error(explicarFalhaNaPartida(err));
+  process.exit(1);
+});
 
 carregarDotenv();
 const config = carregarConfig();
