@@ -339,7 +339,7 @@ que sobe tudo ao ligar o PC (mesmo sem ninguém logado) e um **vigia** a cada 5 
    npm run servico:verificar
    ```
 
-**Atualizar:** `git pull`, depois `npm ci` e `npm run servico:instalar`.
+**Atualizar:** `npm run atualizar:servidor` (para no PM2, `git pull`, `npm install`, compila e sobe de novo; o `.env` e o banco ficam).
 **Logs:** `npm run pm2:logs`, `logs\benheimdall.out.log` e `logs\servico-windows.log` (vigia).
 
 - **Uma única instância, em modo fork:** há um só laço de leitura da Argus, e o tempo real guarda as conexões em memória.
@@ -427,17 +427,18 @@ location / {
 
 ## 🧰 Comandos
 
-| Comando                                                                  | O que faz                                           |
-| ------------------------------------------------------------------------ | --------------------------------------------------- |
-| `npm run dev`                                                            | Backend e front com recarga automática              |
-| `npm test`                                                               | Testes (Vitest)                                     |
-| `npm run lint`                                                           | ESLint e checagem de tipos em todos os pacotes      |
-| `npm run build`                                                          | Compila o front e o backend para produção           |
-| `npm start`                                                              | Roda o backend compilado (ele também serve o front) |
-| `npm run pm2:iniciar` · `pm2:parar` · `pm2:logs`                         | Processo `benheimdall` no PM2                       |
-| `npm run servico:instalar` · `servico:verificar` · `servico:desinstalar` | Serviço do Windows (tarefa "BenHeimdall" + vigia)   |
-| `npm run tunel:instalar`                                                 | Cloudflare Tunnel no Windows                        |
-| `npm run dev:tunel` · `prod:tunel`                                       | Túnel rápido e temporário do Cloudflare             |
+| Comando                                                                  | O que faz                                                                                    |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `npm run dev`                                                            | Backend e front com recarga automática                                                       |
+| `npm run atualizar` · `atualizar:servidor`                               | Atualiza do GitHub: no PC (pull + install) ou no servidor (também compila e reinicia no PM2) |
+| `npm test`                                                               | Testes (Vitest)                                                                              |
+| `npm run lint`                                                           | ESLint e checagem de tipos em todos os pacotes                                               |
+| `npm run build`                                                          | Compila o front e o backend para produção                                                    |
+| `npm start`                                                              | Roda o backend compilado (ele também serve o front)                                          |
+| `npm run pm2:iniciar` · `pm2:parar` · `pm2:logs`                         | Processo `benheimdall` no PM2                                                                |
+| `npm run servico:instalar` · `servico:verificar` · `servico:desinstalar` | Serviço do Windows (tarefa "BenHeimdall" + vigia)                                            |
+| `npm run tunel:instalar`                                                 | Cloudflare Tunnel no Windows                                                                 |
+| `npm run dev:tunel` · `prod:tunel`                                       | Túnel rápido e temporário do Cloudflare                                                      |
 
 <details>
 <summary><b>🔧 Variáveis de ambiente</b> (todas no <code>.env</code>, validadas na partida)</summary>

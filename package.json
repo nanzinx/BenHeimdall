@@ -20,6 +20,8 @@
     "lint": "eslint . && npm run typecheck --workspaces --if-present",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "atualizar": "node scripts/atualizar.mjs",
+    "atualizar:servidor": "node scripts/atualizar.mjs --servidor",
     "pm2:iniciar": "pm2 startOrRestart ecosystem.config.cjs --env production",
     "pm2:parar": "pm2 stop benheimdall",
     "pm2:logs": "pm2 logs benheimdall --lines 40",
