@@ -41,6 +41,10 @@ function falhar(mensagem) {
 // No Windows o servidor em execução trava o módulo nativo do SQLite: o npm install não conseguiria trocá-lo.
 if (servidor) pm2Cmd('Parando o benheimdall no PM2', 'stop', 'benheimdall');
 
+// O npm install reescreve o package-lock.json em algumas máquinas (versão do npm, Windows), o que
+// travaria o git pull. Ele é regenerado no passo seguinte, então volta à versão do GitHub.
+rodar('Descartando mudanças locais no package-lock.json', 'git', ['checkout', '--', 'package-lock.json']);
+
 if (!rodar('Baixando a versão nova (git pull)', 'git', ['pull', '--ff-only']))
   falhar(
     'O git pull não foi possível (algum arquivo do projeto foi alterado nesta máquina).\n' +
