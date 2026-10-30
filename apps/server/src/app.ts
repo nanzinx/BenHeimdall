@@ -17,6 +17,7 @@ import type { Log } from './log';
 import { rotasDev } from './rotas/dev';
 import { rotasPainel } from './rotas/painel';
 import { rotasSessao } from './rotas/sessao';
+import { rotasTransferencia } from './rotas/transferencia';
 import { rotasUsuarios } from './rotas/usuarios';
 import { ligarSocket } from './socket';
 
@@ -80,6 +81,8 @@ export function criarApp(deps: Dependencias) {
 
   app.use('/api/sessao', rotasSessao(servico, producao));
   app.use('/api', rotasPainel(servico, producao, ciclo, registro));
+  // Antes de rotasUsuarios: aquele roteador exige perfil admin em tudo o que passa por ele.
+  app.use('/api', rotasTransferencia(servico, producao, ciclo, argus, log));
   app.use('/api', rotasUsuarios(servico, producao));
   if (simulacao && argus instanceof MockArgusClient) app.use('/api/dev', rotasDev(servico, argus, ciclo));
 

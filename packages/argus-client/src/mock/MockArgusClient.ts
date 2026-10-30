@@ -11,7 +11,7 @@ import type {
   MotivoPausaBruto,
   StatusNormalizado,
 } from '../tipos';
-import { ArgusIndisponivelError } from '../tipos';
+import { ArgusIndisponivelError, ArgusRecusouError } from '../tipos';
 import { CAMPANHAS, CLIENTES, DDDS, MOTIVOS_PAUSA, NOMES_AGENTES, SUPERVISORES } from './dados';
 
 /** Códigos de status inventados para o simulador (de propósito, diferentes dos do painel). */
@@ -105,6 +105,17 @@ export class MockArgusClient implements ArgusClient {
   async obterCallbacks(): Promise<CallbacksBruto> {
     this.preparar();
     return { pendentes: this.callbacks };
+  }
+
+  /** Ramais em que o pop-up de transferência foi aberto (para conferir em testes). */
+  readonly transferenciasAbertas: string[] = [];
+
+  async abrirTransferencia(ramal: string): Promise<void> {
+    if (this.emFalha) throw new ArgusIndisponivelError('Argus simulada fora do ar');
+    const a = this.agentes.find((x) => x.bruto.ramal === ramal);
+    if (!a) throw new ArgusRecusouError(`Ramal ${ramal} não encontrado.`);
+    if (a.statusSim !== 'ATENDENDO') throw new ArgusRecusouError('Operador não está em atendimento.');
+    this.transferenciasAbertas.push(ramal);
   }
 
   // ---------- simulação ----------

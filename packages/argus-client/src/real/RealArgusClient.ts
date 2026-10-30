@@ -19,7 +19,7 @@ import type {
   MotivoPausaBruto,
   StatusNormalizado,
 } from '../tipos';
-import { ArgusIndisponivelError } from '../tipos';
+import { ArgusIndisponivelError, ArgusRecusouError } from '../tipos';
 import { classificarStatus, TEXTOS_STATUS_PADRAO, type TextosStatus } from './classificar';
 import { distribuirBaias, identificarEquipes, type EquipeConfig } from './salao';
 
@@ -162,6 +162,20 @@ export class RealArgusClient implements ArgusClient {
 
   async obterCallbacks(): Promise<CallbacksBruto> {
     return { pendentes: 0 };
+  }
+
+  // ---------- ação: pop-up de transferência (doc 4.15) ----------
+
+  async abrirTransferencia(ramal: string): Promise<void> {
+    const { status, data } = await this.enviar('popuptransferencia', { ramal }, this.o.timeoutMs);
+    const r = data as { codStatus?: number; descStatus?: string } | null;
+    if (status >= 200 && status < 300 && r?.codStatus === 1) return;
+    if (status === 403)
+      throw new ArgusIndisponivelError('Argus recusou o token em /popuptransferencia (HTTP 403).');
+    if (status === 429)
+      throw new ArgusIndisponivelError('A Argus pediu para aguardar. Tente de novo em alguns segundos.');
+    if (r?.descStatus) throw new ArgusRecusouError(r.descStatus);
+    throw new ArgusIndisponivelError(`Argus /popuptransferencia respondeu HTTP ${status}`);
   }
 
   // ---------- HTTP ----------

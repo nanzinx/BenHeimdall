@@ -49,7 +49,11 @@ tabulando, em pausa e livre para transferência, numa única tela que se atualiz
 | 📺 **Modo TV**                   | Tela cheia, letras grandes, sem dados de cliente e sem motivo de pausa.                                                            |
 
 > [!NOTE]
-> O painel **só lê dados**: não transfere, não pausa e não desloga ninguém. A transferência continua no softphone.
+> O painel **só lê dados**, com uma exceção: o botão **Transferir ligação**, no detalhe de quem
+> está em ligação. Ele abre a tela de transferência da Argus no computador do operador (comando
+> `popuptransferencia`, doc 4.15). A API não transfere direto para um ramal: o operador escolhe o
+> destino, e o painel mostra quem está livre para indicar. Admin transfere em todas as equipes;
+> supervisor, só na própria. Cada pedido fica no log de acessos. O painel não pausa nem desloga ninguém.
 
 ## 🖼️ Telas
 

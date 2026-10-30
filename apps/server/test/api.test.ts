@@ -126,6 +126,46 @@ describe('API', () => {
     expect((await request(app).get('/api/usuarios').set('Cookie', cSup)).status).toBe(403);
   });
 
+  it('transferência: abre o pop-up só de quem está em ligação, só da própria equipe, e fica no log', async () => {
+    const { amb, app, entrar } = await preparar();
+    const agentes = amb.ciclo.painelAtual().agentes;
+    const emLigacao = agentes.find((a) => a.status === 'ATENDENDO' && a.equipe > 0)!;
+    const semLigacao = agentes.find((a) => a.status !== 'ATENDENDO' && a.equipe === emLigacao.equipe);
+    const outraEquipe = emLigacao.equipe === 1 ? 2 : 1;
+    const url = (id: string) => `/api/agentes/${id}/transferencia`;
+
+    const dono = await contaPronta(amb.servico, {
+      usuario: 'sup.dono',
+      perfil: 'supervisor',
+      equipe: emLigacao.equipe,
+    });
+    const outro = await contaPronta(amb.servico, {
+      usuario: 'sup.outro',
+      perfil: 'supervisor',
+      equipe: outraEquipe,
+    });
+    const tv = await contaPronta(amb.servico, { usuario: 'tv.sala', perfil: 'tv' });
+    const cDono = (await entrar('sup.dono', dono.senha)).cookie;
+    const cOutro = (await entrar('sup.outro', outro.senha)).cookie;
+    const cTv = (await entrar('tv.sala', tv.senha)).cookie;
+
+    expect((await request(app).post(url(emLigacao.id))).status).toBe(401);
+    expect((await request(app).post(url(emLigacao.id)).set('Cookie', cTv)).status).toBe(403);
+    const r403 = await request(app).post(url(emLigacao.id)).set('Cookie', cOutro);
+    expect(r403.body.codigo).toBe('OUTRA_EQUIPE');
+    if (semLigacao)
+      expect((await request(app).post(url(semLigacao.id)).set('Cookie', cDono)).body.codigo).toBe(
+        'SEM_LIGACAO',
+      );
+
+    const ok = await request(app).post(url(emLigacao.id)).set('Cookie', cDono);
+    expect(ok.status).toBe(200);
+    expect(amb.argus.transferenciasAbertas).toEqual([emLigacao.ramal]);
+    expect((await request(app).post(url(emLigacao.id)).set('Cookie', cDono)).status).toBe(429);
+    expect(amb.argus.transferenciasAbertas).toHaveLength(1);
+    expect(amb.servico.repo.listarAcessos(5).some((l) => l.evento === 'TRANSFERENCIA')).toBe(true);
+  });
+
   it('Socket.IO recusa handshake sem sessão e entrega painel:atualizado com sessão', async () => {
     const { amb, http, entrar } = await preparar();
     await new Promise<void>((ok) => http.listen(0, '127.0.0.1', ok));

@@ -69,6 +69,20 @@ export interface ArgusClient {
   readonly contaAtendimentosPeloHistorico?: boolean;
   obterFila(): Promise<unknown>;
   obterCallbacks(): Promise<unknown>;
+  /**
+   * Abre, na tela do operador, o pop-up de transferência da ligação em curso (doc 4.15,
+   * /popuptransferencia). A API não transfere direto para um ramal: quem escolhe o destino é o
+   * operador, no pop-up. É a ÚNICA ação do painel que muda algo na Argus.
+   */
+  abrirTransferencia(ramal: string): Promise<void>;
+}
+
+/** A Argus respondeu, mas recusou o pedido (ex.: o operador não está mais em atendimento). */
+export class ArgusRecusouError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ArgusRecusouError';
+  }
 }
 
 /** A Argus não respondeu (rede, timeout, erro HTTP ou falha simulada). */

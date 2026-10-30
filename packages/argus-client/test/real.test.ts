@@ -4,6 +4,7 @@ import { z } from 'zod';
 import {
   ArgusIndisponivelError,
   ArgusLimiteError,
+  ArgusRecusouError,
   RealArgusClient,
   agenteBrutoSchema,
   chamadaBrutaSchema,
@@ -209,6 +210,26 @@ describe('RealArgusClient', () => {
 });
 
 describe('nomes', () => {
+  it('pop-up de transferência: manda o ramal; recusa da Argus vira ArgusRecusouError', async () => {
+    const corpos: object[] = [];
+    let resposta: Resp = { status: 200, data: { codStatus: 1, descStatus: 'ok' } };
+    const c = new RealArgusClient({
+      baseUrl: 'http://argus',
+      token: 't',
+      agora: () => AGORA,
+      enviar: async (comando, corpo) => {
+        corpos.push({ comando, ...corpo });
+        return resposta;
+      },
+    });
+    await c.abrirTransferencia('2105');
+    expect(corpos).toEqual([{ comando: 'popuptransferencia', ramal: '2105' }]);
+    resposta = { status: 200, data: { codStatus: 0, descStatus: 'Operador não está em atendimento' } };
+    await expect(c.abrirTransferencia('2105')).rejects.toBeInstanceOf(ArgusRecusouError);
+    resposta = { status: 403, data: null };
+    await expect(c.abrirTransferencia('2105')).rejects.toBeInstanceOf(ArgusIndisponivelError);
+  });
+
   it('nomes em maiúsculas viram nome próprio', async () => {
     const { nomeProprio } = await import('../src');
     expect(nomeProprio('ANA PAULA DA SILVA')).toBe('Ana Paula da Silva');

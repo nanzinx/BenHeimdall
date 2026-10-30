@@ -12,13 +12,16 @@ import {
   type Painel,
 } from '@benheimdall/shared';
 import { api } from '../api/cliente';
+import { useSessao } from '../hooks/useSessao';
 import { useUi } from '../hooks/useUi';
+import { Transferir } from './Transferir';
 
 const hhmm = (iso: string) =>
   new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
 export function DetalheAgente({ painel }: { painel: Painel | undefined }) {
-  const { aberto, fechar, agora } = useUi();
+  const { aberto, fechar, agora, modoTv } = useUi();
+  const { sessao } = useSessao();
   const botao = useRef<HTMLButtonElement>(null);
   const a = painel?.agentes.find((x) => x.id === aberto);
 
@@ -45,6 +48,13 @@ export function DetalheAgente({ painel }: { painel: Painel | undefined }) {
     a?.status === 'PAUSA' && a.pausa
       ? a.pausa.totalDiaSeg + desdeAtualizacao
       : (detalhe.data?.pausaTotalSeg ?? 0);
+  // Transferir: admin em todos; supervisor só na própria equipe (o servidor confere de novo).
+  const usuario = sessao?.usuario;
+  const podeTransferir =
+    !!a &&
+    !modoTv &&
+    a.status === 'ATENDENDO' &&
+    (usuario?.perfil === 'admin' || (usuario?.perfil === 'supervisor' && usuario.equipe === a.equipe));
   const linha = (detalhe.data?.linhaDoTempo ?? []).slice(-14).reverse();
 
   let resumo = '';
@@ -96,6 +106,7 @@ export function DetalheAgente({ painel }: { painel: Painel | undefined }) {
               </div>
               <div className="timer">{formatarDuracao(s)}</div>
             </div>
+            {podeTransferir && painel && <Transferir key={a.id} agente={a} agentes={painel.agentes} />}
             <div className="stats">
               <div className="stat">
                 <small>Atendimentos</small>
