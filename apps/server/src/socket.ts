@@ -5,7 +5,7 @@ import type { Server as HttpServer } from 'node:http';
 import { Server, type Socket } from 'socket.io';
 import type { Painel } from '@benheimdall/shared';
 import { tokenDoCabecalho } from './acesso/http';
-import { ipDoCliente } from './acesso/ips';
+import { ipDoCliente, pedidoLocal } from './acesso/ips';
 import type { ServicoAcesso } from './acesso/servico';
 import type { CicloLeitura } from './leitura/ciclo';
 import type { Log } from './log';
@@ -32,6 +32,7 @@ export function ligarSocket(http: HttpServer, o: OpcoesSocket) {
     o.servico.validar(tokenDoCabecalho(s.handshake.headers.cookie, o.segredo), {
       renovar: false,
       ip: ipDoCliente(s.request, o.confiarProxy),
+      local: pedidoLocal(s.request),
     });
 
   io.use((socket, next) => {

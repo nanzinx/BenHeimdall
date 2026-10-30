@@ -22,8 +22,9 @@ export interface OpcoesAcesso {
   agora?: () => Date;
   custoBcrypt?: number;
   /**
-   * Sem login (só no PC de desenvolvimento, NODE_ENV=development): toda requisição entra como um
-   * administrador local. Nunca vale em produção (a configuração não deixa).
+   * Sem login (só no PC de desenvolvimento, NODE_ENV=development): pedidos feitos no próprio PC
+   * entram como um administrador local. Nunca vale em produção (a configuração não deixa) nem
+   * para quem chega por túnel.
    */
   acessoLivre?: boolean;
 }
@@ -82,10 +83,6 @@ export class ServicoAcesso {
     this.repo = repo;
     this.agora = o.agora ?? (() => new Date());
     this.custo = o.custoBcrypt ?? CUSTO_BCRYPT;
-  }
-
-  get acessoLivre(): boolean {
-    return this.o.acessoLivre === true;
   }
 
   get sessaoMin() {
@@ -217,9 +214,10 @@ export class ServicoAcesso {
    */
   validar(
     token: string | undefined | null,
-    opcoes: { renovar: boolean; ip?: string | null },
+    opcoes: { renovar: boolean; ip?: string | null; local?: boolean },
   ): ResultadoValidacao {
-    if (this.o.acessoLivre) return { ok: true, sessao: SESSAO_LIVRE };
+    // Acesso livre só para quem abre no próprio PC: por túnel (ngrok, Cloudflare) pede login.
+    if (this.o.acessoLivre && opcoes.local) return { ok: true, sessao: SESSAO_LIVRE };
     if (!token) return { ok: false, codigo: 'SEM_SESSAO' };
     const s = this.repo.sessaoAberta(hashToken(token));
     if (!s) return { ok: false, codigo: 'SEM_SESSAO' };

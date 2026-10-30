@@ -33,8 +33,15 @@ export default defineConfig(() => {
       port: 5180,
       // 5173 fica livre para o painel do BenURA em dev.
       strictPort: true,
-      // Túnel rápido do Cloudflare (npm run dev:tunel) usa *.trycloudflare.com.
-      allowedHosts: ['.trycloudflare.com', ...extras],
+      // Túneis: Cloudflare rápido (npm run dev:tunel) e ngrok (npm run dev:ngrok).
+      allowedHosts: [
+        '.trycloudflare.com',
+        '.ngrok-free.dev',
+        '.ngrok-free.app',
+        '.ngrok.dev',
+        '.ngrok.app',
+        ...extras,
+      ],
       // Front e API na mesma origem: o cookie SameSite=Strict funciona sem CORS.
       // xfwd repassa o IP do cliente ao backend (TRUST_PROXY=loopback), inclusive via túnel.
       proxy: {

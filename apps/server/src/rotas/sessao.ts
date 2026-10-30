@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { loginSchema, trocarSenhaSchema, type SessaoAtual } from '@benheimdall/shared';
 import { COOKIE_SESSAO, exigirSessao, opcoesCookie, sessaoDe } from '../acesso/http';
-import type { ServicoAcesso, SessaoValida } from '../acesso/servico';
+import { SESSAO_LIVRE, type ServicoAcesso, type SessaoValida } from '../acesso/servico';
 
 export function rotasSessao(servico: ServicoAcesso, producao: boolean) {
   const r = Router();
@@ -10,7 +10,7 @@ export function rotasSessao(servico: ServicoAcesso, producao: boolean) {
     usuario: s.usuario,
     expiraEm: s.expiraEm,
     sessaoMin: servico.sessaoMin,
-    ...(servico.acessoLivre ? { acessoLivre: true } : {}),
+    ...(s.sessaoId === SESSAO_LIVRE.sessaoId ? { acessoLivre: true } : {}),
   });
 
   r.post('/entrar', async (req, res) => {
@@ -31,7 +31,8 @@ export function rotasSessao(servico: ServicoAcesso, producao: boolean) {
   });
 
   r.post('/sair', exigirSessao(servico, producao, { renovar: false, ...pendente }), (req, res) => {
-    if (!servico.acessoLivre) servico.sair(sessaoDe(res), req.ip);
+    const s = sessaoDe(res);
+    if (s.sessaoId !== SESSAO_LIVRE.sessaoId) servico.sair(s, req.ip);
     res
       .clearCookie(COOKIE_SESSAO, { ...cookie, signed: undefined })
       .status(204)

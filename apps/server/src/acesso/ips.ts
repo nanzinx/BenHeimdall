@@ -73,3 +73,23 @@ export function ipDoCliente(req: IncomingMessage, confiar: boolean | number | st
           : proxyaddr.compile(confiar.split(',').map((s) => s.trim()));
   return normalizarIp(proxyaddr(req, fn));
 }
+
+const HOSTS_LOCAIS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+
+/**
+ * O pedido veio do próprio PC, sem passar por túnel (ngrok, Cloudflare) nem proxy: conexão,
+ * todos os X-Forwarded-For e o Host são locais. O proxy do Vite acrescenta só 127.0.0.1/::1.
+ * Usado para o acesso livre do PC de desenvolvimento não valer para quem entra por um túnel.
+ */
+export function pedidoLocal(req: IncomingMessage): boolean {
+  if (!ehLoopback(normalizarIp(req.socket.remoteAddress))) return false;
+  const xff = req.headers['x-forwarded-for'];
+  const encaminhados = (Array.isArray(xff) ? xff.join(',') : (xff ?? ''))
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!encaminhados.every((ip) => ehLoopback(normalizarIp(ip)))) return false;
+  const host = (req.headers['x-forwarded-host'] ?? req.headers.host ?? '').toString();
+  const nome = host.startsWith('[') ? host.slice(0, host.indexOf(']') + 1) : host.split(':')[0]!;
+  return HOSTS_LOCAIS.has(nome.toLowerCase());
+}

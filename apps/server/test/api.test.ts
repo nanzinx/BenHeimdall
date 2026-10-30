@@ -39,6 +39,10 @@ describe('API', () => {
     expect(sessao.body).toMatchObject({ acessoLivre: true, usuario: { perfil: 'admin' } });
     expect((await request(app).post('/api/sessao/sair')).status).toBeLessThan(300);
     expect((await request(app).get('/api/usuarios')).status).toBe(200);
+    // Por túnel (ngrok, Cloudflare) o acesso livre não vale: pede login.
+    const tunel = { 'X-Forwarded-For': '201.93.163.133, 127.0.0.1', Host: 'x.ngrok-free.dev' };
+    expect((await request(app).get('/api/painel').set(tunel)).status).toBe(401);
+    expect((await request(app).get('/api/sessao').set({ Host: 'x.ngrok-free.dev' })).status).toBe(401);
   });
 
   it('sem sessão, o painel responde 401; o cookie é httpOnly e SameSite=Strict', async () => {

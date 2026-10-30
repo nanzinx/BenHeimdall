@@ -174,6 +174,16 @@ npm run dev:tunel
 Ele mostra um endereço `https://<algo>.trycloudflare.com` temporário. Só entra quem estiver nos
 IPs de `IPS_PERMITIDOS`, e o endereço muda a cada execução.
 
+**Pelo ngrok** (com o domínio fixo da sua conta), aponte para a porta **5180** do `npm run dev`:
+
+```powershell
+ngrok http 5180 --url https://<seu-dominio>.ngrok-free.dev
+```
+
+Pelo túnel valem a lista de IPs **e o login**: o acesso livre (sem login) só vale para quem abre
+`localhost` no próprio PC. No primeiro acesso do ngrok gratuito aparece um aviso dele; é só
+clicar em **Visit Site**.
+
 </details>
 
 ## 🔌 Ligar na Argus real

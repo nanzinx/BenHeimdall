@@ -3,6 +3,7 @@ import type { CookieOptions, NextFunction, Request, Response } from 'express';
 import cookieParser from 'cookie-parser';
 import { parse as lerCookies } from 'cookie';
 import type { Perfil } from '@benheimdall/shared';
+import { pedidoLocal } from './ips';
 import type { ServicoAcesso, SessaoValida } from './servico';
 
 export const COOKIE_SESSAO = 'bh_sessao';
@@ -39,7 +40,11 @@ export interface OpcoesExigir {
 
 export function exigirSessao(servico: ServicoAcesso, producao: boolean, o: OpcoesExigir) {
   return (req: Request, res: Response, next: NextFunction) => {
-    const r = servico.validar(tokenDoPedido(req), { renovar: o.renovar, ip: req.ip ?? null });
+    const r = servico.validar(tokenDoPedido(req), {
+      renovar: o.renovar,
+      ip: req.ip ?? null,
+      local: pedidoLocal(req),
+    });
     if (!r.ok) {
       res.clearCookie(COOKIE_SESSAO, { ...opcoesCookie(producao), signed: undefined });
       const mensagem =

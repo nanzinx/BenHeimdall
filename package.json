@@ -30,6 +30,7 @@
     "servico:desinstalar": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/windows/desinstalar-servico.ps1",
     "tunel:instalar": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/windows/instalar-tunel.ps1",
     "dev:tunel": "cloudflared tunnel --no-autoupdate --url http://localhost:5180",
+    "dev:ngrok": "ngrok http 5180",
     "prod:tunel": "cloudflared tunnel --no-autoupdate --url http://localhost:3020"
   },
   "devDependencies": {
