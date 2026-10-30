@@ -15,6 +15,7 @@ afterEach(() => rmSync(dir, { recursive: true, force: true }));
 // Meio do dia local, para não cruzar a meia-noite.
 const hoje = inicioDoDia(new Date());
 const as = (h: number, m = 0, s = 0) => new Date(hoje.getTime() + ((h * 60 + m) * 60 + s) * 1000);
+const ms = (d: Date, n: number) => new Date(d.getTime() + n);
 const st = (status: StatusAtual['status'], desde: Date, motivo: string | null = null): StatusAtual => ({
   agenteId: 'ag01',
   status,
@@ -89,9 +90,33 @@ describe('status_eventos', () => {
 });
 
 describe('leituras da Argus real', () => {
+  it('"offline" de um instante no meio da pausa não duplica a pausa nem o total', () => {
+    const reg = new RegistroStatus(abrirBanco(':memory:'));
+    reg.registrar([st('LIVRE', as(13))], as(13));
+    reg.registrar([st('PAUSA', as(13, 6), 'Digital')], as(13, 6, 2));
+    reg.registrar([st('PAUSA', as(13, 6), 'Digital')], as(13, 37, 58));
+    // Leitura falha: a Argus respondeu "não logado" por um instante.
+    reg.registrar([st('OFFLINE', as(13, 38))], as(13, 38));
+    reg.registrar([st('PAUSA', as(13, 6), 'Digital')], as(13, 38, 3));
+    reg.registrar([st('OFFLINE', as(13, 38, 6))], as(13, 38, 6));
+    reg.registrar([st('PAUSA', as(13, 6), 'Digital')], as(13, 38, 9));
+    expect(reg.pausasDoDia(as(13, 40)).get('ag01')).toBe(34 * 60);
+    expect(reg.linhaDoTempo('ag01', as(13, 40)).map((e) => e.status)).toEqual(['LIVRE', 'PAUSA']);
+  });
+
+  it('início que oscila mais de 5 s (tempoStatus da Argus) não abre evento repetido', () => {
+    const db = abrirBanco(':memory:');
+    const reg = new RegistroStatus(db);
+    reg.registrar([st('PAUSA', as(12, 7), 'WPP')], as(12, 7, 1));
+    reg.registrar([st('PAUSA', ms(as(12, 7), 9000), 'WPP')], as(12, 7, 4));
+    reg.registrar([st('PAUSA', ms(as(12, 7), 2000), 'WPP')], as(12, 7, 7));
+    expect(reg.linhaDoTempo('ag01', as(12, 8))).toHaveLength(1);
+    expect(reg.pausasDoDia(as(12, 8)).get('ag01')).toBe(60);
+    expect(db.prepare('SELECT COUNT(*) AS n FROM status_eventos').get()).toEqual({ n: 1 });
+  });
+
   it('início que varia milissegundos entre leituras não abre evento novo; atendimentos do dia contados', () => {
     const reg = new RegistroStatus(abrirBanco(':memory:'));
-    const ms = (d: Date, n: number) => new Date(d.getTime() + n);
     expect(reg.registrar([st('ATENDENDO', as(9))], as(9, 1))).toBe(1);
     expect(reg.registrar([st('ATENDENDO', ms(as(9), 40))], as(9, 1, 3))).toBe(0);
     reg.registrar([st('LIVRE', as(9, 5))], as(9, 5));

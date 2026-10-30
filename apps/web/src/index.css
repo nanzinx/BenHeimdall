@@ -602,7 +602,10 @@
     @apply absolute bottom-2.5 left-[63px] top-2.5 w-0.5 bg-linha content-[''];
   }
   .tl li {
-    @apply relative grid grid-cols-[50px_12px_1fr] items-start gap-2 py-[5px];
+    @apply relative grid grid-cols-[50px_12px_1fr_auto] items-start gap-2 py-[5px];
+  }
+  .tl-dur {
+    @apply font-display text-xs tabular-nums text-tinta-2;
   }
   .tl time {
     @apply font-display text-[12.5px] font-semibold tabular-nums text-tinta-2;

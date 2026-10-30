@@ -28,6 +28,8 @@ const TOLERANCIA_INICIO_MS = 5000;
  * servidor parado com o agente em pausa somaria, ao religar, todo o tempo parado como pausa.
  */
 const LACUNA_MS = 60_000;
+/** Leitura falha que pode ser desfeita: só eventos abertos há poucos minutos. */
+const JANELA_FALHA_MS = 5 * 60_000;
 
 /** Até quando o evento aberto pode ter durado, pelo que as leituras viram. */
 const limiteVisto = (e: LinhaEvento) => Date.parse(e.visto_em ?? e.inicio) + LACUNA_MS;
@@ -37,6 +39,10 @@ export class RegistroStatus {
   private readonly inserirStmt;
   private readonly fecharStmt;
   private readonly vistoStmt;
+  private readonly reabrirStmt;
+  private readonly apagarStmt;
+  private readonly depoisDeStmt;
+  private readonly ultimoAteStmt;
   private readonly doDiaStmt;
   private readonly doAgenteStmt;
 
@@ -49,6 +55,14 @@ export class RegistroStatus {
        VALUES (@agenteId, @status, @motivo, @inicio, @vistoEm)`,
     );
     this.vistoStmt = db.prepare('UPDATE status_eventos SET visto_em = ? WHERE id = ?');
+    this.reabrirStmt = db.prepare('UPDATE status_eventos SET fim = NULL, visto_em = ? WHERE id = ?');
+    this.apagarStmt = db.prepare('DELETE FROM status_eventos WHERE id = ?');
+    this.depoisDeStmt = db.prepare<[string, string], LinhaEvento>(
+      'SELECT * FROM status_eventos WHERE agente_id = ? AND inicio > ? ORDER BY id',
+    );
+    this.ultimoAteStmt = db.prepare<[string, string], LinhaEvento>(
+      'SELECT * FROM status_eventos WHERE agente_id = ? AND inicio <= ? ORDER BY inicio DESC, id DESC LIMIT 1',
+    );
     this.fecharStmt = db.prepare('UPDATE status_eventos SET fim = ? WHERE id = ?');
     // Eventos que tocam o intervalo [início do dia, agora].
     this.doDiaStmt = db.prepare<[string, string], LinhaEvento>(
@@ -70,29 +84,56 @@ export class RegistroStatus {
       for (const s of atuais) {
         // O início nunca fica no futuro (relógios diferentes entre Argus e servidor).
         const inicioMs = Math.min(Date.parse(s.desde), agoraMs);
-        const aberto = this.abertoStmt.get(s.agenteId);
-        // Mesmo status com início a menos de 5 s do anterior é a mesma ocorrência: na Argus real o
-        // início vem de "agora − tempoStatus" e varia alguns milissegundos a cada leitura.
+        let aberto = this.abertoStmt.get(s.agenteId);
+        const mesmo = (e: LinhaEvento) => e.status === s.status && e.motivo === s.motivo;
+
+        // A Argus diz que o status atual começou ANTES do evento aberto: o que veio no meio foi
+        // leitura falha (ex.: /statusoperador respondeu "não logado" por um instante). Apaga esses
+        // eventos recentes e retoma o anterior, em vez de contar a mesma pausa duas vezes.
+        if (aberto && inicioMs < Date.parse(aberto.inicio) - TOLERANCIA_INICIO_MS) {
+          const intrusos = this.depoisDeStmt.all(s.agenteId, iso(inicioMs));
+          if (intrusos.every((e) => agoraMs - Date.parse(e.inicio) <= JANELA_FALHA_MS)) {
+            for (const e of intrusos) this.apagarStmt.run(e.id);
+            const anterior = this.ultimoAteStmt.get(s.agenteId, iso(inicioMs + TOLERANCIA_INICIO_MS));
+            if (anterior && mesmo(anterior)) {
+              this.reabrirStmt.run(iso(agoraMs), anterior.id);
+              continue;
+            }
+            aberto = anterior?.fim === null ? anterior : undefined;
+            if (anterior && anterior.fim !== null && Date.parse(anterior.fim) > inicioMs)
+              this.fecharStmt.run(iso(Math.max(Date.parse(anterior.inicio), inicioMs)), anterior.id);
+          }
+        }
+
+        // Mesma ocorrência? Na Argus real o início vem de "agora − tempoStatus", que oscila de uma
+        // leitura para outra. Pausa, livre, pós e offline repetidos, vistos há pouco, são o mesmo
+        // trecho. Já um ATENDENDO que recomeça depois da última leitura é ligação nova (conta no dia).
+        const vistoMs = Date.parse(aberto?.visto_em ?? aberto?.inicio ?? '');
         if (
           aberto &&
-          aberto.status === s.status &&
-          aberto.motivo === s.motivo &&
-          Math.abs(Date.parse(aberto.inicio) - inicioMs) < TOLERANCIA_INICIO_MS
+          mesmo(aberto) &&
+          (Math.abs(Date.parse(aberto.inicio) - inicioMs) < TOLERANCIA_INICIO_MS ||
+            (s.status === 'ATENDENDO'
+              ? inicioMs <= vistoMs + TOLERANCIA_INICIO_MS
+              : agoraMs - vistoMs <= LACUNA_MS))
         ) {
           this.vistoStmt.run(iso(agoraMs), aberto.id);
           continue;
         }
+        let inicioNovo = inicioMs;
         if (aberto) {
           // Fecha no início do novo status (ou pouco depois da última vez que foi visto, se houve
           // um intervalo sem leituras), sem voltar para antes do início do evento aberto.
           const fimMs = Math.max(Date.parse(aberto.inicio), Math.min(inicioMs, limiteVisto(aberto)));
           this.fecharStmt.run(iso(fimMs), aberto.id);
+          // Eventos do mesmo agente nunca se sobrepõem.
+          inicioNovo = Math.max(inicioMs, fimMs);
         }
         this.inserirStmt.run({
           agenteId: s.agenteId,
           status: s.status,
           motivo: s.motivo,
-          inicio: iso(inicioMs),
+          inicio: iso(inicioNovo),
           vistoEm: iso(agoraMs),
         });
         novos++;
@@ -105,13 +146,26 @@ export class RegistroStatus {
   pausasDoDia(agora: Date): Map<string, number> {
     const iniDia = inicioDoDia(agora).getTime();
     const agoraMs = agora.getTime();
-    const totais = new Map<string, number>();
+    const trechos = new Map<string, [number, number][]>();
     for (const e of this.doDiaStmt.all(iso(agoraMs), iso(iniDia))) {
       const ini = Math.max(Date.parse(e.inicio), iniDia);
       const fim = Math.min(e.fim ? Date.parse(e.fim) : agoraMs, agoraMs);
-      if (fim > ini) totais.set(e.agente_id, (totais.get(e.agente_id) ?? 0) + (fim - ini) / 1000);
+      if (fim > ini) trechos.set(e.agente_id, [...(trechos.get(e.agente_id) ?? []), [ini, fim]]);
     }
-    for (const [k, v] of totais) totais.set(k, Math.floor(v));
+    // Soma a união dos trechos: o mesmo tempo nunca conta duas vezes (inclusive em registros
+    // antigos, gravados antes da correção das leituras falhas).
+    const totais = new Map<string, number>();
+    for (const [agente, lista] of trechos) {
+      lista.sort((x, y) => x[0] - y[0]);
+      let total = 0;
+      let ate = -Infinity;
+      for (const [ini, fim] of lista) {
+        if (fim <= ate) continue;
+        total += fim - Math.max(ini, ate);
+        ate = fim;
+      }
+      totais.set(agente, Math.floor(total / 1000));
+    }
     return totais;
   }
 
@@ -130,11 +184,31 @@ export class RegistroStatus {
   /** Linha do tempo de hoje do agente, recortada no início do dia. */
   linhaDoTempo(agenteId: string, agora: Date): EventoStatus[] {
     const iniDia = inicioDoDia(agora).getTime();
-    return this.doAgenteStmt.all(agenteId, agora.toISOString(), iso(iniDia)).map((e) => ({
-      status: e.status,
-      ...(e.motivo ? { motivo: e.motivo } : {}),
-      inicio: iso(Math.max(Date.parse(e.inicio), iniDia)),
-      ...(e.fim ? { fim: e.fim } : {}),
-    }));
+    const linha: EventoStatus[] = [];
+    for (const e of this.doAgenteStmt.all(agenteId, agora.toISOString(), iso(iniDia))) {
+      // Trecho de duração zero (sobra de leitura falha) não aparece.
+      if (e.fim && e.fim <= e.inicio) continue;
+      const evento: EventoStatus = {
+        status: e.status,
+        ...(e.motivo ? { motivo: e.motivo } : {}),
+        inicio: iso(Math.max(Date.parse(e.inicio), iniDia)),
+        ...(e.fim ? { fim: e.fim } : {}),
+      };
+      // Mesmo status e motivo emendados (registros antigos repetidos): vira um trecho só. Com
+      // intervalo entre eles (ex.: duas ligações), ficam separados.
+      const ultimo = linha.at(-1);
+      if (
+        ultimo?.fim &&
+        ultimo.status === evento.status &&
+        ultimo.motivo === evento.motivo &&
+        Date.parse(evento.inicio) - Date.parse(ultimo.fim) < TOLERANCIA_INICIO_MS
+      ) {
+        if (!evento.fim) delete ultimo.fim;
+        else if (evento.fim > ultimo.fim) ultimo.fim = evento.fim;
+        continue;
+      }
+      linha.push(evento);
+    }
+    return linha;
   }
 }

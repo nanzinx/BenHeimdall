@@ -55,7 +55,8 @@ export function DetalheAgente({ painel }: { painel: Painel | undefined }) {
     !modoTv &&
     a.status === 'ATENDENDO' &&
     (usuario?.perfil === 'admin' || (usuario?.perfil === 'supervisor' && usuario.equipe === a.equipe));
-  const linha = (detalhe.data?.linhaDoTempo ?? []).slice(-14).reverse();
+  // O dia inteiro, do mais recente para o mais antigo (zera à meia-noite).
+  const linha = [...(detalhe.data?.linhaDoTempo ?? [])].reverse();
 
   let resumo = '';
   if (a) {
@@ -122,7 +123,9 @@ export function DetalheAgente({ painel }: { painel: Painel | undefined }) {
               </div>
             </div>
             <div>
-              <div className="subhead !pl-0">Linha do tempo de hoje</div>
+              <div className="subhead !pl-0">
+                Linha do tempo de hoje{linha.length ? ` · ${linha.length} trechos` : ''}
+              </div>
               {detalhe.isError ? (
                 <p className="empty">Não foi possível carregar a linha do tempo.</p>
               ) : linha.length ? (
@@ -135,6 +138,11 @@ export function DetalheAgente({ painel }: { painel: Painel | undefined }) {
                         {ROTULO_STATUS[e.status]}
                         {e.motivo ? ` · ${e.motivo}` : ''}
                       </span>
+                      <small className="tl-dur">
+                        {formatarDuracao(
+                          Math.max(0, ((e.fim ? Date.parse(e.fim) : agora) - Date.parse(e.inicio)) / 1000),
+                        )}
+                      </small>
                     </li>
                   ))}
                 </ul>
