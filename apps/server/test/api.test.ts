@@ -15,8 +15,8 @@ afterEach(() => {
   while (fechar.length) fechar.pop()!();
 });
 
-async function preparar() {
-  const amb = criarAmbiente();
+async function preparar(acessoLivre = false) {
+  const amb = criarAmbiente({ acessoLivre });
   await amb.ciclo.executar();
   const { app, http, io } = amb.criar();
   fechar.push(() => {
@@ -31,6 +31,16 @@ async function preparar() {
 }
 
 describe('API', () => {
+  it('acesso livre (PC): painel e sessão sem login, como administrador', async () => {
+    const { app } = await preparar(true);
+    expect((await request(app).get('/api/painel')).status).toBe(200);
+    const sessao = await request(app).get('/api/sessao');
+    expect(sessao.status).toBe(200);
+    expect(sessao.body).toMatchObject({ acessoLivre: true, usuario: { perfil: 'admin' } });
+    expect((await request(app).post('/api/sessao/sair')).status).toBeLessThan(300);
+    expect((await request(app).get('/api/usuarios')).status).toBe(200);
+  });
+
   it('sem sessão, o painel responde 401; o cookie é httpOnly e SameSite=Strict', async () => {
     const { amb, app, entrar } = await preparar();
     expect((await request(app).get('/api/painel')).status).toBe(401);

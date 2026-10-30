@@ -63,6 +63,8 @@ const envSchema = z.object({
   // E-mail do primeiro admin (os logins são todos por e-mail).
   ADMIN_USER: emailLoginSchema.default('renan.leite@benconsig.com'),
   ADMIN_SENHA_INICIAL: z.string().default(''),
+  // No PC (NODE_ENV=development) o painel abre sem login; LOGIN_EM_DEV=true liga o login para testar.
+  LOGIN_EM_DEV: booleano,
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   PAUSAS_PATH: z.string().default('config/pausas.json'),
   // Atrás de proxy reverso (nginx, Caddy): número de saltos ou lista de IPs confiáveis.
@@ -116,6 +118,8 @@ export function carregarConfig(env: NodeJS.ProcessEnv = process.env) {
     logLevel: e.LOG_LEVEL,
     limites: carregarLimites(path.resolve(RAIZ, e.PAUSAS_PATH)),
     trustProxy: lerTrustProxy(e.TRUST_PROXY),
+    /** Sem login: só em NODE_ENV=development (nunca em produção nem nos testes). */
+    acessoLivre: e.NODE_ENV === 'development' && !e.LOGIN_EM_DEV,
     /** Número da equipe → nome, para a tela (também no modo simulado). */
     nomesEquipes: Object.fromEntries(equipes.map((q) => [q.numero, q.nome])) as Record<number, string>,
   };

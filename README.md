@@ -94,8 +94,14 @@ npm install
 npm run dev
 ```
 
-Abra **<http://localhost:5180>** e entre com **`renan.leite@benconsig.com`** / **`troque-no-primeiro-acesso`**.
-O sistema pede para criar uma senha nova. Por padrão, roda com a **Argus simulada**.
+Abra **<http://localhost:5180>**: no seu PC o painel **abre direto, sem login**, como administrador
+(selo **acesso livre · PC** no topo). Por padrão, roda com a **Argus simulada**.
+
+> [!NOTE]
+> O acesso livre só vale com `NODE_ENV=development`. No servidor (`NODE_ENV=production`, forçado
+> pelo PM2 e pelo Docker) o login volta: entre com **`renan.leite@benconsig.com`** /
+> **`troque-no-primeiro-acesso`** e crie a senha nova. Para testar o login no PC, ponha
+> `LOGIN_EM_DEV=true` no `.env`.
 
 > [!TIP]
 > Para ver o aviso de queda, clique em **Simular queda da Argus (15 s)** no topo do painel: o
@@ -456,6 +462,7 @@ location / {
 | `IPS_PERMITIDOS`                                                                    | IPs da operação                     | Quem acessa o sistema (IPv4, IPv6, CIDR)                                    |
 | `TV_ALLOWED_IPS`                                                                    | —                                   | De onde o perfil `tv` entra                                                 |
 | `ADMIN_USER` · `ADMIN_SENHA_INICIAL`                                                | `renan.leite@benconsig.com` · —     | Primeiro admin (criado com o banco vazio)                                   |
+| `LOGIN_EM_DEV`                                                                      | —                                   | Só em dev: `true` liga o login no PC (sem ele, o PC entra sem login)        |
 | `TRUST_PROXY`                                                                       | `loopback`                          | Proxies confiáveis para achar o IP real                                     |
 | `DEV_ALLOWED_HOSTS`                                                                 | —                                   | Só em dev: domínios extras liberados no Vite                                |
 | `CLOUDFLARE_TUNNEL_TOKEN` · `BIND_ADDR`                                             | — · `127.0.0.1`                     | Só no Docker Compose                                                        |

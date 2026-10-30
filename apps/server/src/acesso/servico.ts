@@ -21,7 +21,28 @@ export interface OpcoesAcesso {
   log: Log;
   agora?: () => Date;
   custoBcrypt?: number;
+  /**
+   * Sem login (só no PC de desenvolvimento, NODE_ENV=development): toda requisição entra como um
+   * administrador local. Nunca vale em produção (a configuração não deixa).
+   */
+  acessoLivre?: boolean;
 }
+
+/** Sessão usada no acesso livre: um administrador local, sem conta no banco. */
+export const SESSAO_LIVRE: SessaoValida = {
+  sessaoId: 'acesso-livre',
+  usuario: {
+    id: 0,
+    usuario: 'acesso-livre@local',
+    nome: 'Acesso livre (PC)',
+    perfil: 'admin',
+    equipe: null,
+    ativo: true,
+    trocaSenha: false,
+    ultimoAcesso: null,
+  },
+  expiraEm: null,
+};
 
 /** Erro de regra de negócio, já com o status HTTP e a mensagem para a tela. */
 export class ErroAcesso extends Error {
@@ -61,6 +82,10 @@ export class ServicoAcesso {
     this.repo = repo;
     this.agora = o.agora ?? (() => new Date());
     this.custo = o.custoBcrypt ?? CUSTO_BCRYPT;
+  }
+
+  get acessoLivre(): boolean {
+    return this.o.acessoLivre === true;
   }
 
   get sessaoMin() {
@@ -194,6 +219,7 @@ export class ServicoAcesso {
     token: string | undefined | null,
     opcoes: { renovar: boolean; ip?: string | null },
   ): ResultadoValidacao {
+    if (this.o.acessoLivre) return { ok: true, sessao: SESSAO_LIVRE };
     if (!token) return { ok: false, codigo: 'SEM_SESSAO' };
     const s = this.repo.sessaoAberta(hashToken(token));
     if (!s) return { ok: false, codigo: 'SEM_SESSAO' };

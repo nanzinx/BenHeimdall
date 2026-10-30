@@ -119,6 +119,8 @@ export interface SessaoAtual {
   /** Null para o perfil tv, que não expira. */
   expiraEm: string | null;
   sessaoMin: number;
+  /** PC de desenvolvimento sem login (NODE_ENV=development): entra direto como administrador. */
+  acessoLivre?: boolean;
 }
 
 export interface RegistroAcesso {

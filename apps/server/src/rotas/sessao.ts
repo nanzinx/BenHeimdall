@@ -10,6 +10,7 @@ export function rotasSessao(servico: ServicoAcesso, producao: boolean) {
     usuario: s.usuario,
     expiraEm: s.expiraEm,
     sessaoMin: servico.sessaoMin,
+    ...(servico.acessoLivre ? { acessoLivre: true } : {}),
   });
 
   r.post('/entrar', async (req, res) => {
@@ -30,7 +31,7 @@ export function rotasSessao(servico: ServicoAcesso, producao: boolean) {
   });
 
   r.post('/sair', exigirSessao(servico, producao, { renovar: false, ...pendente }), (req, res) => {
-    servico.sair(sessaoDe(res), req.ip);
+    if (!servico.acessoLivre) servico.sair(sessaoDe(res), req.ip);
     res
       .clearCookie(COOKIE_SESSAO, { ...cookie, signed: undefined })
       .status(204)

@@ -71,7 +71,7 @@ export function Layout() {
     else if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
   };
 
-  useAtividade(usuario.perfil !== 'tv', renovar);
+  useAtividade(usuario.perfil !== 'tv' && !sessao?.acessoLivre, renovar);
 
   // O contador chegou a zero: confirma no servidor (que registra a expiração).
   const expirou = !!sessao?.expiraEm && agora >= Date.parse(sessao.expiraEm) + 1000;

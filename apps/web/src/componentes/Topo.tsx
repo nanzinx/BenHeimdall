@@ -82,15 +82,24 @@ export function Topo({ painel, agora, sessao, modoTv, onModoTv, onSair }: Props)
               {usuario.perfil === 'supervisor' && usuario.equipe ? ` · Equipe ${usuario.equipe}` : ''}
             </span>
           </span>
-          <span
-            className={clsx('sess', restante !== null && restante < 60 && 'low')}
-            title="Tempo até a sessão expirar sem uso"
-          >
-            {restante === null ? 'sem expiração' : `sessão ${formatarDuracao(restante)}`}
-          </span>
-          <button className="btn-top" type="button" onClick={onSair}>
-            Sair
-          </button>
+          {sessao.acessoLivre ? (
+            // PC de desenvolvimento: sem login, sem expiração e sem Sair.
+            <span className="sess" title="Sem login no PC (NODE_ENV=development); no servidor o login volta">
+              acesso livre · PC
+            </span>
+          ) : (
+            <>
+              <span
+                className={clsx('sess', restante !== null && restante < 60 && 'low')}
+                title="Tempo até a sessão expirar sem uso"
+              >
+                {restante === null ? 'sem expiração' : `sessão ${formatarDuracao(restante)}`}
+              </span>
+              <button className="btn-top" type="button" onClick={onSair}>
+                Sair
+              </button>
+            </>
+          )}
         </div>
       </div>
     </header>

@@ -32,7 +32,10 @@ const servico = new ServicoAcesso(new Repositorio(db), {
   sessaoMin: config.sessaoMin,
   tvIps: config.tvIps,
   log,
+  acessoLivre: config.acessoLivre,
 });
+if (config.acessoLivre)
+  log.warn('ACESSO LIVRE: sem login (NODE_ENV=development). No servidor (production) o login volta sozinho.');
 const argus = criarArgusClient(config.argus);
 const ciclo = new CicloLeitura({
   argus,

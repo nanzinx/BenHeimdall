@@ -36,6 +36,15 @@ describe('configuração', () => {
     expect(() => carregarConfig({ ADMIN_USER: 'admin' })).toThrow(/e-mail válido/);
   });
 
+  it('sem login só no PC (development); production e test sempre pedem login', () => {
+    expect(carregarConfig({ NODE_ENV: 'development' }).acessoLivre).toBe(true);
+    expect(carregarConfig({ NODE_ENV: 'development', LOGIN_EM_DEV: 'true' }).acessoLivre).toBe(false);
+    expect(carregarConfig({ NODE_ENV: 'test' }).acessoLivre).toBe(false);
+    expect(carregarConfig({ NODE_ENV: 'production', SESSION_SECRET: 'x'.repeat(40) }).acessoLivre).toBe(
+      false,
+    );
+  });
+
   it('TRUST_PROXY aceita saltos, listas e desligado', () => {
     expect(carregarConfig({ TRUST_PROXY: '' }).trustProxy).toBe(false);
     expect(carregarConfig({ TRUST_PROXY: '1' }).trustProxy).toBe(1);

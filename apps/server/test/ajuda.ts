@@ -30,7 +30,13 @@ import { RegistroStatus } from '../src/leitura/eventos';
 import { logSilencioso } from '../src/log';
 
 export function criarAmbiente(
-  opcoes: { agora?: () => Date; tvIps?: string; ipsPermitidos?: string; trustProxy?: string } = {},
+  opcoes: {
+    agora?: () => Date;
+    tvIps?: string;
+    ipsPermitidos?: string;
+    trustProxy?: string;
+    acessoLivre?: boolean;
+  } = {},
 ) {
   const config = carregarConfig({
     NODE_ENV: 'test',
@@ -49,6 +55,7 @@ export function criarAmbiente(
     log: logSilencioso,
     agora,
     custoBcrypt: 4,
+    acessoLivre: opcoes.acessoLivre,
   });
   const argus = new MockArgusClient({ semente: 9 });
   const ciclo = new CicloLeitura({ argus, registro, limites: LIMITES, pollMs: 3000, log: logSilencioso });
