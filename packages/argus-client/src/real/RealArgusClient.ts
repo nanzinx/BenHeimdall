@@ -385,7 +385,6 @@ export class RealArgusClient implements ArgusClient {
         const aberturaMs = Date.parse(String(lead?.dataHoraAberturaLead ?? ''));
         chamada = {
           agenteId: op.ramal,
-          ...(lead?.codCliente ? { codigoCliente: String(lead.codCliente).trim() } : {}),
           nomeCliente: String(lead?.nomeCliente ?? ''),
           telefone: String(lead?.telefone ?? ''),
           campanha: String(status?.campanha ?? '').trim(),

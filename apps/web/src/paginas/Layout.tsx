@@ -24,7 +24,7 @@ export function useDadosVista() {
   return useOutletContext<DadosVista>();
 }
 
-/** Filtro por equipe e busca por nome, ramal ou código do cliente (quando visível ao perfil). */
+/** Filtro por equipe e busca por nome do agente, ramal ou nome do cliente (quando visível ao perfil). */
 /** Filtro "Todas" (o 0 é "Sem equipe"). */
 export const TODAS = -1;
 
@@ -36,7 +36,7 @@ export function filtrar(agentes: Agente[], equipe: number, busca: string): Agent
       (!q ||
         a.nome.toLowerCase().includes(q) ||
         a.ramal.includes(q) ||
-        (a.atendimento?.codigoCliente?.includes(q) ?? false)),
+        (a.atendimento?.clienteMascarado?.toLowerCase().includes(q) ?? false)),
   );
 }
 

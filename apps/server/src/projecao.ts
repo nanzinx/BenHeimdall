@@ -23,7 +23,7 @@ export function projetarAgente(a: Agente, leitor: Leitor): Agente {
     saida.atendimento =
       leitor.equipe !== null && a.equipe === leitor.equipe
         ? atendimento
-        : { campanha: atendimento.campanha, inicio: atendimento.inicio };
+        : { campanha: atendimento.campanha, inicio: atendimento.inicio, restrito: true };
   return saida;
 }
 

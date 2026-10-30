@@ -42,8 +42,8 @@ export function BarraFerramentas({
           type="search"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          placeholder="Buscar agente, ramal ou código do cliente"
-          aria-label="Buscar agente, ramal ou código do cliente"
+          placeholder="Buscar agente, ramal ou cliente"
+          aria-label="Buscar agente, ramal ou cliente"
         />
       </label>
     </div>

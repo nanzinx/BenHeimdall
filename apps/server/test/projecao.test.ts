@@ -34,15 +34,16 @@ describe('projeção por perfil', () => {
     const propria = proj.agentes.filter((a) => a.equipe === 2 && a.atendimento);
     expect(outras.length).toBeGreaterThan(0);
     expect(propria.length).toBeGreaterThan(0);
-    for (const a of outras) expect(Object.keys(a.atendimento!).sort()).toEqual(['campanha', 'inicio']);
-    for (const a of propria) expect(a.atendimento!.codigoCliente).toBeTruthy();
+    for (const a of outras)
+      expect(Object.keys(a.atendimento!).sort()).toEqual(['campanha', 'inicio', 'restrito']);
+    for (const a of propria) expect(a.atendimento!.clienteMascarado).toBeTruthy();
 
-    // Os códigos e telefones das outras equipes não aparecem em lugar nenhum.
+    // Nomes e telefones das outras equipes não aparecem em lugar nenhum.
     const json = JSON.stringify(proj);
     for (const a of p.agentes.filter((x) => x.equipe !== 2 && x.atendimento)) {
       expect(json).not.toContain(a.atendimento!.telefoneMascarado);
-      expect(json).not.toContain(`"${a.atendimento!.codigoCliente}"`);
     }
+    expect(json).not.toContain('codigoCliente');
     // Status e motivo de pausa de todas as equipes continuam visíveis.
     expect(proj.agentes.map((a) => a.status)).toEqual(p.agentes.map((a) => a.status));
     expect(proj.agentes.filter((a) => a.pausa).every((a) => a.pausa!.motivo)).toBe(true);

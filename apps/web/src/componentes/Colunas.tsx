@@ -49,13 +49,13 @@ function LinhaAtendimento({ a }: { a: Agente }) {
           <span>
             <span className="pill pos">Tabulando</span>
           </span>
-        ) : at?.codigoCliente ? (
-          <span>
-            <b className="cod">{at.codigoCliente}</b> {at.clienteMascarado ?? ''}
-            {at.telefoneMascarado && <span className="tel"> · {at.telefoneMascarado}</span>}
-          </span>
-        ) : (
+        ) : at?.restrito ? (
           <span className="restr">Cliente de outra equipe</span>
+        ) : (
+          <span>
+            <b>{at?.clienteMascarado ?? 'Cliente sem nome'}</b>
+            {at?.telefoneMascarado && <span className="tel"> · {at.telefoneMascarado}</span>}
+          </span>
         )}
         <small>{at?.campanha ?? ''}</small>
       </div>
@@ -145,7 +145,7 @@ export function Colunas({ painel, agentes }: { painel: Painel; agentes: Agente[]
         <div className="col-h">
           <h2>Atendimentos em curso</h2>
           <span className="count">{atend.length}</span>
-          <span className="hint">código · cliente · campanha · duração</span>
+          <span className="hint">cliente · campanha · duração</span>
         </div>
         <ul className="list" aria-live="off">
           {atend.length ? (

@@ -29,9 +29,6 @@ export const agenteBrutoSchema = z.object({
 export const chamadaBrutaSchema = z
   .object({
     agenteId: z.string().min(1),
-    // TODO(Fase 2): confirmar se a chamada ativa da Argus traz o código do cliente
-    // ou se ele precisa ser cruzado pelo telefone em outra base.
-    codigoCliente: z.string().optional(),
     nomeCliente: z.string(),
     telefone: z.string(),
     campanha: z.string(),

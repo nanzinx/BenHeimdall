@@ -79,7 +79,7 @@ export const agenteSchema = z
       .optional(),
     atendimento: z
       .object({
-        codigoCliente: z.string().optional(),
+        restrito: z.literal(true).optional(),
         clienteMascarado: z.string().optional(),
         telefoneMascarado: z.string().optional(),
         campanha: z.string(),

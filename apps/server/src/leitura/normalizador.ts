@@ -156,8 +156,6 @@ export function normalizar(leitura: LeituraArgus, ctx: ContextoNormalizacao): Pa
     const c = chamadas.get(a.id);
     if (c && (st.status === 'ATENDENDO' || st.status === 'POS_ATENDIMENTO')) {
       agente.atendimento = {
-        // A Argus manda o codCliente informado na importação do lead; sem ele, "—".
-        codigoCliente: c.codigoCliente || '—',
         // Sem lead aberto (ou campo vazio), o dado simplesmente não vai.
         ...(c.nomeCliente.trim() ? { clienteMascarado: primeiroNome(c.nomeCliente) } : {}),
         ...(c.telefone.replace(/\D/g, '') ? { telefoneMascarado: mascararTelefone(c.telefone) } : {}),

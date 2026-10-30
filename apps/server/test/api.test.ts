@@ -65,7 +65,9 @@ describe('API', () => {
     const pSup = (await request(app).get('/api/painel').set('Cookie', cSup)).body as Painel;
     expect(pSup.agentes).toHaveLength(48);
     expect(
-      pSup.agentes.filter((a) => a.equipe !== 1 && a.atendimento).every((a) => !a.atendimento!.codigoCliente),
+      pSup.agentes
+        .filter((a) => a.equipe !== 1 && a.atendimento)
+        .every((a) => a.atendimento!.restrito && !a.atendimento!.clienteMascarado),
     ).toBe(true);
 
     const { cookie: cTv } = await entrar('tv.salao', tv.senha);

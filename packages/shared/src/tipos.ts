@@ -40,10 +40,11 @@ export interface PausaAgente {
 
 export interface AtendimentoAgente {
   /**
-   * Os três campos de cliente são omitidos pela projeção quando o perfil não pode vê-los
-   * (supervisor olhando outra equipe). A campanha e o início sempre vêm.
+   * Os campos de cliente são omitidos pela projeção quando o perfil não pode vê-los
+   * (supervisor olhando outra equipe): aí vem `restrito`. A campanha e o início sempre vêm.
+   * O código do cliente não é usado no painel.
    */
-  codigoCliente?: string;
+  restrito?: true;
   clienteMascarado?: string;
   telefoneMascarado?: string;
   campanha: string;

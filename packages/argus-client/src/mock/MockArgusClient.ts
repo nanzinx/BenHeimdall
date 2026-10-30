@@ -184,7 +184,6 @@ export class MockArgusClient implements ArgusClient {
       Array.from({ length: digitos }, () => Math.floor(this.rnd() * 10)).join('');
     return {
       agenteId,
-      codigoCliente: String(100000 + Math.floor(this.rnd() * 900000)),
       nomeCliente: this.escolher(CLIENTES),
       telefone: `${this.escolher(DDDS)}9${num(8)}`,
       campanha: this.escolher(CAMPANHAS),

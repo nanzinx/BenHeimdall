@@ -127,7 +127,8 @@ describe('RealArgusClient', () => {
     expect(Date.parse(bruno.desde)).toBe(AGORA - 600_000);
 
     expect(chamadas).toHaveLength(1);
-    expect(chamadas[0]).toMatchObject({ agenteId: '2101', codigoCliente: 'C-778', campanha: 'Consignado' });
+    expect(chamadas[0]).toMatchObject({ agenteId: '2101', campanha: 'Consignado' });
+    expect(chamadas[0]).not.toHaveProperty('codigoCliente'); // o painel não usa o código do cliente
     expect(JSON.stringify(chamadas)).not.toContain('123.456.789-00');
     expect(JSON.stringify(agentes)).not.toContain('111.222.333-44');
     expect(await cliente.listarMotivosPausa()).toEqual([{ codigo: 'ALMOÇO 1', descricao: 'ALMOÇO 1' }]);

@@ -40,7 +40,7 @@ tabulando, em pausa e livre para transferência, numa única tela que se atualiz
 
 |                                  |                                                                                                                                    |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| 📞 **Atendimentos em curso**     | Agente, código do cliente, primeiro nome, telefone parcial, campanha e duração. Quem está tabulando aparece como **Tabulando**.    |
+| 📞 **Atendimentos em curso**     | Agente, primeiro nome do cliente, telefone parcial, campanha e duração. Quem está tabulando aparece como **Tabulando**.            |
 | ⏸️ **Em pausa**                  | Motivo, tempo na pausa, limite do motivo e total do dia. O cartão fica **laranja a 80%** do limite e **vermelho pulsante a 100%**. |
 | ✅ **Livres para transferência** | Há quanto tempo estão livres, em ordem de **mais ocioso** ou de **melhor conversão**.                                              |
 | 📊 **Indicadores**               | Atendendo, pós-atendimento, em pausa (e quantos acima do limite), livres e offline.                                                |
@@ -215,14 +215,14 @@ sequenceDiagram
     L-->>N: painel:atualizado (já filtrado pelo perfil de cada um)
 ```
 
-| O painel mostra                 | De onde vem (doc-api-argus.pdf)                                                              |
-| ------------------------------- | -------------------------------------------------------------------------------------------- |
-| Agentes (nome, ramal)           | `/listarusuarios` (operadores ativos), em cache de 5 min                                     |
-| Robôs fora do painel            | `/listargrupos`: ramais de grupos virtuais (DTMF/Flash) são ignorados                        |
-| Status, pausa e tempo no status | `/statusoperador` de cada ramal, a cada `POLL_MS` (3 s)                                      |
-| Cliente em atendimento          | `ultimoLead`: código, primeiro nome e telefone parcial. **O CPF que vem junto é descartado** |
-| Equipe                          | grupo do operador e, se ele não disser, o supervisor (veja [Equipes](#-equipes))             |
-| Atendimentos do dia             | contados pelo histórico do próprio BenHeimdall                                               |
+| O painel mostra                 | De onde vem (doc-api-argus.pdf)                                                             |
+| ------------------------------- | ------------------------------------------------------------------------------------------- |
+| Agentes (nome, ramal)           | `/listarusuarios` (operadores ativos), em cache de 5 min                                    |
+| Robôs fora do painel            | `/listargrupos`: ramais de grupos virtuais (DTMF/Flash) são ignorados                       |
+| Status, pausa e tempo no status | `/statusoperador` de cada ramal, a cada `POLL_MS` (3 s)                                     |
+| Cliente em atendimento          | `ultimoLead`: primeiro nome e telefone parcial. **Código do cliente e CPF são descartados** |
+| Equipe                          | grupo do operador e, se ele não disser, o supervisor (veja [Equipes](#-equipes))            |
+| Atendimentos do dia             | contados pelo histórico do próprio BenHeimdall                                              |
 
 <details>
 <summary><b>Como cada status da Argus vira status do painel</b></summary>
@@ -276,11 +276,11 @@ flowchart LR
 
 ## 🔐 Acesso e segurança
 
-| Perfil            | Vê                                                                                      | Sessão                                                 |
-| ----------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| 🛡️ **admin**      | Tudo, mais a tela **Usuários e acessos**                                                | Expira após 15 min sem uso                             |
-| 👤 **supervisor** | Status de todas as equipes; código, nome e telefone do cliente **só da própria equipe** | Expira após 15 min sem uso                             |
-| 📺 **tv**         | Sem dados de cliente e sem motivo de pausa; entra direto no modo TV                     | Não expira, mas só entra pelos IPs de `TV_ALLOWED_IPS` |
+| Perfil            | Vê                                                                              | Sessão                                                 |
+| ----------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| 🛡️ **admin**      | Tudo, mais a tela **Usuários e acessos**                                        | Expira após 15 min sem uso                             |
+| 👤 **supervisor** | Status de todas as equipes; nome e telefone do cliente **só da própria equipe** | Expira após 15 min sem uso                             |
+| 📺 **tv**         | Sem dados de cliente e sem motivo de pausa; entra direto no modo TV             | Não expira, mas só entra pelos IPs de `TV_ALLOWED_IPS` |
 
 - **Login por e-mail** em todas as contas, sem diferenciar maiúsculas. O nome é sugerido a partir
   do e-mail (`juliana.mendes@…` → "Juliana Mendes").

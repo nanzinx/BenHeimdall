@@ -61,11 +61,11 @@ export function DetalheAgente({ painel }: { painel: Painel | undefined }) {
   if (a) {
     const at = a.atendimento;
     if (a.status === 'ATENDENDO' && at)
-      resumo = at.codigoCliente
-        ? [`Cód. ${at.codigoCliente}`, at.clienteMascarado, at.telefoneMascarado, at.campanha]
+      resumo = at.restrito
+        ? `Cliente de outra equipe · ${at.campanha}`
+        : [at.clienteMascarado ?? 'Cliente sem nome', at.telefoneMascarado, at.campanha]
             .filter(Boolean)
-            .join(' · ')
-        : `Cliente de outra equipe · ${at.campanha}`;
+            .join(' · ');
     else if (a.status === 'POS_ATENDIMENTO' && at) resumo = `Tabulando · ${at.campanha}`;
     else resumo = `desde ${hhmm(a.desde)}`;
   }
