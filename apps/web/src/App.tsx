@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import type { Perfil } from '@benheimdall/shared';
+import { Marca } from './componentes/Topo';
 import { useSessao } from './hooks/useSessao';
 import { Layout } from './paginas/Layout';
 import { Login } from './paginas/Login';
@@ -19,9 +20,38 @@ function Protegido({ children, perfis }: { children: ReactNode; perfis?: Perfil[
   return <>{children}</>;
 }
 
+/** O backend não respondeu: explica em vez de cair na tela de login (que não funcionaria). */
+function ServidorFora({ mensagem, tentar }: { mensagem: string; tentar: () => void }) {
+  return (
+    <section className="gate" aria-label="Servidor fora do ar">
+      <div className="login">
+        <div className="login-brand">
+          <span className="brand-mark" aria-hidden="true">
+            <Marca />
+          </span>
+          <b>
+            Ben<i>Heimdall</i>
+          </b>
+          <span>Painel de Atendimento</span>
+        </div>
+        <p className="login-lead">
+          <b>O servidor não está respondendo.</b> Assim que ele subir, o painel abre sozinho.
+        </p>
+        <p className="fmsg" role="alert">
+          {mensagem}
+        </p>
+        <button className="btn-primary" type="button" onClick={tentar}>
+          Tentar de novo
+        </button>
+      </div>
+    </section>
+  );
+}
+
 export function App() {
-  const { carregando } = useSessao();
+  const { carregando, falha, sessao, revalidar } = useSessao();
   if (carregando) return <div className="splash">Carregando…</div>;
+  if (falha && !sessao) return <ServidorFora mensagem={falha} tentar={revalidar} />;
   return (
     <Routes>
       <Route path="/login" element={<Login />} />

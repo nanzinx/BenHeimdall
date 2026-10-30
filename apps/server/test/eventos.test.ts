@@ -27,7 +27,7 @@ describe('status_eventos', () => {
     const reg = new RegistroStatus(abrirBanco(':memory:'));
     reg.registrar([st('LIVRE', as(9))], as(9));
     reg.registrar([st('PAUSA', as(10), 'Lanche')], as(10, 0, 3));
-    reg.registrar([st('PAUSA', as(10), 'Lanche')], as(10, 5)); // repetida: não grava de novo
+    reg.registrar([st('PAUSA', as(10), 'Lanche')], as(10, 14, 59)); // repetida: não grava de novo
     reg.registrar([st('LIVRE', as(10, 15))], as(10, 15, 2));
     reg.registrar([st('PAUSA', as(11), 'Banheiro')], as(11));
     expect(reg.pausasDoDia(as(11, 4)).get('ag01')).toBe(15 * 60 + 4 * 60);
@@ -44,6 +44,7 @@ describe('status_eventos', () => {
     const db1 = abrirBanco(arquivo);
     const reg1 = new RegistroStatus(db1);
     reg1.registrar([st('PAUSA', as(10), 'Feedback')], as(10));
+    reg1.registrar([st('PAUSA', as(10), 'Feedback')], as(10, 19, 57));
     reg1.registrar([st('LIVRE', as(10, 20))], as(10, 20));
     reg1.registrar([st('PAUSA', as(11), 'Lanche')], as(11));
     db1.close();
@@ -51,8 +52,32 @@ describe('status_eventos', () => {
     // "Reinício": novo processo, nova conexão, mesmo arquivo.
     const reg2 = new RegistroStatus(abrirBanco(arquivo));
     expect(reg2.pausasDoDia(as(11, 10)).get('ag01')).toBe(30 * 60);
+    reg2.registrar([st('PAUSA', as(11), 'Lanche')], as(11, 11, 58));
     reg2.registrar([st('LIVRE', as(11, 12))], as(11, 12));
     expect(reg2.pausasDoDia(as(12)).get('ag01')).toBe(32 * 60);
+  });
+
+  it('servidor parado com o agente em pausa não soma o tempo parado', () => {
+    const arquivo = path.join(dir, 'parado.db');
+    const reg1 = new RegistroStatus(abrirBanco(arquivo));
+    reg1.registrar([st('PAUSA', as(8), 'Banheiro')], as(8));
+    reg1.registrar([st('PAUSA', as(8), 'Banheiro')], as(8, 3)); // última leitura antes de parar
+
+    // Religa às 11h: o agente está livre desde 10h, mas ninguém viu a pausa depois das 8h03.
+    const reg2 = new RegistroStatus(abrirBanco(arquivo));
+    reg2.registrar([st('LIVRE', as(10))], as(11));
+    expect(reg2.pausasDoDia(as(11)).get('ag01')).toBe(4 * 60); // 8h00 até 8h03 + 1 min de folga
+  });
+
+  it('a mesma pausa continua depois de um reinício', () => {
+    const arquivo = path.join(dir, 'continua.db');
+    const reg1 = new RegistroStatus(abrirBanco(arquivo));
+    reg1.registrar([st('PAUSA', as(9), 'Feedback')], as(9, 1));
+    const reg2 = new RegistroStatus(abrirBanco(arquivo));
+    reg2.registrar([st('PAUSA', as(9), 'Feedback')], as(9, 10));
+    reg2.registrar([st('PAUSA', as(9), 'Feedback')], as(9, 11, 57));
+    reg2.registrar([st('LIVRE', as(9, 12))], as(9, 12));
+    expect(reg2.pausasDoDia(as(10)).get('ag01')).toBe(12 * 60);
   });
 
   it('pausa iniciada ontem só conta a partir da meia-noite', () => {

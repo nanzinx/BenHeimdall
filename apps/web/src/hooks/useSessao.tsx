@@ -7,6 +7,8 @@ import { api, definirAoPerderSessao, ErroApi } from '../api/cliente';
 interface ContextoSessao {
   sessao: SessaoAtual | null;
   carregando: boolean;
+  /** O servidor não respondeu ao conferir a sessão (backend fora do ar, por exemplo). */
+  falha: string;
   /** Mensagem para a tela de login (sessão expirada, encerrada...). */
   aviso: string;
   entrar(dados: LoginEntrada): Promise<SessaoAtual>;
@@ -46,6 +48,8 @@ export function ProvedorSessao({ children }: { children: ReactNode }) {
     },
     staleTime: Infinity,
     retry: 1,
+    // Backend fora do ar: tenta de novo sozinho e entra assim que ele subir.
+    refetchInterval: (q) => (q.state.status === 'error' ? 3000 : false),
   });
 
   const definir = useCallback((s: SessaoAtual | null) => qc.setQueryData(CHAVE, s), [qc]);
@@ -69,6 +73,7 @@ export function ProvedorSessao({ children }: { children: ReactNode }) {
     () => ({
       sessao: consulta.data ?? null,
       carregando: consulta.isPending,
+      falha: consulta.isError && !consulta.data ? consulta.error.message : '',
       aviso,
       perdida,
       revalidar: () => void qc.invalidateQueries({ queryKey: CHAVE }),
@@ -93,7 +98,7 @@ export function ProvedorSessao({ children }: { children: ReactNode }) {
         definir(await api<SessaoAtual>('/api/sessao/renovar', { method: 'POST' }));
       },
     }),
-    [consulta.data, consulta.isPending, aviso, perdida, definir, qc],
+    [consulta.data, consulta.isPending, consulta.isError, consulta.error, aviso, perdida, definir, qc],
   );
 
   return <Ctx.Provider value={valor}>{children}</Ctx.Provider>;

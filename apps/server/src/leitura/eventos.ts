@@ -11,6 +11,7 @@ interface LinhaEvento {
   motivo: string | null;
   inicio: string;
   fim: string | null;
+  visto_em: string | null;
 }
 
 /** Meia-noite local (fuso do servidor) do dia de `agora`. */
@@ -22,11 +23,20 @@ export function inicioDoDia(agora: Date): Date {
 
 const iso = (ms: number) => new Date(ms).toISOString();
 const TOLERANCIA_INICIO_MS = 5000;
+/**
+ * Ao fechar um status, ele só vale até um pouco depois da última leitura que o viu. Sem isso, um
+ * servidor parado com o agente em pausa somaria, ao religar, todo o tempo parado como pausa.
+ */
+const LACUNA_MS = 60_000;
+
+/** Até quando o evento aberto pode ter durado, pelo que as leituras viram. */
+const limiteVisto = (e: LinhaEvento) => Date.parse(e.visto_em ?? e.inicio) + LACUNA_MS;
 
 export class RegistroStatus {
   private readonly abertoStmt;
   private readonly inserirStmt;
   private readonly fecharStmt;
+  private readonly vistoStmt;
   private readonly doDiaStmt;
   private readonly doAgenteStmt;
 
@@ -35,8 +45,10 @@ export class RegistroStatus {
       'SELECT * FROM status_eventos WHERE agente_id = ? AND fim IS NULL ORDER BY id DESC LIMIT 1',
     );
     this.inserirStmt = db.prepare(
-      'INSERT INTO status_eventos (agente_id, status, motivo, inicio) VALUES (@agenteId, @status, @motivo, @inicio)',
+      `INSERT INTO status_eventos (agente_id, status, motivo, inicio, visto_em)
+       VALUES (@agenteId, @status, @motivo, @inicio, @vistoEm)`,
     );
+    this.vistoStmt = db.prepare('UPDATE status_eventos SET visto_em = ? WHERE id = ?');
     this.fecharStmt = db.prepare('UPDATE status_eventos SET fim = ? WHERE id = ?');
     // Eventos que tocam o intervalo [início do dia, agora].
     this.doDiaStmt = db.prepare<[string, string], LinhaEvento>(
@@ -66,11 +78,14 @@ export class RegistroStatus {
           aberto.status === s.status &&
           aberto.motivo === s.motivo &&
           Math.abs(Date.parse(aberto.inicio) - inicioMs) < TOLERANCIA_INICIO_MS
-        )
+        ) {
+          this.vistoStmt.run(iso(agoraMs), aberto.id);
           continue;
+        }
         if (aberto) {
-          // Fecha no início do novo status, sem voltar para antes do início do evento aberto.
-          const fimMs = Math.max(Date.parse(aberto.inicio), inicioMs);
+          // Fecha no início do novo status (ou pouco depois da última vez que foi visto, se houve
+          // um intervalo sem leituras), sem voltar para antes do início do evento aberto.
+          const fimMs = Math.max(Date.parse(aberto.inicio), Math.min(inicioMs, limiteVisto(aberto)));
           this.fecharStmt.run(iso(fimMs), aberto.id);
         }
         this.inserirStmt.run({
@@ -78,6 +93,7 @@ export class RegistroStatus {
           status: s.status,
           motivo: s.motivo,
           inicio: iso(inicioMs),
+          vistoEm: iso(agoraMs),
         });
         novos++;
       }

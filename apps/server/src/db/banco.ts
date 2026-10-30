@@ -53,6 +53,9 @@ const MIGRACOES = [
      ip TEXT
    );
    CREATE INDEX IF NOT EXISTS idx_acessos_em ON acessos (em);`,
+  // Última leitura em que o status aberto foi visto: com o servidor parado, a pausa não cresce.
+  `ALTER TABLE status_eventos ADD COLUMN visto_em TEXT;
+   UPDATE status_eventos SET visto_em = inicio WHERE fim IS NULL;`,
 ];
 
 export function abrirBanco(arquivo: string): Banco {
