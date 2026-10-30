@@ -6,6 +6,7 @@ import {
   type Painel,
   type SessaoAtual,
 } from '@benheimdall/shared';
+import { useTema } from '../hooks/useTema';
 
 /** O olho de Heimdall: vigia o salão inteiro. */
 export function Marca() {
@@ -36,6 +37,7 @@ interface Props {
 
 export function Topo({ painel, agora, sessao, modoTv, onModoTv, onSair }: Props) {
   const { usuario } = sessao;
+  const { tema, alternar } = useTema();
   const online = painel?.argusOnline ?? false;
   const atraso = painel ? segundosDesde(painel.ultimaLeituraArgus, agora) : 0;
   const restante = sessao.expiraEm
@@ -66,6 +68,14 @@ export function Topo({ painel, agora, sessao, modoTv, onModoTv, onSair }: Props)
           </span>
         </div>
         <span className="clock">{new Date(agora).toLocaleTimeString('pt-BR')}</span>
+        <button
+          className="btn-top"
+          type="button"
+          onClick={alternar}
+          title={tema === 'escuro' ? 'Mudar para o modo claro' : 'Mudar para o modo escuro'}
+        >
+          {tema === 'escuro' ? '☀ Modo claro' : '☾ Modo escuro'}
+        </button>
         {usuario.perfil !== 'tv' && onModoTv && (
           <button className="btn-top" type="button" aria-pressed={modoTv} onClick={onModoTv}>
             Modo TV

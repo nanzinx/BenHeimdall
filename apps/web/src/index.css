@@ -39,29 +39,29 @@
     color-scheme: light;
   }
 
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme='light']) {
-      --fundo: 7 12 26;
-      --fundo-2: 11 20 48;
-      --superficie: 15 24 48;
-      --superficie-2: 22 34 63;
-      --tinta: 232 237 247;
-      --tinta-2: 147 160 189;
-      --linha: 31 44 75;
-      --marca: 13 58 138;
-      --marca-2: 7 29 77;
-      --marca-txt: 141 184 255;
-      --destaque: 255 208 46;
-      --st-atend: 91 155 255;
-      --st-pos: 164 141 255;
-      --st-pausa: 251 173 60;
-      --st-crit: 255 107 107;
-      --st-livre: 61 220 132;
-      --st-off: 110 120 147;
-      --sombra: 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 20px rgb(0 0 0 / 0.25);
-      --sombra-hover: 0 2px 6px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.4);
-      color-scheme: dark;
-    }
+  /* Tema escuro: o data-theme do <html> é definido antes da primeira pintura (index.html), pela
+     escolha salva no botão do topo ou, sem escolha, pelo tema do sistema. */
+  :root[data-theme='dark'] {
+    --fundo: 7 12 26;
+    --fundo-2: 11 20 48;
+    --superficie: 15 24 48;
+    --superficie-2: 22 34 63;
+    --tinta: 232 237 247;
+    --tinta-2: 147 160 189;
+    --linha: 31 44 75;
+    --marca: 13 58 138;
+    --marca-2: 7 29 77;
+    --marca-txt: 141 184 255;
+    --destaque: 255 208 46;
+    --st-atend: 91 155 255;
+    --st-pos: 164 141 255;
+    --st-pausa: 251 173 60;
+    --st-crit: 255 107 107;
+    --st-livre: 61 220 132;
+    --st-off: 110 120 147;
+    --sombra: 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 20px rgb(0 0 0 / 0.25);
+    --sombra-hover: 0 2px 6px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.4);
+    color-scheme: dark;
   }
 
   html {

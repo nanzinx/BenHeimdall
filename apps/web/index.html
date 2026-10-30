@@ -6,6 +6,18 @@
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <title>BenHeimdall · Painel de Atendimento</title>
+    <script>
+      // Tema antes da primeira pintura (sem piscar): a escolha salva ou, sem ela, o do sistema.
+      (function () {
+        var t = null;
+        try {
+          t = localStorage.getItem('benheimdall-tema');
+        } catch (e) {}
+        if (t !== 'claro' && t !== 'escuro')
+          t = matchMedia('(prefers-color-scheme: dark)').matches ? 'escuro' : 'claro';
+        document.documentElement.dataset.theme = t === 'escuro' ? 'dark' : 'light';
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
