@@ -21,7 +21,7 @@ import type {
 } from '../tipos';
 import { ArgusIndisponivelError, ArgusRecusouError } from '../tipos';
 import { classificarStatus, TEXTOS_STATUS_PADRAO, type TextosStatus } from './classificar';
-import { distribuirBaias, identificarEquipes, type EquipeConfig } from './salao';
+import { criarDetectorDeSupervisor, distribuirBaias, identificarEquipes, type EquipeConfig } from './salao';
 
 export interface RealArgusOpcoes {
   baseUrl: string;
@@ -34,6 +34,8 @@ export interface RealArgusOpcoes {
   textosStatus?: TextosStatus;
   /** Só operadores destas campanhas (vazio = todos). */
   campanhasIds?: number[];
+  /** Ramais que nunca entram no painel (ex.: conta de operador de alguém da gestão). */
+  ocultarRamais?: string[];
   /** Equipes do salão (config/equipes.json): identificadas pelo grupo e pelo supervisor. */
   equipes?: EquipeConfig[];
   pausaLimiteMs?: number;
@@ -249,8 +251,12 @@ export class RealArgusClient implements ArgusClient {
           grupo: String((comSupervisor ?? daOperacao[0])?.grupoUsuarioDesc ?? '').trim(),
         });
       }
-      this.diretorioCache = { em: agora, operadores };
-      return operadores;
+      // Supervisores com conta de operador ficam de fora: não atendem e só distorcem os números.
+      const ehSupervisor = criarDetectorDeSupervisor(operadores.map((o) => o.supervisor));
+      const ocultos = new Set(this.o.ocultarRamais ?? []);
+      const doSalao = operadores.filter((o) => !ocultos.has(o.ramal) && !ehSupervisor(o.nome));
+      this.diretorioCache = { em: agora, operadores: doSalao };
+      return doSalao;
     } catch (err) {
       // Sem a lista nova, segue com a anterior (o status de cada um continua sendo lido).
       if (this.diretorioCache) return this.diretorioCache.operadores;

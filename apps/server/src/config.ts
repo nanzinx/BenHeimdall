@@ -48,6 +48,8 @@ const envSchema = z.object({
   ARGUS_TIMEOUT_MS: z.coerce.number().int().min(500).default(5000),
   ARGUS_CONCORRENCIA: z.coerce.number().int().min(1).max(50).default(10),
   ARGUS_CAMPANHAS_IDS: z.string().default(''),
+  // Ramais que nunca aparecem no painel (além dos supervisores, que saem sozinhos).
+  OCULTAR_RAMAIS: z.string().default(''),
   STATUS_LIVRE: z.string().default(''),
   STATUS_ATENDIMENTO: z.string().default(''),
   STATUS_POS_ATENDIMENTO: z.string().default(''),
@@ -96,6 +98,7 @@ export function carregarConfig(env: NodeJS.ProcessEnv = process.env) {
       timeoutMs: e.ARGUS_TIMEOUT_MS,
       concorrencia: e.ARGUS_CONCORRENCIA,
       campanhasIds: lista(e.ARGUS_CAMPANHAS_IDS).map(Number).filter(Number.isInteger),
+      ocultarRamais: lista(e.OCULTAR_RAMAIS),
       textosStatus: {
         livre: listaOu(e.STATUS_LIVRE, TEXTOS_STATUS_PADRAO.livre),
         atendimento: listaOu(e.STATUS_ATENDIMENTO, TEXTOS_STATUS_PADRAO.atendimento),

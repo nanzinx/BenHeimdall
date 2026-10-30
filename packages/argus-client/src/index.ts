@@ -8,4 +8,10 @@ export {
   TEXTOS_STATUS_PADRAO,
   type TextosStatus,
 } from './real/classificar';
-export { distribuirBaias, identificarEquipes, type Baia, type EquipeConfig } from './real/salao';
+export {
+  criarDetectorDeSupervisor,
+  distribuirBaias,
+  identificarEquipes,
+  type Baia,
+  type EquipeConfig,
+} from './real/salao';

@@ -458,30 +458,31 @@ location / {
 <summary><b>🔧 Variáveis de ambiente</b> (todas no <code>.env</code>, validadas na partida)</summary>
 <br />
 
-| Variável                                                                            | Padrão                              | Para quê                                                                    |
-| ----------------------------------------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------------- |
-| `PORT`                                                                              | `3020`                              | Porta do backend                                                            |
-| `NODE_ENV`                                                                          | `development`                       | `production` liga o cookie `Secure`, exige `SESSION_SECRET` e serve o front |
-| `ARGUS_MODE`                                                                        | `mock`                              | `mock` (simulada) ou `real`                                                 |
-| `ARGUS_TOKEN`                                                                       | —                                   | Token da Argus (obrigatório com `real`)                                     |
-| `ARGUS_BASE_URL`                                                                    | `https://argus.app.br/apiargus/cmd` | Endereço da API (`ARGUS_BASE` também vale)                                  |
-| `ARGUS_CONCORRENCIA`                                                                | `10`                                | `/statusoperador` ao mesmo tempo                                            |
-| `ARGUS_CAMPANHAS_IDS`                                                               | —                                   | Só operadores destas campanhas (vazio = todos)                              |
-| `STATUS_LIVRE` · `STATUS_ATENDIMENTO` · `STATUS_POS_ATENDIMENTO` · `STATUS_OFFLINE` | padrões acima                       | Textos de status da Argus                                                   |
-| `EQUIPES_FILE`                                                                      | `config/equipes.json`               | Equipes do salão                                                            |
-| `ARGUS_MOCK_FALHA`                                                                  | `false`                             | Só no mock: começa com a Argus fora do ar                                   |
-| `POLL_MS`                                                                           | `3000`                              | Intervalo de leitura da Argus (ms)                                          |
-| `DB_PATH`                                                                           | `data/benheimdall.db`               | Banco SQLite                                                                |
-| `SESSION_SECRET`                                                                    | aleatório em dev                    | Assina o cookie. **Obrigatório em produção** (32+ caracteres)               |
-| `SESSAO_MIN`                                                                        | `15`                                | Minutos sem uso até a sessão expirar                                        |
-| `IPS_PERMITIDOS`                                                                    | IPs da operação                     | Quem acessa o sistema (IPv4, IPv6, CIDR)                                    |
-| `TV_ALLOWED_IPS`                                                                    | —                                   | De onde o perfil `tv` entra                                                 |
-| `ADMIN_USER` · `ADMIN_SENHA_INICIAL`                                                | `renan.leite@benconsig.com` · —     | Primeiro admin (criado com o banco vazio)                                   |
-| `LOGIN_EM_DEV`                                                                      | —                                   | Só em dev: `true` liga o login no PC (sem ele, o PC entra sem login)        |
-| `TRUST_PROXY`                                                                       | `loopback`                          | Proxies confiáveis para achar o IP real                                     |
-| `DEV_ALLOWED_HOSTS`                                                                 | —                                   | Só em dev: domínios extras liberados no Vite                                |
-| `CLOUDFLARE_TUNNEL_TOKEN` · `BIND_ADDR`                                             | — · `127.0.0.1`                     | Só no Docker Compose                                                        |
-| `LOG_LEVEL`                                                                         | `info`                              | Nível de log                                                                |
+| Variável                                                                            | Padrão                              | Para quê                                                                                |
+| ----------------------------------------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------- |
+| `PORT`                                                                              | `3020`                              | Porta do backend                                                                        |
+| `NODE_ENV`                                                                          | `development`                       | `production` liga o cookie `Secure`, exige `SESSION_SECRET` e serve o front             |
+| `ARGUS_MODE`                                                                        | `mock`                              | `mock` (simulada) ou `real`                                                             |
+| `ARGUS_TOKEN`                                                                       | —                                   | Token da Argus (obrigatório com `real`)                                                 |
+| `ARGUS_BASE_URL`                                                                    | `https://argus.app.br/apiargus/cmd` | Endereço da API (`ARGUS_BASE` também vale)                                              |
+| `ARGUS_CONCORRENCIA`                                                                | `10`                                | `/statusoperador` ao mesmo tempo                                                        |
+| `ARGUS_CAMPANHAS_IDS`                                                               | —                                   | Só operadores destas campanhas (vazio = todos)                                          |
+| `STATUS_LIVRE` · `STATUS_ATENDIMENTO` · `STATUS_POS_ATENDIMENTO` · `STATUS_OFFLINE` | padrões acima                       | Textos de status da Argus                                                               |
+| `OCULTAR_RAMAIS`                                                                    | —                                   | Ramais que não aparecem no painel (supervisores com conta de operador já saem sozinhos) |
+| `EQUIPES_FILE`                                                                      | `config/equipes.json`               | Equipes do salão                                                                        |
+| `ARGUS_MOCK_FALHA`                                                                  | `false`                             | Só no mock: começa com a Argus fora do ar                                               |
+| `POLL_MS`                                                                           | `3000`                              | Intervalo de leitura da Argus (ms)                                                      |
+| `DB_PATH`                                                                           | `data/benheimdall.db`               | Banco SQLite                                                                            |
+| `SESSION_SECRET`                                                                    | aleatório em dev                    | Assina o cookie. **Obrigatório em produção** (32+ caracteres)                           |
+| `SESSAO_MIN`                                                                        | `15`                                | Minutos sem uso até a sessão expirar                                                    |
+| `IPS_PERMITIDOS`                                                                    | IPs da operação                     | Quem acessa o sistema (IPv4, IPv6, CIDR)                                                |
+| `TV_ALLOWED_IPS`                                                                    | —                                   | De onde o perfil `tv` entra                                                             |
+| `ADMIN_USER` · `ADMIN_SENHA_INICIAL`                                                | `renan.leite@benconsig.com` · —     | Primeiro admin (criado com o banco vazio)                                               |
+| `LOGIN_EM_DEV`                                                                      | —                                   | Só em dev: `true` liga o login no PC (sem ele, o PC entra sem login)                    |
+| `TRUST_PROXY`                                                                       | `loopback`                          | Proxies confiáveis para achar o IP real                                                 |
+| `DEV_ALLOWED_HOSTS`                                                                 | —                                   | Só em dev: domínios extras liberados no Vite                                            |
+| `CLOUDFLARE_TUNNEL_TOKEN` · `BIND_ADDR`                                             | — · `127.0.0.1`                     | Só no Docker Compose                                                                    |
+| `LOG_LEVEL`                                                                         | `info`                              | Nível de log                                                                            |
 
 </details>
 

@@ -231,6 +231,31 @@ describe('nomes', () => {
     await expect(c.abrirTransferencia('2105')).rejects.toBeInstanceOf(ArgusIndisponivelError);
   });
 
+  it('conta de operador de supervisor (e ramais em OCULTAR_RAMAIS) não entra no painel', async () => {
+    const usuarios = [
+      usuario('2101', 'ANA PAULA', 'MAYSA LIMA'),
+      usuario('2102', 'CAHUAN RIBEIRO', 'ROBSON MELO'),
+      usuario('2103', 'BRUNO', 'CAHUAN VASCONCELOS RIBEIRO'),
+      usuario('2104', 'MAYSA LIMA', 'ROBSON MELO'), // a própria supervisora, como operadora
+      usuario('2105', 'CARLA', 'MAYSA LIMA'),
+      usuario('2106', 'MAYSA LIMAS', 'ROBSON MELO'), // nome parecido, mas é outra pessoa
+    ];
+    const c = new RealArgusClient({
+      baseUrl: 'http://argus',
+      token: 't',
+      agora: () => AGORA,
+      ocultarRamais: ['2105'],
+      enviar: async (comando) =>
+        comando === 'listarusuarios'
+          ? { status: 200, data: { codStatus: 1, usuarios } }
+          : comando === 'listargrupos'
+            ? { status: 200, data: { codStatus: 1, grupos: [] } }
+            : { status: 500, data: { codStatus: 0 } },
+    });
+    const agentes = z.array(agenteBrutoSchema).parse(await c.listarAgentes());
+    expect(agentes.map((a) => a.ramal)).toEqual(['2101', '2103', '2106']);
+  });
+
   it('nomes em maiúsculas viram nome próprio', async () => {
     const { nomeProprio } = await import('../src');
     expect(nomeProprio('ANA PAULA DA SILVA')).toBe('Ana Paula da Silva');

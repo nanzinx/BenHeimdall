@@ -105,3 +105,31 @@ export function distribuirBaias(agentes: { ramal: string; equipe: number }[]): M
   }
   return resultado;
 }
+
+const palavras = (s: string) =>
+  normalizarTexto(s)
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(Boolean);
+
+/**
+ * O operador é, na verdade, um supervisor (conta de operador do próprio supervisor, que fica
+ * parada em pausa e atrapalha os números): o nome bate com o de algum supervisor da Argus, por
+ * inteiro ou pelo primeiro e último nome ("Cahuan Ferreira" × "CAHUAN VASCONCELOS FERREIRA").
+ */
+export function criarDetectorDeSupervisor(supervisores: Iterable<string>): (nome: string) => boolean {
+  const inteiros = new Set<string>();
+  const pontas = new Set<string>();
+  for (const s of supervisores) {
+    const p = palavras(s);
+    if (!p.length) continue;
+    inteiros.add(p.join(' '));
+    if (p.length > 1) pontas.add(`${p[0]} ${p.at(-1)}`);
+  }
+  return (nome) => {
+    const p = palavras(nome);
+    if (!p.length) return false;
+    return inteiros.has(p.join(' ')) || (p.length > 1 && pontas.has(`${p[0]} ${p.at(-1)}`));
+  };
+}
