@@ -96,6 +96,19 @@ export function Layout() {
     else if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
   };
 
+  // Saída do modo TV: Esc, o botão que aparece ao mexer o mouse, ou sair da tela cheia.
+  useEffect(() => {
+    if (!tvLigado) return undefined;
+    const aoTeclar = (e: KeyboardEvent) => e.key === 'Escape' && setTvLigado(false);
+    const aoSairDaTelaCheia = () => !document.fullscreenElement && setTvLigado(false);
+    document.addEventListener('keydown', aoTeclar);
+    document.addEventListener('fullscreenchange', aoSairDaTelaCheia);
+    return () => {
+      document.removeEventListener('keydown', aoTeclar);
+      document.removeEventListener('fullscreenchange', aoSairDaTelaCheia);
+    };
+  }, [tvLigado]);
+
   useAtividade(usuario.perfil !== 'tv' && !sessao?.acessoLivre, renovar);
 
   // O contador chegou a zero: confirma no servidor (que registra a expiração).
@@ -134,14 +147,7 @@ export function Layout() {
 
   return (
     <CtxUi.Provider value={ui}>
-      <Topo
-        painel={painel}
-        agora={agora}
-        sessao={sessao!}
-        modoTv={modoTv}
-        onModoTv={usuario.perfil === 'tv' ? undefined : alternarTv}
-        onSair={aoSair}
-      />
+      <Topo painel={painel} agora={agora} sessao={sessao!} onSair={aoSair} />
       {entradaNaTela && (
         <Entrada
           painel={painel}
@@ -158,6 +164,7 @@ export function Layout() {
             <Indicadores agentes={agentes} agora={agora} />
             {!modoTv && (
               <BarraFerramentas
+                onModoTv={alternarTv}
                 admin={usuario.perfil === 'admin'}
                 equipes={equipesDoPainel(painel.agentes)}
               />
@@ -174,6 +181,11 @@ export function Layout() {
         )}
       </main>
       {!modoTv && <DetalheAgente painel={painel} />}
+      {tvLigado && (
+        <button className="sair-tv" type="button" onClick={alternarTv}>
+          Sair do modo TV <kbd>Esc</kbd>
+        </button>
+      )}
     </CtxUi.Provider>
   );
 }

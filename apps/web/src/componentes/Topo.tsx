@@ -30,12 +30,37 @@ interface Props {
   painel: Painel | undefined;
   agora: number;
   sessao: SessaoAtual;
-  modoTv: boolean;
-  onModoTv?: () => void;
   onSair: () => void;
 }
 
-export function Topo({ painel, agora, sessao, modoTv, onModoTv, onSair }: Props) {
+const IconeSol = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+  </svg>
+);
+const IconeLua = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7Z" />
+  </svg>
+);
+
+export function Topo({ painel, agora, sessao, onSair }: Props) {
   const { usuario } = sessao;
   const { tema, alternar } = useTema();
   const online = painel?.argusOnline ?? false;
@@ -69,18 +94,14 @@ export function Topo({ painel, agora, sessao, modoTv, onModoTv, onSair }: Props)
         </div>
         <span className="clock">{new Date(agora).toLocaleTimeString('pt-BR')}</span>
         <button
-          className="btn-top"
+          className="btn-icone"
           type="button"
           onClick={alternar}
-          title={tema === 'escuro' ? 'Mudar para o modo claro' : 'Mudar para o modo escuro'}
+          aria-label={tema === 'escuro' ? 'Mudar para o modo claro' : 'Mudar para o modo escuro'}
+          title={tema === 'escuro' ? 'Modo claro' : 'Modo escuro'}
         >
-          {tema === 'escuro' ? '☀ Modo claro' : '☾ Modo escuro'}
+          {tema === 'escuro' ? <IconeSol /> : <IconeLua />}
         </button>
-        {usuario.perfil !== 'tv' && onModoTv && (
-          <button className="btn-top" type="button" aria-pressed={modoTv} onClick={onModoTv}>
-            Modo TV
-          </button>
-        )}
         <div className="userbox">
           <span className="avatar" aria-hidden="true">
             {iniciais(usuario.nome)}

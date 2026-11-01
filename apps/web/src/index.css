@@ -187,6 +187,30 @@
   .btn-top[aria-pressed='true'] {
     @apply border-destaque bg-destaque text-destaque-tinta;
   }
+  /* Botão só com ícone no topo (tema claro/escuro): discreto. */
+  .btn-icone {
+    @apply grid size-9 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 text-white/75 transition duration-200 ease-suave hover:rotate-12 hover:bg-white/10 hover:text-white;
+  }
+  .btn-icone svg {
+    @apply size-[18px];
+  }
+  /* Modo TV fica ao lado das abas, fora do topo. */
+  .btn-tv {
+    @apply inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-linha bg-superficie px-3 py-[9px] text-[13px] font-semibold text-tinta-2 shadow-cartao transition duration-200 ease-suave hover:-translate-y-px hover:text-tinta;
+  }
+  .btn-tv svg {
+    @apply size-4;
+  }
+  /* No modo TV: aparece quando o mouse mexe (some sozinho), para quem não lembra do Esc. */
+  .sair-tv {
+    @apply fixed bottom-4 right-4 z-40 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-linha bg-superficie/90 px-3.5 py-2 text-[13px] font-semibold text-tinta-2 opacity-0 shadow-cartao backdrop-blur transition-opacity duration-300 hover:text-tinta focus-visible:opacity-100;
+  }
+  body.tv:hover .sair-tv {
+    @apply opacity-100;
+  }
+  .sair-tv kbd {
+    @apply rounded border border-linha px-1.5 font-mono text-[11px];
+  }
   .userbox {
     @apply flex flex-wrap items-center gap-2.5 text-[13px];
   }
