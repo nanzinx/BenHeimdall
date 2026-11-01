@@ -1,4 +1,5 @@
 // Moldura das telas logadas: topo, aviso da Argus, indicadores, filtros, a vista atual e o detalhe.
+import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Outlet, useNavigate, useOutletContext } from 'react-router-dom';
 import { equipesDoPainel, type Agente, type OrdemLivres, type Painel } from '@benheimdall/shared';
@@ -14,6 +15,8 @@ import { useRelogio } from '../hooks/useRelogio';
 import { useSessao } from '../hooks/useSessao';
 import { CtxUi, lerOrdem, type EstadoUi } from '../hooks/useUi';
 import { Colunas } from '../componentes/Colunas';
+import { Entrada } from '../componentes/Entrada';
+import { deveMostrarEntrada, diaDe, lerVistoEm, limparLogin, loginRecente, marcarVisto } from '../entrada';
 
 export interface DadosVista {
   painel: Painel;
@@ -57,6 +60,28 @@ export function Layout() {
   // O perfil tv entra direto nele e não consegue sair (só pelo botão Sair).
   const [tvLigado, setTvLigado] = useState(false);
   const modoTv = usuario.perfil === 'tv' || tvLigado;
+
+  // Entrada de boas-vindas: uma vez por dia e sempre logo depois do login (não no perfil tv).
+  // Ao abrir o círculo, o painel entra em cascata.
+  const [hoje] = useState(() => diaDe(new Date()));
+  const [entrada, setEntrada] = useState<'mostrar' | 'cascata' | 'pronto'>(() =>
+    usuario.perfil !== 'tv' &&
+    deveMostrarEntrada({ vistoEm: lerVistoEm(), hoje, acabouDeEntrar: loginRecente() })
+      ? 'mostrar'
+      : 'pronto',
+  );
+  const [entradaNaTela, setEntradaNaTela] = useState(entrada === 'mostrar');
+  useEffect(() => {
+    if (entrada === 'mostrar') marcarVisto(hoje);
+    limparLogin();
+    // Só na montagem: a decisão já foi tomada.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (entrada !== 'cascata') return undefined;
+    const id = setTimeout(() => setEntrada('pronto'), 1200);
+    return () => clearTimeout(id);
+  }, [entrada]);
 
   useEffect(() => {
     document.body.classList.toggle('tv', modoTv);
@@ -117,7 +142,15 @@ export function Layout() {
         onModoTv={usuario.perfil === 'tv' ? undefined : alternarTv}
         onSair={aoSair}
       />
-      <main className="wrap">
+      {entradaNaTela && (
+        <Entrada
+          painel={painel}
+          nome={usuario.id ? usuario.nome : null}
+          aoSair={() => setEntrada('cascata')}
+          aoTerminar={() => setEntradaNaTela(false)}
+        />
+      )}
+      <main className={clsx('wrap', entrada === 'cascata' && 'cascata')}>
         {!modoTv && usuario.perfil !== 'tv' && <NotaSimulacao />}
         <AvisoArgus painel={painel} agora={agora} />
         {painel ? (

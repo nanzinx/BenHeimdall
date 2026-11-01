@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { LoginEntrada, SessaoAtual, TrocarSenhaEntrada } from '@benheimdall/shared';
 import { api, definirAoPerderSessao, ErroApi } from '../api/cliente';
+import { marcarLogin } from '../entrada';
 
 interface ContextoSessao {
   sessao: SessaoAtual | null;
@@ -80,6 +81,7 @@ export function ProvedorSessao({ children }: { children: ReactNode }) {
       async entrar(dados) {
         const s = await api<SessaoAtual>('/api/sessao/entrar', { method: 'POST', body: dados });
         setAviso('');
+        marcarLogin(); // a entrada aparece logo depois de todo login
         definir(s);
         return s;
       },

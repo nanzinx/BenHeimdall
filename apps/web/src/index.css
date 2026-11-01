@@ -789,3 +789,330 @@
     transition: none !important;
   }
 }
+
+/* ======================= entrada (componentes/Entrada.tsx) ======================= */
+/* Sempre no azul da marca, nos dois temas. Mesma ideia da entrada do BenURA. */
+.en-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 0 24px;
+  text-align: center;
+  color: #fff;
+  cursor: pointer;
+  background: radial-gradient(120% 90% at 50% 40%, #0d3a8a 0%, #071d4d 45%, #040b1f 100%);
+}
+.en-brilho {
+  position: absolute;
+  bottom: -12rem;
+  left: -12rem;
+  width: 560px;
+  height: 560px;
+  border-radius: 9999px;
+  background: rgb(245 196 0 / 0.15);
+  filter: blur(64px);
+  pointer-events: none;
+  animation: en-brilho 2.4s ease-in-out infinite;
+}
+.en-brilho-2 {
+  inset: -14rem -14rem auto auto;
+  background: rgb(91 155 255 / 0.18);
+  animation-delay: 1.2s;
+}
+.en-onda {
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  border: 2px solid rgb(245 196 0 / 0.75);
+  pointer-events: none;
+  opacity: 0;
+  animation: en-onda 1.3s ease-out 0.15s both;
+}
+.en-icone {
+  animation: en-icone 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+/* O olho abre, olha para um lado e para o outro (vigia o salão) e pisca. */
+.en-olho {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation:
+    en-abrir 0.45s cubic-bezier(0.3, 0.7, 0.2, 1) 0.2s both,
+    en-piscar 0.22s ease-in-out 2.05s both;
+}
+.en-iris {
+  animation: en-olhar 1.25s ease-in-out 0.6s both;
+}
+.en-abre {
+  max-width: 0;
+  animation: en-abre 0.55s cubic-bezier(0.3, 0.7, 0.2, 1) 0.75s forwards;
+}
+.en-palavra {
+  animation: en-deslizar 0.55s cubic-bezier(0.3, 0.7, 0.2, 1) 0.75s both;
+}
+.en-surgir {
+  animation: en-surgir 0.4s ease-out both;
+}
+.en-pulo {
+  animation: en-pulo 0.45s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+.en-selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 0.6rem;
+  background: rgb(255 255 255 / 0.1);
+  padding: 0.3rem 0.8rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.en-selo b {
+  font-weight: 800;
+  color: #f5c400;
+}
+.en-ponto {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: currentColor;
+  box-shadow: 0 0 0 3px rgb(255 255 255 / 0.12);
+}
+.en-ok {
+  color: #3ddc84;
+  background: rgb(61 220 132 / 0.14);
+}
+.en-fora {
+  color: #ff6b6b;
+  background: rgb(255 107 107 / 0.14);
+}
+.en-rodape {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  width: 15rem;
+  max-width: 70%;
+  transform: translateX(-50%);
+  transition: opacity 0.2s;
+  animation: en-esmaecer 0.4s ease-out 0.9s both;
+}
+.en-progresso {
+  height: 100%;
+  width: 100%;
+  background: #f5c400;
+  transform-origin: left;
+  animation: en-encher linear forwards;
+}
+.en-expandir {
+  animation: en-expandir 0.5s ease-in forwards;
+}
+@property --en-buraco {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+.en-saindo {
+  animation: en-buraco 0.6s ease-in forwards;
+  -webkit-mask-image: radial-gradient(
+    circle at 50% 45%,
+    transparent var(--en-buraco),
+    #000 calc(var(--en-buraco) + 2px)
+  );
+  mask-image: radial-gradient(
+    circle at 50% 45%,
+    transparent var(--en-buraco),
+    #000 calc(var(--en-buraco) + 2px)
+  );
+}
+/* O painel entra em cascata quando o círculo abre. */
+.cascata > * {
+  animation: en-surgir 0.45s ease-out both;
+}
+.cascata > :nth-child(2) {
+  animation-delay: 0.06s;
+}
+.cascata > :nth-child(3) {
+  animation-delay: 0.12s;
+}
+.cascata > :nth-child(4) {
+  animation-delay: 0.18s;
+}
+.cascata > :nth-child(n + 5) {
+  animation-delay: 0.24s;
+}
+
+@keyframes en-icone {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes en-onda {
+  0% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(3.2);
+  }
+}
+@keyframes en-abrir {
+  from {
+    transform: scaleY(0.08);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes en-piscar {
+  0%,
+  100% {
+    transform: none;
+  }
+  50% {
+    transform: scaleY(0.1);
+  }
+}
+@keyframes en-olhar {
+  0%,
+  100% {
+    transform: none;
+  }
+  30% {
+    transform: translateX(-6px);
+  }
+  70% {
+    transform: translateX(6px);
+  }
+}
+@keyframes en-abre {
+  from {
+    max-width: 0;
+  }
+  to {
+    max-width: 420px;
+  }
+}
+@keyframes en-deslizar {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes en-surgir {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes en-pulo {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes en-encher {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes en-expandir {
+  to {
+    opacity: 0;
+    transform: scale(1.14);
+    filter: blur(5px);
+  }
+}
+@keyframes en-brilho {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+@keyframes en-esmaecer {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes en-sair {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+@keyframes en-buraco {
+  from {
+    --en-buraco: 0px;
+  }
+  to {
+    --en-buraco: 1600px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.en-icone, .en-palavra, .en-surgir, .en-pulo, .en-rodape, .cascata > *) {
+    animation: en-esmaecer 0.2s ease-out both;
+    animation-delay: 0s;
+  }
+  :is(.en-onda, .en-brilho, .en-olho, .en-iris) {
+    animation: none;
+  }
+  .en-onda {
+    display: none;
+  }
+  .en-abre {
+    animation: none;
+    max-width: none;
+  }
+  .en-progresso {
+    animation: none;
+    transform: none;
+  }
+  .en-expandir {
+    animation: en-sair 0.2s ease-in forwards;
+  }
+  .en-saindo {
+    animation: en-sair 0.2s ease-in forwards;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
