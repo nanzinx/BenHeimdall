@@ -62,11 +62,25 @@ export function listarPausas(agentes: Agente[], agoraMs: number): Agente[] {
   return agentes.filter((a) => a.status === 'PAUSA').sort((x, y) => razao(y) - razao(x));
 }
 
+/** Equipe que recebe as transferências: é ela que converte o cliente. */
+export const EQUIPE_TRANSFERENCIA = 'Digital';
+
+const semAcento = (s: string) =>
+  s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+
+export const recebeTransferencia = (a: Pick<Agente, 'equipeNome'>) =>
+  semAcento(a.equipeNome ?? '') === semAcento(EQUIPE_TRANSFERENCIA);
+
 /**
- * Livres para transferência. Só entra quem está LIVRE: pós-atendimento (tabulação) nunca aparece aqui.
+ * Livres para transferência: só a equipe Digital, e só quem está LIVRE (pós-atendimento, a
+ * tabulação, nunca aparece aqui).
  */
 export function listarLivres(agentes: Agente[], ordem: OrdemLivres): Agente[] {
-  const livres = agentes.filter((a) => a.status === 'LIVRE');
+  const livres = agentes.filter((a) => a.status === 'LIVRE' && recebeTransferencia(a));
   const maisAntigo = (x: Agente, y: Agente) => Date.parse(x.desde) - Date.parse(y.desde);
   return ordem === 'ocioso'
     ? livres.sort(maisAntigo)

@@ -86,7 +86,7 @@ export function DetalheAgente({ painel }: { painel: Painel | undefined }) {
               <p>
                 {rotuloEquipe(a.equipe, a.equipeNome)}
                 {a.supervisor ? ` · supervisor ${a.supervisor}` : ''}
-                {a.lado ? ` · baia ${a.lado === 'E' ? 'esquerda' : 'direita'} ${a.posicao}` : ''} · ramal{' '}
+                {' · ramal '}
                 {a.ramal}
               </p>
             )}

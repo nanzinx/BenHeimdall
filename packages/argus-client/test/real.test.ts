@@ -8,7 +8,6 @@ import {
   RealArgusClient,
   agenteBrutoSchema,
   chamadaBrutaSchema,
-  distribuirBaias,
   identificarEquipes,
   type RealArgusOpcoes,
 } from '../src';
@@ -155,8 +154,6 @@ describe('RealArgusClient', () => {
       '2103': [1, 'Gabriel'],
       '2104': [0, undefined],
     });
-    // Baias distribuídas por equipe, em ordem de ramal.
-    expect(agentes.find((a) => a.ramal === '2101')).toMatchObject({ lado: 'E', posicao: 1 });
   });
 
   it('uma coleta por ciclo atende os métodos e o diretório fica em cache', async () => {
@@ -264,7 +261,7 @@ describe('nomes', () => {
   });
 });
 
-describe('equipes e baias', () => {
+describe('equipes', () => {
   it('palavra inteira no grupo, depois no supervisor; quem sobra ganha número novo', () => {
     const eq = identificarEquipes(
       [
@@ -287,14 +284,5 @@ describe('equipes e baias', () => {
       '4': { numero: 2, nome: 'Maysa' },
       '5': { numero: 0, nome: '' },
     });
-  });
-
-  it('distribui até 8 baias por equipe; o resto fica sem baia', () => {
-    const agentes = Array.from({ length: 10 }, (_, i) => ({ ramal: String(100 + i), equipe: 1 }));
-    const b = distribuirBaias(agentes);
-    expect(b.get('100')).toEqual({ lado: 'E', posicao: 1 });
-    expect(b.get('104')).toEqual({ lado: 'D', posicao: 1 });
-    expect(b.has('108')).toBe(false);
-    expect(b.size).toBe(8);
   });
 });

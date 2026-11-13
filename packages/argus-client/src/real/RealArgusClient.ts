@@ -21,7 +21,7 @@ import type {
 } from '../tipos';
 import { ArgusIndisponivelError, ArgusRecusouError } from '../tipos';
 import { classificarStatus, TEXTOS_STATUS_PADRAO, type TextosStatus } from './classificar';
-import { criarDetectorDeSupervisor, distribuirBaias, identificarEquipes, type EquipeConfig } from './salao';
+import { criarDetectorDeSupervisor, identificarEquipes, type EquipeConfig } from './salao';
 
 export interface RealArgusOpcoes {
   baseUrl: string;
@@ -333,7 +333,6 @@ export class RealArgusClient implements ArgusClient {
       this.o.equipes,
     );
     const equipeDe = (op: Operador) => equipes.get(op.ramal) ?? { numero: 0, nome: '' };
-    const baias = distribuirBaias(operadores.map((op) => ({ ramal: op.ramal, equipe: equipeDe(op).numero })));
 
     const agora = this.agora();
     const agentes: AgenteBruto[] = [];
@@ -369,14 +368,12 @@ export class RealArgusClient implements ArgusClient {
         if (!Number.isFinite(tempo) || Math.abs(antes - desdeMs) < ESTAVEL_MS) desdeMs = antes;
       }
 
-      const baia = baias.get(op.ramal);
       const agente: AgenteBruto = {
         id: op.ramal,
         nome: nomeProprio(String(status?.nome ?? '').trim()) || op.nome,
         ramal: op.ramal,
         equipe: equipeDe(op).numero,
         ...(equipeDe(op).nome ? { equipeNome: equipeDe(op).nome } : {}),
-        ...(baia ? { lado: baia.lado, posicao: baia.posicao } : {}),
         supervisor: op.supervisor,
         status: classe,
         desde: new Date(desdeMs).toISOString(),

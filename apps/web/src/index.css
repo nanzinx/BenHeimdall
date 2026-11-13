@@ -83,7 +83,7 @@
     font: inherit;
     color: inherit;
   }
-  :is(button, input, select, a, .row, .seat):focus-visible {
+  :is(button, input, select, a, .row):focus-visible {
     @apply outline outline-2 outline-offset-2 outline-destaque;
   }
 }
@@ -193,23 +193,6 @@
   }
   .btn-icone svg {
     @apply size-[18px];
-  }
-  /* Modo TV fica ao lado das abas, fora do topo. */
-  .btn-tv {
-    @apply inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-linha bg-superficie px-3 py-[9px] text-[13px] font-semibold text-tinta-2 shadow-cartao transition duration-200 ease-suave hover:-translate-y-px hover:text-tinta;
-  }
-  .btn-tv svg {
-    @apply size-4;
-  }
-  /* No modo TV: aparece quando o mouse mexe (some sozinho), para quem não lembra do Esc. */
-  .sair-tv {
-    @apply fixed bottom-4 right-4 z-40 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-linha bg-superficie/90 px-3.5 py-2 text-[13px] font-semibold text-tinta-2 opacity-0 shadow-cartao backdrop-blur transition-opacity duration-300 hover:text-tinta focus-visible:opacity-100;
-  }
-  body.tv:hover .sair-tv {
-    @apply opacity-100;
-  }
-  .sair-tv kbd {
-    @apply rounded border border-linha px-1.5 font-mono text-[11px];
   }
   .userbox {
     @apply flex flex-wrap items-center gap-2.5 text-[13px];
@@ -470,87 +453,6 @@
   }
   .subhead {
     @apply px-2.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-tinta-2;
-  }
-
-  /* ---------- mapa do salão ---------- */
-  .salao {
-    @apply mt-4 pb-8;
-  }
-  .salao-scroll {
-    @apply overflow-x-auto pb-2;
-  }
-  .floor {
-    @apply flex min-w-max gap-3.5;
-  }
-  .team {
-    @apply flex w-[218px] animate-entrada flex-col gap-2.5 rounded-cartao border border-linha bg-superficie p-3 shadow-cartao;
-  }
-  .team:nth-child(2) {
-    @apply [animation-delay:50ms];
-  }
-  .team:nth-child(3) {
-    @apply [animation-delay:100ms];
-  }
-  .team:nth-child(4) {
-    @apply [animation-delay:150ms];
-  }
-  .team:nth-child(n + 5) {
-    @apply [animation-delay:200ms];
-  }
-  .team h3 {
-    @apply m-0 flex items-baseline justify-between font-display text-[17px] font-bold;
-  }
-  .team h3 small {
-    @apply rounded-full bg-livre/[0.12] px-2 py-px font-sans text-[11.5px] font-semibold text-livre;
-  }
-  .team h3 .sup-nome {
-    @apply font-sans text-[13px] font-semibold not-italic text-tinta-2;
-  }
-  .sides {
-    @apply grid grid-cols-2 gap-2;
-  }
-  .side {
-    @apply flex flex-col-reverse gap-1.5;
-  }
-  .side-l {
-    @apply mb-1 text-center text-[10.5px] font-semibold uppercase tracking-[0.08em] text-tinta-2;
-  }
-  .seat {
-    @apply flex min-h-[58px] cursor-pointer flex-col justify-center rounded-[10px] border border-status/55 bg-status/[0.13] px-[9px] py-[7px] text-left text-tinta transition duration-200 ease-suave hover:-translate-y-0.5 hover:scale-[1.03] hover:shadow-cartao-hover;
-  }
-  .seat.vazia {
-    @apply cursor-default border-off/30 bg-off/5 opacity-25 hover:transform-none hover:shadow-none;
-  }
-  .seat b {
-    @apply truncate text-[12.5px] font-semibold;
-  }
-  .seat span {
-    @apply font-display text-[13px] font-bold tabular-nums text-status;
-  }
-  .seat em {
-    @apply truncate text-[10.5px] not-italic text-tinta-2;
-  }
-  .seat.s-CRIT {
-    @apply animate-alerta;
-  }
-  .sup {
-    @apply rounded-[10px] border border-dashed border-linha p-[7px] text-center text-[11px] font-semibold uppercase tracking-[0.08em] text-tinta-2;
-    background-image: repeating-linear-gradient(45deg, transparent 0 6px, rgb(var(--superficie-2)) 6px 7px);
-  }
-  .sem-baia {
-    @apply flex flex-col gap-1.5 border-t border-dashed border-linha pt-2;
-  }
-  .legend {
-    @apply mt-3.5 flex flex-wrap gap-3.5 text-[12.5px] text-tinta-2;
-  }
-  .legend span {
-    @apply inline-flex items-center gap-1.5;
-  }
-  .legend i {
-    @apply h-2.5 w-2.5 rounded-[3px] bg-status;
-  }
-  .dir {
-    @apply mb-3 mt-0 text-[12.5px] text-tinta-2;
   }
 
   /* ---------- detalhe do agente ---------- */

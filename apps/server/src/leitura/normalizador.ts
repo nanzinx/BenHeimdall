@@ -137,7 +137,6 @@ export function normalizar(leitura: LeituraArgus, ctx: ContextoNormalizacao): Pa
       ...((a.equipeNome ?? ctx.nomesEquipes?.[a.equipe])
         ? { equipeNome: a.equipeNome ?? ctx.nomesEquipes?.[a.equipe] }
         : {}),
-      ...(a.lado && a.posicao ? { lado: a.lado, posicao: a.posicao } : {}),
       supervisor: a.supervisor,
       status: st.status,
       desde: new Date(a.desde).toISOString(),

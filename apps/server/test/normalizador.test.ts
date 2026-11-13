@@ -61,8 +61,6 @@ describe('normalizador', () => {
           nome: 'X',
           ramal: '1',
           equipe: 1,
-          lado: 'E',
-          posicao: 1,
           supervisor: 'S',
           status: 'CODIGO_NOVO',
           desde: agora.toISOString(),

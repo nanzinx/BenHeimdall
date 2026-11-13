@@ -13,8 +13,6 @@ export const agenteBrutoSchema = z.object({
   equipe: z.number().int().min(0).max(99),
   /** Rótulo da equipe na tela (ex.: "Gabriel", "Digital"). */
   equipeNome: z.string().optional(),
-  lado: z.enum(['E', 'D']).optional(),
-  posicao: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
   supervisor: z.string(),
   /** Código de status como a Argus manda. Traduzido por `ArgusClient.mapaStatus`. */
   status: z.string().min(1),

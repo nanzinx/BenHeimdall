@@ -39,7 +39,7 @@ export function Transferir({ agente, agentes }: { agente: Agente; agentes: Agent
           <p className="fhint">
             {livres.length
               ? `Livres agora: ${livres.map((l) => `${l.nome} (ramal ${l.ramal})`).join(' · ')}`
-              : 'Ninguém livre agora.'}
+              : 'Ninguém da equipe Digital livre agora.'}
           </p>
           <div className="transf-acoes">
             <button

@@ -6,7 +6,6 @@ import { useSessao } from './hooks/useSessao';
 import { Layout } from './paginas/Layout';
 import { Login } from './paginas/Login';
 import { PaginaPainel } from './paginas/PaginaPainel';
-import { PaginaSalao } from './paginas/PaginaSalao';
 import { PaginaUsuarios } from './paginas/PaginaUsuarios';
 import { TrocarSenha } from './paginas/TrocarSenha';
 
@@ -64,7 +63,6 @@ export function App() {
         }
       >
         <Route path="/painel" element={<PaginaPainel />} />
-        <Route path="/salao" element={<PaginaSalao />} />
         <Route
           path="/usuarios"
           element={

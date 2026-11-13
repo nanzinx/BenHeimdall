@@ -3,20 +3,13 @@ import { z } from 'zod';
 import { ArgusIndisponivelError, MockArgusClient, agenteBrutoSchema, chamadaBrutaSchema } from '../src';
 
 describe('MockArgusClient', () => {
-  it('simula 48 agentes, 6 equipes × 8 baias, com respostas no formato bruto', async () => {
+  it('simula 48 agentes, 6 equipes de 8, com respostas no formato bruto', async () => {
     const mock = new MockArgusClient({ semente: 7 });
     const agentes = z.array(agenteBrutoSchema).parse(await mock.listarAgentes());
     expect(agentes).toHaveLength(48);
     for (const eq of [1, 2, 3, 4, 5, 6]) {
       const time = agentes.filter((a) => a.equipe === eq);
       expect(time).toHaveLength(8);
-      for (const lado of ['E', 'D'] as const)
-        expect(
-          time
-            .filter((a) => a.lado === lado)
-            .map((a) => a.posicao)
-            .sort(),
-        ).toEqual([1, 2, 3, 4]);
     }
     z.array(chamadaBrutaSchema).parse(await mock.listarChamadasAtivas());
     expect(agentes.every((a) => a.status in mock.mapaStatus)).toBe(true);

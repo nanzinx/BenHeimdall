@@ -1,14 +1,7 @@
-// Equipes e baias. A Argus não tem "equipe": ela vem do grupo do operador (um por supervisor,
+// Equipes. A Argus não tem "equipe": ela vem do grupo do operador (um por supervisor,
 // como "GABRIEL - COMERCIAL", ou um grupo próprio, como "DIGITAL") e, se o grupo não disser
-// (ex.: URA), do supervisor dele. As baias são distribuídas por ordem de ramal.
+// (ex.: URA), do supervisor dele.
 import { normalizarTexto } from './classificar';
-
-export type Lado = 'E' | 'D';
-export type Posicao = 1 | 2 | 3 | 4;
-export interface Baia {
-  lado: Lado;
-  posicao: Posicao;
-}
 
 /** Uma equipe de config/equipes.json. */
 export interface EquipeConfig {
@@ -78,30 +71,6 @@ export function identificarEquipes(
   for (const op of semConfig) {
     const s = op.supervisor.trim();
     resultado.set(op.ramal, { numero: numeroDe.get(s)!, nome: nomeCurto(s) });
-  }
-  return resultado;
-}
-
-/** Ordem de ocupação: baias 1–4 da esquerda, depois 1–4 da direita. */
-const BAIAS: Baia[] = (['E', 'D'] as const).flatMap((lado) =>
-  ([1, 2, 3, 4] as const).map((posicao) => ({ lado, posicao })),
-);
-
-/**
- * Baia de cada ramal: as 8 baias da equipe, por ordem de ramal. Equipe com mais de 8 agentes:
- * os que sobram ficam sem baia (aparecem nas listas e no mapa, em "Sem baia definida").
- */
-export function distribuirBaias(agentes: { ramal: string; equipe: number }[]): Map<string, Baia> {
-  const resultado = new Map<string, Baia>();
-  const porEquipe = new Map<number, string[]>();
-  for (const a of agentes) porEquipe.set(a.equipe, [...(porEquipe.get(a.equipe) ?? []), a.ramal]);
-  for (const ramais of porEquipe.values()) {
-    ramais
-      .sort((x, y) => x.localeCompare(y, undefined, { numeric: true }))
-      .forEach((ramal, i) => {
-        const b = BAIAS[i];
-        if (b) resultado.set(ramal, b);
-      });
   }
   return resultado;
 }

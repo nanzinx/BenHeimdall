@@ -59,9 +59,6 @@ export interface Agente {
   equipe: number;
   /** Nome da equipe na tela (ex.: "Gabriel", "Digital"). */
   equipeNome?: string;
-  /** Baia no salão. Ausentes quando a equipe tem mais de 8 agentes e a baia não foi definida. */
-  lado?: 'E' | 'D';
-  posicao?: 1 | 2 | 3 | 4;
   supervisor: string;
   status: StatusAgente;
   /** ISO, início do status atual. */

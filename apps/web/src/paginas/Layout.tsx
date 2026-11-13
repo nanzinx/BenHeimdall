@@ -56,10 +56,8 @@ export function Layout() {
   const [busca, setBusca] = useState('');
   const [ordem, setOrdem] = useState<OrdemLivres>(lerOrdem);
   const [aberto, setAberto] = useState<string | null>(null);
-  // Modo TV: tela cheia, fonte maior, sem motivo de pausa e sem dados de cliente.
-  // O perfil tv entra direto nele e não consegue sair (só pelo botão Sair).
-  const [tvLigado, setTvLigado] = useState(false);
-  const modoTv = usuario.perfil === 'tv' || tvLigado;
+  // Modo TV (fonte maior, sem motivo de pausa e sem dados de cliente): só no perfil tv.
+  const modoTv = usuario.perfil === 'tv';
 
   // Entrada de boas-vindas: uma vez por dia e sempre logo depois do login (não no perfil tv).
   // Ao abrir o círculo, o painel entra em cascata.
@@ -88,26 +86,6 @@ export function Layout() {
     if (modoTv) setAberto(null);
     return () => document.body.classList.remove('tv');
   }, [modoTv]);
-
-  const alternarTv = () => {
-    const ligar = !tvLigado;
-    setTvLigado(ligar);
-    if (ligar) void document.documentElement.requestFullscreen?.().catch(() => undefined);
-    else if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
-  };
-
-  // Saída do modo TV: Esc, o botão que aparece ao mexer o mouse, ou sair da tela cheia.
-  useEffect(() => {
-    if (!tvLigado) return undefined;
-    const aoTeclar = (e: KeyboardEvent) => e.key === 'Escape' && setTvLigado(false);
-    const aoSairDaTelaCheia = () => !document.fullscreenElement && setTvLigado(false);
-    document.addEventListener('keydown', aoTeclar);
-    document.addEventListener('fullscreenchange', aoSairDaTelaCheia);
-    return () => {
-      document.removeEventListener('keydown', aoTeclar);
-      document.removeEventListener('fullscreenchange', aoSairDaTelaCheia);
-    };
-  }, [tvLigado]);
 
   useAtividade(usuario.perfil !== 'tv' && !sessao?.acessoLivre, renovar);
 
@@ -164,7 +142,6 @@ export function Layout() {
             <Indicadores agentes={agentes} agora={agora} />
             {!modoTv && (
               <BarraFerramentas
-                onModoTv={alternarTv}
                 admin={usuario.perfil === 'admin'}
                 equipes={equipesDoPainel(painel.agentes)}
               />
@@ -181,11 +158,6 @@ export function Layout() {
         )}
       </main>
       {!modoTv && <DetalheAgente painel={painel} />}
-      {tvLigado && (
-        <button className="sair-tv" type="button" onClick={alternarTv}>
-          Sair do modo TV <kbd>Esc</kbd>
-        </button>
-      )}
     </CtxUi.Provider>
   );
 }

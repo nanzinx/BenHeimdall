@@ -6,9 +6,8 @@ const agente = (id: string, status: StatusAgente, desde: string, atend = 10, ven
   id,
   nome: id,
   ramal: '2100',
-  equipe: 1,
-  lado: 'E',
-  posicao: 1,
+  equipe: 6,
+  equipeNome: 'Digital',
   supervisor: 'Sup',
   status,
   desde,
@@ -29,6 +28,15 @@ describe('lista de livres', () => {
       expect(ids).not.toContain('tabulando');
       expect(ids).not.toContain('atendendo');
     }
+  });
+
+  it('só a equipe Digital aparece nos livres para transferência', () => {
+    const outros = [
+      { ...agente('comercial', 'LIVRE', '2026-01-01T09:00:00Z'), equipe: 1, equipeNome: 'Gabriel' },
+      { ...agente('sem-equipe', 'LIVRE', '2026-01-01T09:00:00Z'), equipe: 0, equipeNome: undefined },
+      { ...agente('digital', 'LIVRE', '2026-01-01T09:00:00Z'), equipeNome: 'DIGITAL' },
+    ];
+    expect(listarLivres(outros, 'ocioso').map((a) => a.id)).toEqual(['digital']);
   });
 
   it('ordena por mais ocioso ou por conversão', () => {

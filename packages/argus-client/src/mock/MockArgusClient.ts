@@ -1,4 +1,4 @@
-// Argus simulada: 48 agentes (6 equipes × 8 baias, a 6 é a Digital) com transições realistas.
+// Argus simulada: 48 agentes (6 equipes de 8, a 6 é a Digital) com transições realistas.
 //
 // A simulação avança em passos de 3 s, calculados a partir do relógio no momento de cada leitura,
 // então não há timer próprio: quem dita o ritmo é o laço de leitura do servidor.
@@ -138,7 +138,6 @@ export class MockArgusClient implements ArgusClient {
     const agora = this.agora();
     return NOMES_AGENTES.map((nome, i) => {
       const equipe = Math.floor(i / 8) + 1;
-      const n = i % 8;
       const atendimentos = 6 + Math.floor(this.rnd() * 22);
       const sim: AgenteSim = {
         bruto: {
@@ -146,8 +145,6 @@ export class MockArgusClient implements ArgusClient {
           nome,
           ramal: String(2101 + i),
           equipe,
-          lado: n < 4 ? 'E' : 'D',
-          posicao: ((n % 4) + 1) as 1 | 2 | 3 | 4,
           supervisor: SUPERVISORES[equipe - 1] ?? '',
           status: STATUS_MOCK.LIVRE,
           desde: new Date(agora).toISOString(),

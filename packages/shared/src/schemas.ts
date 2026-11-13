@@ -64,8 +64,6 @@ export const agenteSchema = z
     ramal: z.string(),
     equipe: z.number().int().min(0).max(99),
     equipeNome: z.string().optional(),
-    lado: z.enum(['E', 'D']).optional(),
-    posicao: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
     supervisor: z.string(),
     status: z.enum(['ATENDENDO', 'POS_ATENDIMENTO', 'PAUSA', 'LIVRE', 'OFFLINE']),
     desde: iso,

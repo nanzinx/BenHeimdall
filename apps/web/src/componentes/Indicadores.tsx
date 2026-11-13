@@ -25,7 +25,7 @@ export function Indicadores({ agentes, agora }: { agentes: Agente[]; agora: numb
       status: acima ? 'CRIT' : 'PAUSA',
       classe: acima ? 'alarme' : undefined,
     },
-    { rotulo: 'Livres', valor: c.LIVRE, sub: 'prontos p/ transferência', status: 'LIVRE' },
+    { rotulo: 'Livres', valor: c.LIVRE, sub: 'aguardando ligação', status: 'LIVRE' },
     { rotulo: 'Offline', valor: c.OFFLINE, sub: 'deslogados', status: 'OFFLINE' },
   ];
 

@@ -137,7 +137,9 @@ export function Colunas({ painel, agentes }: { painel: Painel; agentes: Agente[]
   const { agora, ordem, setOrdem } = useUi();
   const atend = listarAtendimentos(agentes);
   const pausas = listarPausas(agentes, agora);
-  const livres = listarLivres(agentes, ordem);
+  // Livres: sempre a equipe Digital inteira (é para ela que se transfere), qualquer que seja o
+  // filtro de equipe escolhido.
+  const livres = listarLivres(painel.agentes, ordem);
 
   return (
     <section className="board">
@@ -173,7 +175,7 @@ export function Colunas({ painel, agentes }: { painel: Painel; agentes: Agente[]
 
       <div className="col s-LIVRE">
         <div className="col-h">
-          <h2 title="Livres para transferência">Livres p/ transferência</h2>
+          <h2 title="Livres da equipe Digital para transferência">Livres p/ transferência</h2>
           <span className="count">{livres.length}</span>
           <select
             aria-label="Ordenar livres"
@@ -193,7 +195,7 @@ export function Colunas({ painel, agentes }: { painel: Painel; agentes: Agente[]
             livres.map((a, i) => <LinhaLivre key={a.id} a={a} pos={i + 1} />)
           ) : (
             <li className="empty">
-              Nenhum agente livre agora. Os livres aparecem aqui assim que terminam a tabulação.
+              Ninguém da equipe Digital livre agora. Eles aparecem aqui assim que terminam a tabulação.
             </li>
           )}
         </ul>

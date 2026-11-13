@@ -38,15 +38,13 @@ tabulando, em pausa e livre para transferência, numa única tela que se atualiz
 
 ## ✨ O que o painel mostra
 
-|                                  |                                                                                                                                    |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| 📞 **Atendimentos em curso**     | Agente, primeiro nome do cliente, telefone parcial, campanha e duração. Quem está tabulando aparece como **Tabulando**.            |
-| ⏸️ **Em pausa**                  | Motivo, tempo na pausa, limite do motivo e total do dia. O cartão fica **laranja a 80%** do limite e **vermelho pulsante a 100%**. |
-| ✅ **Livres para transferência** | Há quanto tempo estão livres, em ordem de **mais ocioso** ou de **melhor conversão**.                                              |
-| 📊 **Indicadores**               | Atendendo, pós-atendimento, em pausa (e quantos acima do limite), livres e offline.                                                |
-| 🗺️ **Mapa do salão**             | As 6 equipes com 8 baias cada; a baia 1 de cada lado fica junto da mesa do supervisor.                                             |
-| 🕒 **Detalhe do agente**         | Linha do tempo do dia, atendimentos, vendas e pausa total.                                                                         |
-| 📺 **Modo TV**                   | Tela cheia, letras grandes, sem dados de cliente e sem motivo de pausa.                                                            |
+|                                  |                                                                                                                                              |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 📞 **Atendimentos em curso**     | Agente, primeiro nome do cliente, telefone parcial, campanha e duração. Quem está tabulando aparece como **Tabulando**.                      |
+| ⏸️ **Em pausa**                  | Motivo, tempo na pausa, limite do motivo e total do dia. O cartão fica **laranja a 80%** do limite e **vermelho pulsante a 100%**.           |
+| ✅ **Livres para transferência** | Só a **equipe Digital** (é para ela que se transfere): há quanto tempo estão livres, em ordem de **mais ocioso** ou de **melhor conversão**. |
+| 📊 **Indicadores**               | Atendendo, pós-atendimento, em pausa (e quantos acima do limite), livres e offline.                                                          |
+| 🕒 **Detalhe do agente**         | Linha do tempo do dia, atendimentos, vendas e pausa total.                                                                                   |
 
 > [!NOTE]
 > O painel **só lê dados**, com uma exceção: o botão **Transferir ligação**, no detalhe de quem
@@ -60,7 +58,7 @@ tabulando, em pausa e livre para transferência, numa única tela que se atualiz
 <table>
   <tr>
     <td width="50%"><img src="docs/img/painel.png" alt="Painel no tema escuro, com indicadores e as três colunas" /><br /><sub><b>Painel</b> · tema escuro</sub></td>
-    <td width="50%"><img src="docs/img/salao.png" alt="Mapa do salão com as seis equipes e suas baias coloridas pelo status" /><br /><sub><b>Mapa do salão</b> · 6 equipes × 8 baias</sub></td>
+    <td width="50%"><img src="docs/img/painel-claro.png" alt="Painel no tema claro" /><br /><sub><b>Painel</b> · tema claro</sub></td>
   </tr>
   <tr>
     <td width="50%"><img src="docs/img/detalhe.png" alt="Detalhe do agente com a linha do tempo do dia" /><br /><sub><b>Detalhe do agente</b> · linha do tempo do dia</sub></td>
@@ -69,16 +67,10 @@ tabulando, em pausa e livre para transferência, numa única tela que se atualiz
 </table>
 
 <details>
-<summary><b>Mais telas: tema claro, usuários e modo TV</b></summary>
+<summary><b>Mais telas: usuários e acessos</b></summary>
 <br />
 
-| Tema claro                                                         | Usuários e acessos                                                                             |
-| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| <img src="docs/img/painel-claro.png" alt="Painel no tema claro" /> | <img src="docs/img/usuarios.png" alt="Administração de contas, nova conta e log de acessos" /> |
-
-**Modo TV (1080p)**
-
-<img src="docs/img/tv.png" alt="Modo TV em 1920 por 1080, com letras grandes e sem dados de cliente" />
+<img src="docs/img/usuarios.png" alt="Administração de contas, nova conta e log de acessos" />
 
 </details>
 
@@ -270,8 +262,6 @@ flowchart LR
 
 - **"Gabriel" não casa com "Gabriela".**
 - **Rodízio:** quem está no grupo da URA continua na equipe do seu supervisor.
-- **Baias:** as 8 baias de cada equipe são distribuídas por ordem de ramal. Equipe com mais de 8
-  agentes mostra os demais em "Sem baia definida".
 - As contas de supervisor do BenHeimdall usam esses números. O cadastro já mostra "Equipe 6 · Digital".
 
 ## 🔐 Acesso e segurança
@@ -280,7 +270,7 @@ flowchart LR
 | ----------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | 🛡️ **admin**      | Tudo, mais a tela **Usuários e acessos**                                        | Expira após 15 min sem uso                             |
 | 👤 **supervisor** | Status de todas as equipes; nome e telefone do cliente **só da própria equipe** | Expira após 15 min sem uso                             |
-| 📺 **tv**         | Sem dados de cliente e sem motivo de pausa; entra direto no modo TV             | Não expira, mas só entra pelos IPs de `TV_ALLOWED_IPS` |
+| 📺 **tv**         | Sem dados de cliente e sem motivo de pausa; letras grandes, para a TV do salão  | Não expira, mas só entra pelos IPs de `TV_ALLOWED_IPS` |
 
 - **Login por e-mail** em todas as contas, sem diferenciar maiúsculas. O nome é sugerido a partir
   do e-mail (`juliana.mendes@…` → "Juliana Mendes").
