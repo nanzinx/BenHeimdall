@@ -6,68 +6,84 @@ O operador da discadora está com o cliente na linha e precisa transferir para a
 Digital** (é ela que converte). Hoje só o supervisor enxerga quem da Digital está livre, então o
 operador tem que perguntar a ele: o supervisor vira gargalo e o cliente espera.
 
-Sucesso: o operador descobre sozinho, em segundos, para quem transferir; duas transferências não
-caem na mesma pessoa; a distribuição entre o pessoal da Digital fica justa.
+Sucesso: o operador sabe, em segundos e sem perguntar a ninguém, para quem transferir; duas
+transferências não caem na mesma pessoa; a distribuição entre o pessoal da Digital fica justa.
 
 ## Objetivos
 
-- **A — "Livres da Digital agora":** uma página simples, que o operador deixa aberta, com quem da
-  Digital está livre (nome, ramal, há quanto tempo), do mais ocioso para o menos.
-- **B — "Preciso transferir":** um botão na mesma página. O sistema escolhe o próximo livre da
+- **Botão "Preciso transferir"** numa página do operador. O sistema escolhe o próximo livre da
   Digital (o mais ocioso que não esteja reservado), **reserva por 60 s** e diz ao operador
   "Transfira para Fulano · ramal X".
-- O BenHub (ou outro sistema) consegue consultar quem está livre.
+- Cada operador entra com **login por e-mail**, como os supervisores.
 - Tudo registrado: quem pediu, para quem foi, se a transferência chegou.
 
 ## Fora do escopo (agora)
 
+- **A lista "Livres da Digital agora" para o operador** (decidido: só o botão; o operador não
+  escolhe para quem transferir, o sistema escolhe). O supervisor continua vendo os livres no painel.
+- Consulta para o BenHub (fica para quando houver a integração).
 - Transferir sozinho pela Argus: a API não transfere para um ramal (só abre o pop-up na tela do
   operador). Quem transfere continua sendo o operador, no softphone.
-- Avisar o operador da Digital na tela dele (ele não tem o BenHeimdall aberto). Fica para depois.
-- Relatórios de transferências por pessoa. O registro fica gravado; a tela de relatório vem depois.
+- Avisar o operador da Digital na tela dele (ele não tem o BenHeimdall aberto).
+- Relatório de transferências por pessoa. O registro fica gravado; a tela vem depois.
 - Mexer no status da Argus (pausar, liberar).
 
 ## Anti-objetivos
 
-- Não pode virar mais uma coisa que o operador precisa "cuidar": a página tem que funcionar
-  aberta numa aba o dia todo, sem login que expira a cada 15 min.
-- Não pode expor dado de cliente: a página só mostra nome e ramal dos operadores da Digital.
+- Não pode virar mais uma coisa que o operador precisa "cuidar": a página fica aberta numa aba o
+  dia todo, sem cair a cada 15 min.
+- O operador não vê dado de cliente nem o painel: só a página dele.
 - Não pode mandar duas transferências para a mesma pessoa ao mesmo tempo.
 
 ## Restrições
 
 - Mesmo servidor e mesmo ciclo de leitura de hoje (Argus a cada 3 s). Nada novo na Argus.
-- Fora da rede da empresa ninguém entra: a página respeita `IPS_PERMITIDOS`, como o resto.
+- Fora da rede da empresa ninguém entra (`IPS_PERMITIDOS`, como o resto).
 - "Livre" é o status LIVRE da Argus; WhatsApp/Digital (`LIGAÇÃO - WPP`, `Em Atendimento - DIGITAL`)
   já contam como atendimento, então não aparecem como livres.
 
 ## Caminhos considerados
 
-1. **A — só a página de livres:** rápida, tira o supervisor do meio, mas deixa colisão e
-   distribuição injusta.
-2. **B — o sistema escolhe e reserva:** resolve colisão e justiça; precisa saber quem é o operador.
-3. **C — o operador pede e o supervisor responde:** mantém o gargalo. Descartado.
+1. **Página com a lista de livres:** rápida, tira o supervisor do meio, mas deixa colisão e
+   distribuição injusta, e o operador escolhe quem quiser.
+2. **O sistema escolhe e reserva (botão):** resolve colisão e justiça; precisa saber quem é o
+   operador.
+3. **O operador pede e o supervisor responde:** mantém o gargalo. Descartado.
 
-**Escolhido: A e depois B**, na mesma página (a A é a base da B).
+**Escolhido: só o 2 (o botão)**, com login por e-mail para cada operador.
 
 ## Como fica
 
+### Perfil novo: operador
+
+- Conta com e-mail, senha, nome e **ramal** (o ramal liga a conta ao agente da Argus).
+- Depois do login vai direto para `/transferir`. Não abre o painel, os usuários nem o detalhe do
+  agente; a API dele é só a da transferência.
+- **Sessão do dia:** não cai por 15 min sem uso (o operador fica numa aba aberta); dura até o fim
+  do dia de trabalho (meia-noite) ou até sair. Senhas, bloqueio após 5 erros, troca no primeiro
+  acesso e log de acessos: iguais aos das outras contas.
+
+### Criar ~50 contas
+
+- Em **Usuários e acessos**, o admin cria a conta de operador como as outras (perfil "operador" +
+  ramal).
+- Botão **"Importar operadores da Argus"**: lê os operadores da Argus (nome, ramal e e-mail, que a
+  `/listarusuarios` já devolve), mostra a lista e cria de uma vez as contas que ainda não existem,
+  com senha temporária. Ao fim mostra **e-mail + senha temporária de cada um** para o admin
+  repassar (pode imprimir). Quem não tem e-mail na Argus fica de fora, avisado.
+
 ### Página do operador (`/transferir`)
 
-Fora da área logada do painel, numa rota própria, pensada para ficar aberta numa aba (e caber no
-celular).
+Pensada para ficar aberta numa aba (e caber no celular).
 
 ```
-┌──────────────────────────────────────────────┐
-│ BenHeimdall · Transferência        Você: [Ana Paula ▾] │
-│                                                │
-│  [  Preciso transferir  ]   ← botão grande     │
-│                                                │
-│  Livres da Digital agora (4)                   │
-│  1  Igor Valente     ramal 2148   livre há 4:06│
-│  2  Gustavo Pimenta  ramal 2146   livre há 0:20│
-│  3  Enzo Martins     ramal 2144   reservado p/ Bruno · 0:42 │
-└──────────────────────────────────────────────┘
+┌──────────────────────────────────────┐
+│ BenHeimdall · Transferência   Ana Paula · Sair │
+│                                        │
+│        [  Preciso transferir  ]        │
+│                                        │
+│   Digital: 4 livres agora              │
+└──────────────────────────────────────┘
 ```
 
 Depois do clique:
@@ -78,18 +94,17 @@ Depois do clique:
   [ Transferi ]   [ Não consegui, outro ]
 ```
 
-- **Quem é você:** na primeira vez o operador escolhe o próprio nome numa lista (operadores do
-  painel que não são da Digital). Fica lembrado no navegador. _(ver Pergunta em aberto)_
 - **Pedir:** o servidor escolhe o livre da Digital há mais tempo, que não esteja reservado, e
   reserva por 60 s. Um operador só tem uma reserva por vez (pedir de novo devolve a mesma).
-- **Ninguém livre:** "Ninguém da Digital livre agora" e o botão vira "Avisar quando alguém ficar
-  livre" (a página tenta de novo sozinha e mostra o primeiro que liberar).
+- **Ninguém livre:** "Ninguém da Digital livre agora. Assim que alguém liberar, aparece aqui." A
+  página tenta de novo sozinha e mostra o primeiro que liberar (já reservado para ele).
 - **Fim da reserva:**
   - _chegou:_ o reservado sai de LIVRE para ATENDENDO dentro dos 60 s → "concluída";
   - _"Transferi":_ concluída na hora;
   - _"Não consegui, outro":_ cancela e já pede o próximo (sem repetir o mesmo);
   - _60 s sem nada:_ expira e a pessoa volta para a fila.
-- Atualiza a cada 3 s (consulta simples ao servidor, sem Socket.IO, porque não há sessão).
+- Só mostra **quantos** da Digital estão livres, não quem (decisão: o operador não escolhe).
+- Atualiza a cada 3 s.
 
 ### Painel do supervisor
 
@@ -98,42 +113,32 @@ Na coluna "Livres p/ transferência", quem está reservado ganha a etiqueta
 
 ### Servidor
 
-- `GET /api/publico/digital` → livres da Digital (nome, ramal, livre desde, reserva se houver) e a
-  lista de operadores para o "Quem é você". Sem dado de cliente.
-- `POST /api/publico/transferencias` `{ operadorId }` → cria a reserva (ou devolve a que já existe).
-- `POST /api/publico/transferencias/:id/transferi` e `/:id/outro` → fecham a reserva.
-- Reservas em memória (o servidor é um processo só) + tabela `transferencias` no SQLite com
-  o histórico: pedida_em, operador, destino, como terminou (concluída, cancelada, expirada) e
-  quando. Migração 3.
-- As rotas `/api/publico/*` não exigem login, mas passam pelo filtro de `IPS_PERMITIDOS` e têm
-  limite de pedidos (ex.: 1 pedido por operador a cada 3 s).
+- `GET /api/transferencia` (perfil operador) → reserva atual do operador, se houver, e quantos da
+  Digital estão livres.
+- `POST /api/transferencia` → cria a reserva (ou devolve a que já existe).
+- `POST /api/transferencia/:id/transferi` e `/:id/outro` → fecham a reserva.
+- Reservas em memória (o servidor é um processo só) + tabela `transferencias` no SQLite com o
+  histórico: pedida_em, operador (conta e ramal), destino (nome e ramal), como terminou
+  (concluída, cancelada, expirada) e quando. A reserva aberta no painel vem do mesmo lugar.
 - O ciclo de leitura fecha as reservas: a cada leitura, confere quem saiu de LIVRE e quem expirou.
-
-### BenHub e outros sistemas
-
-`GET /api/publico/digital` já serve. Se o BenHub buscar pelo navegador (outro endereço), libera-se
-o endereço dele numa variável (`ORIGENS_EXTERNAS`) para o CORS. Como o BenHub mostra isso é do lado
-dele.
+- Usuário ganha a coluna `ramal` e o perfil `operador` (migração no SQLite).
 
 ## Decisões que tomei (pode mudar)
 
 - Reserva de **60 s**; ordem por **mais ocioso** (a conversão ainda não é real).
-- Página **sem login**, só por IP da empresa (login de 15 min não serve para aba aberta o dia todo).
+- Sessão do operador dura o dia (até meia-noite), sem expirar por inatividade.
+- Importação das contas pela Argus, com a lista de senhas temporárias para o admin repassar.
+- A página mostra só a quantidade de livres da Digital.
 - Sem aviso para o operador da Digital nesta primeira versão.
 - "Transferi" e "chegou" contam igual como concluída.
 
-## Pergunta em aberto
-
-**Como o sistema sabe quem é o operador?** Minha proposta é ele escolher o próprio nome uma vez
-(fica salvo no navegador), sem senha. É simples, mas qualquer um pode escolher o nome de outro.
-A alternativa é cada operador ter login (conta por e-mail, como os supervisores): mais seguro,
-mas são ~50 contas para criar e cuidar.
-
 ## Para quem for construir
 
-- Reaproveitar `listarLivres` / `recebeTransferencia` (`packages/shared/src/regras.ts`).
-- A rota nova fica antes de `rotasUsuarios` em `app.ts` (aquele roteador exige admin em tudo).
+- Reaproveitar `listarLivres` / `recebeTransferencia` (`packages/shared/src/regras.ts`) e o
+  `ServicoAcesso` (contas, sessões, log).
+- O roteador novo fica antes de `rotasUsuarios` em `app.ts` (aquele roteador exige admin em tudo).
+- O perfil operador não pode receber `painel:atualizado` no Socket.IO nem acessar `/api/painel`.
 - Testes: escolha do próximo (mais ocioso, sem reservado), uma reserva por operador, expiração,
   conclusão pelo status, colisão (dois pedidos ao mesmo tempo vão para pessoas diferentes),
-  `/api/publico/*` sem login mas bloqueado fora de `IPS_PERMITIDOS`, nenhum dado de cliente na
-  resposta.
+  operador barrado no painel e na administração, sessão do operador sem expirar em 15 min,
+  importação (cria só quem não existe, pula quem não tem e-mail).
