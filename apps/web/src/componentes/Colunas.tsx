@@ -36,6 +36,8 @@ function LinhaAtendimento({ a }: { a: Agente }) {
   const { flash, ...props } = useLinha(a);
   const pos = a.status === 'POS_ATENDIMENTO';
   const at = a.atendimento;
+  // Atendimento por outro canal (WhatsApp, Digital), sem ligação na discadora.
+  const outroCanal = !!at?.canal && !at.clienteMascarado && !at.telefoneMascarado;
   return (
     <li className={clsx('row atend', pos && 'em-pos', flash && 'flash')} {...props}>
       <div className="who">
@@ -49,6 +51,10 @@ function LinhaAtendimento({ a }: { a: Agente }) {
           <span>
             <span className="pill pos">Tabulando</span>
           </span>
+        ) : outroCanal ? (
+          <span>
+            <span className="pill canal">{at!.canal}</span>
+          </span>
         ) : at?.restrito ? (
           <span className="restr">Cliente de outra equipe</span>
         ) : (
@@ -57,13 +63,13 @@ function LinhaAtendimento({ a }: { a: Agente }) {
             {at?.telefoneMascarado && <span className="tel"> · {at.telefoneMascarado}</span>}
           </span>
         )}
-        <small>{at?.campanha ?? ''}</small>
+        <small>{outroCanal ? 'fora da discadora' : (at?.campanha ?? '')}</small>
       </div>
       <div className="timer">
         {formatarDuracao(segundosDesde(a.desde, agora))}
         <small>
           {!pos && <span className="ao-vivo" aria-hidden="true" />}
-          {pos ? 'pós-atend.' : 'em ligação'}
+          {pos ? 'pós-atend.' : outroCanal ? 'atendendo' : 'em ligação'}
         </small>
       </div>
     </li>

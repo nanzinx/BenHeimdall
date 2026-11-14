@@ -49,6 +49,11 @@ export function validarLeitura(respostas: RespostasArgus): LeituraArgus {
 export interface LimitesPausa {
   padraoSeg: number;
   porMotivoSeg: Record<string, number>;
+  /**
+   * Pausas da Argus que, na verdade, são atendimento por outro canal (ex.: "LIGAÇÃO - WPP",
+   * "Em Atendimento - DIGITAL"): contam como ATENDENDO, não como pausa. Casam pelo início do nome.
+   */
+  atendimento?: string[];
 }
 
 /** Status atual de um agente, como é gravado em `status_eventos`. */
@@ -75,12 +80,16 @@ export function extrairStatus(
   leitura: LeituraArgus,
   mapa: Readonly<Record<string, StatusNormalizado>>,
   aoDesconhecer?: (codigo: string) => void,
+  limites?: LimitesPausa,
 ): StatusAtual[] {
   const motivos = new Map(leitura.motivos.map((m) => [m.codigo, m.descricao]));
   return leitura.agentes.map((a) => {
     const status = traduzirStatus(a.status, mapa, aoDesconhecer);
     const motivo =
       status === 'PAUSA' ? (motivos.get(a.codigoPausa ?? '') ?? a.codigoPausa ?? 'Sem motivo') : null;
+    // Pausa que é atendimento por outro canal (WhatsApp, Digital): ATENDENDO, com o canal no motivo.
+    if (motivo && limites && ehPausaDeAtendimento(motivo, limites))
+      return { agenteId: a.id, status: 'ATENDENDO', motivo, desde: a.desde };
     return { agenteId: a.id, status, motivo, desde: a.desde };
   });
 }
@@ -121,10 +130,16 @@ export function limiteDaPausa(motivo: string, limites: LimitesPausa): number {
   return melhor?.seg ?? limites.padraoSeg;
 }
 
+/** A pausa é, na verdade, atendimento por outro canal (config/pausas.json, "atendimento"). */
+export function ehPausaDeAtendimento(motivo: string, limites: LimitesPausa): boolean {
+  const m = semAcento(motivo);
+  return (limites.atendimento ?? []).some((c) => semAcento(c) && m.startsWith(semAcento(c)));
+}
+
 export function normalizar(leitura: LeituraArgus, ctx: ContextoNormalizacao): Painel {
   const chamadas = new Map(leitura.chamadas.map((c) => [c.agenteId, c]));
   const status = new Map(
-    extrairStatus(leitura, ctx.mapaStatus, ctx.aoDesconhecerStatus).map((s) => [s.agenteId, s]),
+    extrairStatus(leitura, ctx.mapaStatus, ctx.aoDesconhecerStatus, ctx.limites).map((s) => [s.agenteId, s]),
   );
 
   const agentes = leitura.agentes.map((a): Agente => {
@@ -160,7 +175,11 @@ export function normalizar(leitura: LeituraArgus, ctx: ContextoNormalizacao): Pa
         ...(c.telefone.replace(/\D/g, '') ? { telefoneMascarado: mascararTelefone(c.telefone) } : {}),
         campanha: c.campanha,
         inicio: new Date(c.inicio).toISOString(),
+        ...(st.status === 'ATENDENDO' && st.motivo ? { canal: st.motivo } : {}),
       };
+    } else if (st.status === 'ATENDENDO' && st.motivo) {
+      // Atendimento por outro canal (WhatsApp, Digital): sem ligação na discadora.
+      agente.atendimento = { canal: st.motivo, campanha: st.motivo, inicio: agente.desde };
     }
     return agente;
   });

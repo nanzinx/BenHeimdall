@@ -78,6 +78,7 @@ export const agenteSchema = z
     atendimento: z
       .object({
         restrito: z.literal(true).optional(),
+        canal: z.string().optional(),
         clienteMascarado: z.string().optional(),
         telefoneMascarado: z.string().optional(),
         campanha: z.string(),

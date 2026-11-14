@@ -420,6 +420,9 @@
   .pill.pos {
     @apply bg-pos/[0.13] text-pos;
   }
+  .pill.canal {
+    @apply bg-livre/[0.13] text-livre;
+  }
   .pill.pos::before {
     @apply h-1.5 w-1.5 animate-piscar rounded-full bg-current content-[''];
   }

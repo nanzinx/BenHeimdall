@@ -106,7 +106,7 @@ export class CicloLeitura extends EventEmitter<EventosCiclo> {
         this.desconhecidos.add(codigo);
         log.warn({ codigo }, 'Status desconhecido da Argus, tratado como OFFLINE');
       };
-      registro.registrar(extrairStatus(leitura, argus.mapaStatus, avisar), agora);
+      registro.registrar(extrairStatus(leitura, argus.mapaStatus, avisar, limites), agora);
       const pausas = registro.pausasDoDia(agora);
       const atendimentos = argus.contaAtendimentosPeloHistorico ? registro.atendimentosDoDia(agora) : null;
       this.painel = normalizar(leitura, {

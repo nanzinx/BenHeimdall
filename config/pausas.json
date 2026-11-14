@@ -6,5 +6,7 @@
     "Descanso": 10,
     "Banheiro": 5,
     "Feedback": 15
-  }
+  },
+  "_atendimento": "Pausas que, na verdade, são atendimento por outro canal: contam como Atendendo (não como pausa). Casam pelo início do nome.",
+  "atendimento": ["LIGAÇÃO - WPP", "Em Atendimento - DIGITAL"]
 }

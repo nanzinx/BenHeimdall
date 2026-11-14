@@ -54,6 +54,7 @@ export function DetalheAgente({ painel }: { painel: Painel | undefined }) {
     !!a &&
     !modoTv &&
     a.status === 'ATENDENDO' &&
+    !a.atendimento?.canal && // WhatsApp/Digital: não há ligação na discadora para transferir
     (usuario?.perfil === 'admin' || (usuario?.perfil === 'supervisor' && usuario.equipe === a.equipe));
   // O dia inteiro, do mais recente para o mais antigo (zera à meia-noite).
   const linha = [...(detalhe.data?.linhaDoTempo ?? [])].reverse();
@@ -61,7 +62,9 @@ export function DetalheAgente({ painel }: { painel: Painel | undefined }) {
   let resumo = '';
   if (a) {
     const at = a.atendimento;
-    if (a.status === 'ATENDENDO' && at)
+    if (a.status === 'ATENDENDO' && at?.canal && !at.clienteMascarado && !at.telefoneMascarado)
+      resumo = `${at.canal} · fora da discadora`;
+    else if (a.status === 'ATENDENDO' && at)
       resumo = at.restrito
         ? `Cliente de outra equipe · ${at.campanha}`
         : [at.clienteMascarado ?? 'Cliente sem nome', at.telefoneMascarado, at.campanha]

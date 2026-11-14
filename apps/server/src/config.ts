@@ -171,6 +171,7 @@ function lerJsonOpcional<T>(arquivo: string, schema: z.ZodType<T, z.ZodTypeDef, 
 const pausasSchema = z.object({
   padraoMin: z.number().positive(),
   limitesMin: z.record(z.string(), z.number().positive()),
+  atendimento: z.array(z.string()).default([]),
 });
 
 export function carregarLimites(arquivo: string): LimitesPausa {
@@ -180,5 +181,6 @@ export function carregarLimites(arquivo: string): LimitesPausa {
     porMotivoSeg: Object.fromEntries(
       Object.entries(p.limitesMin).map(([m, min]) => [m, Math.round(min * 60)]),
     ),
+    atendimento: p.atendimento,
   };
 }

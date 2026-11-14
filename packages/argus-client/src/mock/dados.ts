@@ -94,6 +94,7 @@ export const MOTIVOS_PAUSA = [
   { codigo: 'P02', descricao: 'Descanso' },
   { codigo: 'P03', descricao: 'Banheiro' },
   { codigo: 'P04', descricao: 'Feedback' },
+  { codigo: 'P05', descricao: 'LIGAÇÃO - WPP' },
 ];
 
 export const DDDS = ['11', '11', '11', '13', '19', '21', '31', '41', '51', '71', '81', '85'];

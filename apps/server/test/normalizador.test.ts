@@ -86,6 +86,46 @@ describe('normalizador', () => {
     expect(avisos).toEqual(['CODIGO_NOVO']);
   });
 
+  it('pausa de WhatsApp/Digital conta como atendimento, não como pausa', () => {
+    const agente = (id: string, codigoPausa: string) => ({
+      id,
+      nome: id,
+      ramal: id,
+      equipe: 6,
+      supervisor: 'S',
+      status: 'PAUSA',
+      desde: new Date(agora.getTime() - 600_000).toISOString(),
+      codigoPausa,
+      atendimentosDia: 0,
+      vendasDia: 0,
+    });
+    const leitura = validarLeitura({
+      agentes: [
+        agente('wpp', 'LIGAÇÃO - WPP 2'),
+        agente('digital', 'EM ATENDIMENTO - DIGITAL'),
+        agente('almoco', 'Almoço'),
+      ],
+      chamadas: [],
+      motivos: [],
+      fila: { emEspera: 0 },
+      callbacks: { pendentes: 0 },
+    });
+    const painel = normalizar(leitura, {
+      agora,
+      ultimaLeitura: agora,
+      argusOnline: true,
+      mapaStatus: { PAUSA: 'PAUSA' },
+      limites: LIMITES,
+      pausaDiaSeg: () => 0,
+    });
+    const [wpp, digital, almoco] = painel.agentes;
+    expect(wpp).toMatchObject({ status: 'ATENDENDO', atendimento: { canal: 'LIGAÇÃO - WPP 2' } });
+    expect(wpp!.pausa).toBeUndefined();
+    expect(digital!.status).toBe('ATENDENDO');
+    expect(almoco).toMatchObject({ status: 'PAUSA', pausa: { motivo: 'Almoço' } });
+    expect(() => painelSchema.parse(painel)).not.toThrow();
+  });
+
   it('rejeita resposta fora do formato', () => {
     expect(() =>
       validarLeitura({
@@ -124,7 +164,8 @@ describe('mascaramento', () => {
     }
     for (const chave of ['cpf', 'beneficio', 'conta', 'telefone"', 'nomeCliente'])
       expect(json).not.toContain(chave);
-    for (const a of painel.agentes.filter((x) => x.atendimento)) {
+    // Atendimento por outro canal (WhatsApp, Digital) não tem cliente nem telefone.
+    for (const a of painel.agentes.filter((x) => x.atendimento && !x.atendimento.canal)) {
       expect(a.atendimento!.telefoneMascarado).toMatch(/^\(\d{2}\) 9\*{4}-\d{4}$/);
       expect(a.atendimento!.clienteMascarado).not.toContain(' ');
     }

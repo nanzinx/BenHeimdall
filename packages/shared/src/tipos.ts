@@ -45,6 +45,8 @@ export interface AtendimentoAgente {
    * O código do cliente não é usado no painel.
    */
   restrito?: true;
+  /** Atendimento por outro canal (pausa da Argus como "LIGAÇÃO - WPP"): o nome dela. */
+  canal?: string;
   clienteMascarado?: string;
   telefoneMascarado?: string;
   campanha: string;
