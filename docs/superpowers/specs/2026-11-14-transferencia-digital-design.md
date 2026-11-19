@@ -15,6 +15,8 @@ transferências não caem na mesma pessoa; a distribuição entre o pessoal da D
   Digital (o mais ocioso que não esteja reservado), **reserva por 60 s** e diz ao operador
   "Transfira para Fulano · ramal X".
 - Cada operador entra com **login por e-mail**, como os supervisores.
+- O **operador da Digital** avisa no site que pode receber transferência ("Estou livre") e é
+  **avisado no site** (som + notificação do navegador) quando uma transferência vem para ele.
 - Tudo registrado: quem pediu, para quem foi, se a transferência chegou.
 
 ## Fora do escopo (agora)
@@ -24,7 +26,6 @@ transferências não caem na mesma pessoa; a distribuição entre o pessoal da D
 - Consulta para o BenHub (fica para quando houver a integração).
 - Transferir sozinho pela Argus: a API não transfere para um ramal (só abre o pop-up na tela do
   operador). Quem transfere continua sendo o operador, no softphone.
-- Avisar o operador da Digital na tela dele (ele não tem o BenHeimdall aberto).
 - Relatório de transferências por pessoa. O registro fica gravado; a tela vem depois.
 - Mexer no status da Argus (pausar, liberar).
 
@@ -106,10 +107,35 @@ Depois do clique:
 - Só mostra **quantos** da Digital estão livres, não quem (decisão: o operador não escolhe).
 - Atualiza a cada 3 s.
 
+### Página do operador da Digital (`/transferir`, conta da equipe Digital)
+
+```
+┌──────────────────────────────────────┐
+│ BenHeimdall · Digital        Igor · Sair │
+│   Você está: ● LIVRE p/ transferência   │
+│   [ Estou livre ]  [ Ocupado ]          │
+│  🔔 Bruno vai te transferir um cliente  │
+│     agora (ramal 2105)                  │
+└──────────────────────────────────────┘
+```
+
+- **Quem recebe transferência:** só quem está **LIVRE na Argus E marcou "Estou livre"** no site
+  (decidido: o botão não mexe na Argus; a Argus segue sendo a fonte da verdade e o clique é o
+  "pode mandar" do operador).
+- A marca vale até ele clicar "Ocupado", sair, a sessão acabar ou ele ficar OFFLINE na Argus.
+  Pausa e ligação não apagam a marca: quando volta a LIVRE na Argus, já volta para a fila.
+- Marcou "Estou livre" mas está em pausa/ligação na Argus: a página mostra "Você marcou livre,
+  mas a Argus mostra Em pausa · Almoço" e ele não entra na fila.
+- **Aviso:** ao ser reservado, a página toca um som, mostra "Bruno vai te transferir um cliente
+  (ramal 2105)" e manda notificação do navegador (funciona com a aba minimizada; pede permissão
+  na primeira vez).
+- Na fila, a ordem continua por quem está livre há mais tempo na Argus.
+
 ### Painel do supervisor
 
 Na coluna "Livres p/ transferência", quem está reservado ganha a etiqueta
-"reservado p/ Bruno · 0:42". A ordem não muda.
+"reservado p/ Bruno · 0:42", e quem está livre na Argus mas não marcou "Estou livre" aparece
+apagado, com "não marcou livre". A ordem não muda.
 
 ### Servidor
 
@@ -117,6 +143,8 @@ Na coluna "Livres p/ transferência", quem está reservado ganha a etiqueta
   Digital estão livres.
 - `POST /api/transferencia` → cria a reserva (ou devolve a que já existe).
 - `POST /api/transferencia/:id/transferi` e `/:id/outro` → fecham a reserva.
+- `POST /api/transferencia/disponivel` `{ livre: true|false }` (operador da Digital) → marca/desmarca.
+  `GET /api/transferencia` devolve para ele a marca, o status da Argus e a reserva recebida.
 - Reservas em memória (o servidor é um processo só) + tabela `transferencias` no SQLite com o
   histórico: pedida_em, operador (conta e ramal), destino (nome e ramal), como terminou
   (concluída, cancelada, expirada) e quando. A reserva aberta no painel vem do mesmo lugar.
@@ -129,7 +157,7 @@ Na coluna "Livres p/ transferência", quem está reservado ganha a etiqueta
 - Sessão do operador dura o dia (até meia-noite), sem expirar por inatividade.
 - Importação das contas pela Argus, com a lista de senhas temporárias para o admin repassar.
 - A página mostra só a quantidade de livres da Digital.
-- Sem aviso para o operador da Digital nesta primeira versão.
+- A marca "Estou livre" dura até "Ocupado", sair, fim da sessão ou OFFLINE na Argus.
 - "Transferi" e "chegou" contam igual como concluída.
 
 ## Para quem for construir
@@ -141,4 +169,5 @@ Na coluna "Livres p/ transferência", quem está reservado ganha a etiqueta
 - Testes: escolha do próximo (mais ocioso, sem reservado), uma reserva por operador, expiração,
   conclusão pelo status, colisão (dois pedidos ao mesmo tempo vão para pessoas diferentes),
   operador barrado no painel e na administração, sessão do operador sem expirar em 15 min,
-  importação (cria só quem não existe, pula quem não tem e-mail).
+  importação (cria só quem não existe, pula quem não tem e-mail), só entra na fila quem está
+  LIVRE na Argus e marcou "Estou livre", a marca some ao ficar OFFLINE.
